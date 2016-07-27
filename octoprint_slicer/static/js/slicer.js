@@ -13,6 +13,11 @@ $(function() {
         // self.settingsViewModel = parameters[1];
 
         // TODO: Implement your plugin's view model here.
+        $(document).on("click", ".btn-mini[title='Slice']", function(event) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            $('a[href="#tab_plugin_slicer"]').tab('show');
+        });
     }
 
     // view model class, parameters for constructor, container to bind to
