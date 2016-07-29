@@ -1,1 +1,12 @@
 /* TODO: Have your plugin's CSS files generated to here. */
+#canvas {
+    background-color: #000;
+    width: 200px;
+    height: 200px;
+    border: 1px solid black;
+    margin: 100px;
+    padding: 0px;
+    position: static; /* fixed or static */
+    top: 100px;
+    left: 100px;
+}
