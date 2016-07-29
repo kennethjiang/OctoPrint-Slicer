@@ -25,47 +25,56 @@ $(function() {
         });
 
 
-        self.loadSTL = function(url) {
-            var loader = new THREE.STLLoader();
-            renderer = viewport.init(url);
-            container = document.getElementById( 'slicer-canvas' );
-            container.appendChild( renderer.domElement );
+var container, camera, scene, renderer, mesh,
 
-            /*
-            viewport.modelLoaded = false;
-            loader.load(url, function(geometry) {
-                geometry.center();
-                var mesh = new THREE.Mesh(geometry);
-                mesh.rotation.set(3 * Math.PI / 2, 0, Math.PI);
-                mesh.updateMatrix();
-                mesh.geometry.applyMatrix(mesh.matrix);
-                mesh.position.set(0, 0, 0);
-                mesh.rotation.set(0, 0, 0);
-                mesh.scale.set(1, 1, 1);
-                mesh.renderOrder = 0;
+    objects = [],
+    
+    count = 0,
 
-                // Add model to scene
-                viewport.scene[0].add(mesh);
+    CANVAS_WIDTH = 588,
+    CANVAS_HEIGHT = 588;
 
-                // Append model to list
-                viewport.models.push({
-                    mesh: mesh,
-                    type: type,
-                    glow: null,
-                    adhesion: viewport.createPlatformAdhesion(mesh)
-                });
-                // Select model
-                viewport.removeSelection();
-                viewport.selectModel(mesh);
+container = document.getElementById( 'slicer-canvas' );
 
-                // Fix model's Y
-                viewport.fixModelY();
-                // Set model loaded
-                viewport.modelLoaded = true;
-            });
-            */
-        }
-        self.loadSTL(BASEURL + "downloads/files/" + "local" + "/" + "fish_fossilz.stl");
+renderer = new THREE.WebGLRenderer();
+renderer.setSize( CANVAS_WIDTH, CANVAS_HEIGHT );
+container.appendChild( renderer.domElement );
+
+scene = new THREE.Scene();
+
+camera = new THREE.PerspectiveCamera( 50, CANVAS_WIDTH / CANVAS_HEIGHT, 1, 1000 );
+camera.position.y = 150;
+camera.position.z = 500;
+camera.lookAt( scene.position );
+
+mesh = new THREE.Mesh( 
+    new THREE.BoxGeometry( 200, 200, 200, 1, 1, 1 ), 
+    new THREE.MeshBasicMaterial( { color : 0xff0000, wireframe: true } 
+) );
+scene.add( mesh );
+objects.push( mesh );
+
+// find intersections
+var vector = new THREE.Vector3();
+var raycaster = new THREE.Raycaster();
+
+function render() {
+
+    mesh.rotation.y += 0.01;
+    
+    renderer.render( scene, camera );
+
+}
+
+(function animate() {
+
+    requestAnimationFrame( animate );
+
+    render();
+
+})();
+
+//        self.loadSTL(BASEURL + "downloads/files/" + "local" + "/" + "fish_fossilz.stl");
     }
 
     // view model class, parameters for constructor, container to bind to
