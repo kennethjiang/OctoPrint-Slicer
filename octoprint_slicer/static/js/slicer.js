@@ -34,9 +34,6 @@ $(function() {
 
                 camera = new THREE.PerspectiveCamera( 35, 1.0, 1, 15 );
                 camera.position.set( 3, 0.15, 3 );
-
-                cameraTarget = new THREE.Vector3( 0, -0.25, 0 );
-
                 scene = new THREE.Scene();
 
                 // ASCII file
@@ -51,11 +48,7 @@ $(function() {
                     mesh.rotation.set( 0, - Math.PI / 2, 0 );
                     mesh.scale.set( 0.5, 0.5, 0.5 );
 
-                    mesh.castShadow = true;
-                    mesh.receiveShadow = true;
-
                     scene.add( mesh );
-
                 } );
 
 
@@ -73,20 +66,20 @@ $(function() {
                 renderer.gammaOutput = true;
 
                 container.appendChild( renderer.domElement );
+                controls = new THREE.OrbitControls(camera, renderer.domElement);
+                controls.enableDamping = true;
+                controls.dampingFactor = 0.25;
+                controls.enableZoom = false;
 
             }
 
             function animate() {
-
                 requestAnimationFrame( animate );
-
                 render();
             }
 
             function render() {
-
-                camera.lookAt( cameraTarget );
-
+                controls.update();
                 renderer.render( scene, camera );
 
             }
