@@ -38,21 +38,6 @@ $(function() {
                 cameraTarget = new THREE.Vector3( 0, -0.25, 0 );
 
                 scene = new THREE.Scene();
-                scene.fog = new THREE.Fog( 0x72645b, 2, 15 );
-
-
-                // Ground
-
-                var plane = new THREE.Mesh(
-                    new THREE.PlaneBufferGeometry( 40, 40 ),
-                    new THREE.MeshPhongMaterial( { color: 0x999999, specular: 0x101010 } )
-                );
-                plane.rotation.x = -Math.PI/2;
-                plane.position.y = -0.5;
-                scene.add( plane );
-
-                plane.receiveShadow = true;
-
 
                 // ASCII file
 
@@ -82,14 +67,10 @@ $(function() {
 
                 renderer = new THREE.WebGLRenderer( { antialias: true } );
                 renderer.setSize( CANVAS_WIDTH, CANVAS_HEIGHT );
-                renderer.setClearColor( scene.fog.color );
                 renderer.setPixelRatio( window.devicePixelRatio );
 
                 renderer.gammaInput = true;
                 renderer.gammaOutput = true;
-
-                renderer.shadowMap.enabled = true;
-                renderer.shadowMap.renderReverseSided = false;
 
                 container.appendChild( renderer.domElement );
 
@@ -103,11 +84,6 @@ $(function() {
             }
 
             function render() {
-
-                var timer = Date.now() * 0.0005;
-
-                camera.position.x = Math.cos( timer ) * 3;
-                camera.position.z = Math.sin( timer ) * 3;
 
                 camera.lookAt( cameraTarget );
 
