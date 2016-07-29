@@ -32,7 +32,7 @@ $(function() {
             function init() {
                 container = document.getElementById( 'slicer-canvas' );
 
-                camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 1, 15 );
+                camera = new THREE.PerspectiveCamera( 35, 1.0, 1, 15 );
                 camera.position.set( 3, 0.15, 3 );
 
                 cameraTarget = new THREE.Vector3( 0, -0.25, 0 );
@@ -61,7 +61,7 @@ $(function() {
 
                 // Lights
 
-                scene.add( new THREE.HemisphereLight( 0x443333, 0x111122 ) );
+                scene.add( new THREE.AmbientLight(0xffffff, 1.0) );
 
                 // renderer
 
