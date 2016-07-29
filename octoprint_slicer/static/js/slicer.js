@@ -8,11 +8,6 @@ $(function() {
     function SlicerViewModel(parameters) {
         var self = this;
 
-        var container, camera, scene, renderer, mesh,
-            objects = [],
-            CANVAS_WIDTH = 588,
-            CANVAS_HEIGHT = 588;
-
         // assign the injected parameters, e.g.:
         // self.loginStateViewModel = parameters[0];
         // self.settingsViewModel = parameters[1];
@@ -25,54 +20,101 @@ $(function() {
         });
 
 
-var container, camera, scene, renderer, mesh,
+            var container;
 
-    objects = [],
-    
-    count = 0,
+            var camera, cameraTarget, scene, renderer,
+            CANVAS_WIDTH = 588,
+            CANVAS_HEIGHT = 588;
 
-    CANVAS_WIDTH = 588,
-    CANVAS_HEIGHT = 588;
+            init();
+            animate();
 
-container = document.getElementById( 'slicer-canvas' );
+            function init() {
+                container = document.getElementById( 'slicer-canvas' );
 
-renderer = new THREE.WebGLRenderer();
-renderer.setSize( CANVAS_WIDTH, CANVAS_HEIGHT );
-container.appendChild( renderer.domElement );
+                camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 1, 15 );
+                camera.position.set( 3, 0.15, 3 );
 
-scene = new THREE.Scene();
+                cameraTarget = new THREE.Vector3( 0, -0.25, 0 );
 
-camera = new THREE.PerspectiveCamera( 50, CANVAS_WIDTH / CANVAS_HEIGHT, 1, 1000 );
-camera.position.y = 150;
-camera.position.z = 500;
-camera.lookAt( scene.position );
+                scene = new THREE.Scene();
+                scene.fog = new THREE.Fog( 0x72645b, 2, 15 );
 
-mesh = new THREE.Mesh( 
-    new THREE.BoxGeometry( 200, 200, 200, 1, 1, 1 ), 
-    new THREE.MeshBasicMaterial( { color : 0xff0000, wireframe: true } 
-) );
-scene.add( mesh );
-objects.push( mesh );
 
-// find intersections
-var vector = new THREE.Vector3();
-var raycaster = new THREE.Raycaster();
+                // Ground
 
-function render() {
+                var plane = new THREE.Mesh(
+                    new THREE.PlaneBufferGeometry( 40, 40 ),
+                    new THREE.MeshPhongMaterial( { color: 0x999999, specular: 0x101010 } )
+                );
+                plane.rotation.x = -Math.PI/2;
+                plane.position.y = -0.5;
+                scene.add( plane );
 
-    mesh.rotation.y += 0.01;
-    
-    renderer.render( scene, camera );
+                plane.receiveShadow = true;
 
-}
 
-(function animate() {
+                // ASCII file
 
-    requestAnimationFrame( animate );
+                var loader = new THREE.STLLoader();
+                loader.load( 'http://threejs.org/examples/models/stl/ascii/slotted_disk.stl', function ( geometry ) {
 
-    render();
+                    var material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
+                    var mesh = new THREE.Mesh( geometry, material );
 
-})();
+                    mesh.position.set( 0, - 0.25, 0.6 );
+                    mesh.rotation.set( 0, - Math.PI / 2, 0 );
+                    mesh.scale.set( 0.5, 0.5, 0.5 );
+
+                    mesh.castShadow = true;
+                    mesh.receiveShadow = true;
+
+                    scene.add( mesh );
+
+                } );
+
+
+                // Lights
+
+                scene.add( new THREE.HemisphereLight( 0x443333, 0x111122 ) );
+
+                // renderer
+
+                renderer = new THREE.WebGLRenderer( { antialias: true } );
+                renderer.setSize( CANVAS_WIDTH, CANVAS_HEIGHT );
+                renderer.setClearColor( scene.fog.color );
+                renderer.setPixelRatio( window.devicePixelRatio );
+
+                renderer.gammaInput = true;
+                renderer.gammaOutput = true;
+
+                renderer.shadowMap.enabled = true;
+                renderer.shadowMap.renderReverseSided = false;
+
+                container.appendChild( renderer.domElement );
+
+            }
+
+            function animate() {
+
+                requestAnimationFrame( animate );
+
+                render();
+            }
+
+            function render() {
+
+                var timer = Date.now() * 0.0005;
+
+                camera.position.x = Math.cos( timer ) * 3;
+                camera.position.z = Math.sin( timer ) * 3;
+
+                camera.lookAt( cameraTarget );
+
+                renderer.render( scene, camera );
+
+            }
+
 
 //        self.loadSTL(BASEURL + "downloads/files/" + "local" + "/" + "fish_fossilz.stl");
     }
