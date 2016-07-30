@@ -35,6 +35,23 @@ $(function() {
                 camera = new THREE.PerspectiveCamera( 35, 1.0, 1, 15 );
                 camera.position.set( 3, 0.15, 3 );
                 scene = new THREE.Scene();
+var geometry = new THREE.Geometry();
+geometry.vertices.push(new THREE.Vector3( - 5, 0, 0 ) );
+geometry.vertices.push(new THREE.Vector3( 5, 0, 0 ) );
+
+linesMaterial = new THREE.LineBasicMaterial( { color: 0x787878, opacity: .2, linewidth: .1 } );
+
+for ( var i = 0; i <= 20; i ++ ) {
+
+    var line = new THREE.Line( geometry, linesMaterial );
+    line.position.z = ( i * 0.5 ) - 5;
+    scene.add( line );
+
+    var line = new THREE.Line( geometry, linesMaterial );
+    line.position.x = ( i * 0.5 ) - 5;
+    line.rotation.y = 90 * Math.PI / 180;
+    scene.add( line );
+}
 
                 // ASCII file
 
