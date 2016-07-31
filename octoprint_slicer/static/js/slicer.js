@@ -20,86 +20,82 @@ $(function() {
         });
 
 
-            var container;
+        var container;
 
-            var camera, cameraTarget, scene, renderer,
-            CANVAS_WIDTH = 588,
-            CANVAS_HEIGHT = 588;
+        var camera, cameraTarget, scene, renderer,
+        CANVAS_WIDTH = 588,
+        CANVAS_HEIGHT = 588;
 
-            init();
-            animate();
+        init();
+        animate();
 
-            function init() {
-                container = document.getElementById( 'slicer-canvas' );
+        function init() {
+            container = document.getElementById( 'slicer-canvas' );
 
-                camera = new THREE.PerspectiveCamera( 35, 1.0, 1, 15 );
-                camera.position.set( 3, 0.15, 3 );
-                scene = new THREE.Scene();
-var geometry = new THREE.Geometry();
-geometry.vertices.push(new THREE.Vector3( - 5, 0, 0 ) );
-geometry.vertices.push(new THREE.Vector3( 5, 0, 0 ) );
-
-linesMaterial = new THREE.LineBasicMaterial( { color: 0x787878, opacity: .2, linewidth: .1 } );
-
-for ( var i = 0; i <= 20; i ++ ) {
-
-    var line = new THREE.Line( geometry, linesMaterial );
-    line.position.z = ( i * 0.5 ) - 5;
-    scene.add( line );
-
-    var line = new THREE.Line( geometry, linesMaterial );
-    line.position.x = ( i * 0.5 ) - 5;
-    line.rotation.y = 90 * Math.PI / 180;
-    scene.add( line );
-}
-
-                // ASCII file
-
-                var loader = new THREE.STLLoader();
-                loader.load( 'http://threejs.org/examples/models/stl/ascii/slotted_disk.stl', function ( geometry ) {
-
-                    var material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
-                    var mesh = new THREE.Mesh( geometry, material );
-
-                    mesh.position.set( 0, - 0.25, 0.6 );
-                    mesh.rotation.set( 0, - Math.PI / 2, 0 );
-                    mesh.scale.set( 0.5, 0.5, 0.5 );
-
-                    scene.add( mesh );
-                } );
-
-
-                // Lights
-
-                scene.add( new THREE.AmbientLight(0xffffff, 1.0) );
-
-                // renderer
-
-                renderer = new THREE.WebGLRenderer( { antialias: true } );
-                renderer.setSize( CANVAS_WIDTH, CANVAS_HEIGHT );
-                renderer.setPixelRatio( window.devicePixelRatio );
-
-                renderer.gammaInput = true;
-                renderer.gammaOutput = true;
-
-                container.appendChild( renderer.domElement );
-                controls = new THREE.OrbitControls(camera, renderer.domElement);
-                controls.enableDamping = true;
-                controls.dampingFactor = 0.25;
-                controls.enableZoom = false;
-
+            camera = new THREE.PerspectiveCamera( 35, 1.0, 1, 15 );
+            camera.position.set( 3, 0.15, 3 );
+            scene = new THREE.Scene();
+            var geometry = new THREE.Geometry();
+            geometry.vertices.push(new THREE.Vector3( - 5, 0, 0 ) );
+            geometry.vertices.push(new THREE.Vector3( 5, 0, 0 ) );
+            linesMaterial = new THREE.LineBasicMaterial( { color: 0x787878, opacity: .2, linewidth: .1 } );
+            for ( var i = 0; i <= 20; i ++ ) {
+                var line = new THREE.Line( geometry, linesMaterial );
+                line.position.z = ( i * 0.5 ) - 5;
+                scene.add( line );
+                var line = new THREE.Line( geometry, linesMaterial );
+                line.position.x = ( i * 0.5 ) - 5;
+                line.rotation.y = 90 * Math.PI / 180;
+                scene.add( line );
             }
 
-            function animate() {
-                requestAnimationFrame( animate );
-                render();
-            }
+            // ASCII file
 
-            function render() {
-                controls.update();
-                renderer.render( scene, camera );
+            var loader = new THREE.STLLoader();
+            loader.load( 'http://threejs.org/examples/models/stl/ascii/slotted_disk.stl', function ( geometry ) {
 
-            }
+                var material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
+                var mesh = new THREE.Mesh( geometry, material );
+
+                mesh.position.set( 0, - 0.25, 0.6 );
+                mesh.rotation.set( 0, - Math.PI / 2, 0 );
+                mesh.scale.set( 0.5, 0.5, 0.5 );
+
+                scene.add( mesh );
+            } );
+
+
+            // Lights
+
+            scene.add( new THREE.AmbientLight(0xffffff, 1.0) );
+
+            // renderer
+
+            renderer = new THREE.WebGLRenderer( { antialias: true } );
+            renderer.setSize( CANVAS_WIDTH, CANVAS_HEIGHT );
+            renderer.setPixelRatio( window.devicePixelRatio );
+
+            renderer.gammaInput = true;
+            renderer.gammaOutput = true;
+
+            container.appendChild( renderer.domElement );
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.25;
+            controls.enableZoom = false;
+
+        }
+
+        function animate() {
+            requestAnimationFrame( animate );
+            render();
+        }
+
+        function render() {
+            controls.update();
+            renderer.render( scene, camera );
+
+        }
 
 
 //        self.loadSTL(BASEURL + "downloads/files/" + "local" + "/" + "fish_fossilz.stl");
