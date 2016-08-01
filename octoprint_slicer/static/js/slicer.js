@@ -77,7 +77,6 @@ $(function() {
 
     		$("#slicer-viewport").empty().append(`
     			<div class="model">
-    				<input type="file" accept=".stl, .obj, .m3d, .amf, .wrl, .dae, .3mf">
     				<button class="import" title="Import"><img src="` + PLUGIN_BASEURL + `m33fio/static/img/import.png"></button>
     				<button class="translate disabled" title="Translate"><img src="` + PLUGIN_BASEURL + `m33fio/static/img/translate.png"></button>
     				<button class="rotate" title="Rotate"><img src="` + PLUGIN_BASEURL + `m33fio/static/img/rotate.png"></button>
@@ -88,10 +87,6 @@ $(function() {
     				<button class="reset disabled" title="Reset"><img src="` + PLUGIN_BASEURL + `m33fio/static/img/reset.png"></button>
     				<button class="cut" title="Cut"><img src="` + PLUGIN_BASEURL + `m33fio/static/img/cut.png"></button>
     				<button class="merge" title="Merge"><img src="` + PLUGIN_BASEURL + `m33fio/static/img/merge.png"></button>
-    			</div>
-    			<div class="display">
-    				<button class="boundaries" title="Boundaries"><img src="` + PLUGIN_BASEURL + `m33fio/static/img/boundaries.png"></button>
-    				<button class="measurements" title="Measurements"><img src="` + PLUGIN_BASEURL + `m33fio/static/img/measurements.png"></button>
     			</div>
     			<div class="values translate">
     				<div>
@@ -107,11 +102,6 @@ $(function() {
     					<button class="sphere" title="Sphere"><img src="` + PLUGIN_BASEURL + `m33fio/static/img/sphere.png"></button>
     					<span></span>
     				</div>
-    			</div>
-    			<div class="measurements">
-    				<p class="width"></p>
-    				<p class="depth"></p>
-    				<p class="height"></p>
     			</div>
     		`);
     
