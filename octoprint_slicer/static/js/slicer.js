@@ -60,7 +60,7 @@ $(function() {
 
             renderer.gammaInput = true;
             renderer.gammaOutput = true;
-/*
+
     		$("#slicer-viewport").empty().append(`
     			<div class="model">
     				<button class="import" title="Import"><img src="` + PLUGIN_BASEURL + `m33fio/static/img/import.png"></button>
@@ -90,7 +90,7 @@ $(function() {
     				</div>
     			</div>
     		`);
-   */
+
 		    $("#slicer-viewport").append(renderer.domElement);
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
