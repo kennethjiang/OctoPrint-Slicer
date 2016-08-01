@@ -22,12 +22,12 @@ $(function() {
 
         var container;
 
-        var camera, cameraTarget, scene, renderer,
+        var camera, cameraTarget, scene, renderer, orbitControl, transformControl,
         CANVAS_WIDTH = 588,
         CANVAS_HEIGHT = 588;
 
         init();
-        animate();
+        render();
 
         function init() {
             container = document.getElementById( 'slicer-canvas' );
@@ -45,6 +45,10 @@ $(function() {
                 mesh.scale.set( 0.02, 0.02, 0.02 );
 
                 scene.add( mesh );
+							// Set selection mode to translate
+							transformControls.setMode("translate");
+							transformControls.space = "world";
+                render();
             } );
 
 
@@ -78,22 +82,23 @@ $(function() {
     		`);
 
 		    $("#slicer-viewport").append(renderer.domElement);
-            controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.25;
-            controls.enableZoom = false;
+            orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+            orbitControls.enableDamping = true;
+            orbitControls.dampingFactor = 0.25;
+            orbitControls.addEventListener("change", render);
 
-        }
-
-        function animate() {
-            requestAnimationFrame( animate );
-            render();
+			transformControls = new THREE.TransformControls(camera, renderer.domElement);
+			transformControls.space = "world";
+			transformControls.setAllowedTranslation("XZ");
+			transformControls.setRotationDisableE(true);
+            transformControls.addEventListener("change", render);
+			scene.add(transformControls);
         }
 
         function render() {
-            controls.update();
+            orbitControls.update();
+            transformControls.update();
             renderer.render( scene, camera );
-
         }
 
     }
