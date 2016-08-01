@@ -14,7 +14,6 @@
 
 #slicer-viewport {
     margin-bottom: -5px;
-    z-index: -1;
     position: relative;
 }
 
