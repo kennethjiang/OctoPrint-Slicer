@@ -32,24 +32,10 @@ $(function() {
         function init() {
             container = document.getElementById( 'slicer-canvas' );
 
-            camera = new THREE.PerspectiveCamera( 35, 1.0, 1, 15 );
+            camera = new THREE.PerspectiveCamera( 35, 1.0, 0.1, 100 );
             camera.position.set( 3, 0.15, 3 );
             scene = new THREE.Scene();
-            var geometry = new THREE.Geometry();
-            geometry.vertices.push(new THREE.Vector3( - 5, 0, 0 ) );
-            geometry.vertices.push(new THREE.Vector3( 5, 0, 0 ) );
-            linesMaterial = new THREE.LineBasicMaterial( { color: 0x787878, opacity: .2, linewidth: .1 } );
-            for ( var i = 0; i <= 20; i ++ ) {
-                var line = new THREE.Line( geometry, linesMaterial );
-                line.position.z = ( i * 0.5 ) - 5;
-                scene.add( line );
-                var line = new THREE.Line( geometry, linesMaterial );
-                line.position.x = ( i * 0.5 ) - 5;
-                line.rotation.y = 90 * Math.PI / 180;
-                scene.add( line );
-            }
-
-            // ASCII file
+            scene.add( new THREE.GridHelper( 10, 0.2 ) );
 
             var loader = new THREE.STLLoader();
             loader.load(BASEURL + "downloads/files/" + "local" + "/" + "fish_fossilz.stl", function ( geometry ) {
@@ -74,7 +60,7 @@ $(function() {
 
             renderer.gammaInput = true;
             renderer.gammaOutput = true;
-
+/*
     		$("#slicer-viewport").empty().append(`
     			<div class="model">
     				<button class="import" title="Import"><img src="` + PLUGIN_BASEURL + `m33fio/static/img/import.png"></button>
@@ -104,7 +90,7 @@ $(function() {
     				</div>
     			</div>
     		`);
-    
+   */
 		    $("#slicer-viewport").append(renderer.domElement);
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
