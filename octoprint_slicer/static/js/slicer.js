@@ -44,6 +44,7 @@ $(function() {
                 var mesh = new THREE.Mesh( geometry, material );
                 mesh.scale.set( 0.02, 0.02, 0.02 );
 
+                scene.add( mesh );
                 selectModel( mesh );
                 render();
             } );
@@ -91,6 +92,9 @@ $(function() {
             transformControls.setRotationDisableE(true);
             transformControls.addEventListener("change", render);
             transformControls.addEventListener("mouseDown", startTransform);
+            transformControls.addEventListener("mouseUp", endTransform);
+            //transformControls.addEventListener("mouseUp", this.fixModelY);
+            //transformControls.addEventListener("change", this.updateModelChanges);
             scene.add(transformControls);
 
             $("#slicer-viewport button.translate").click(function(event) {
@@ -104,6 +108,10 @@ $(function() {
             orbitControls.enabled = false;
         }
 
+        function endTransform() {
+            // Enable orbit controls
+            orbitControls.enabled = true;
+        }
         // Select model
         function selectModel(model) {
             var glowVertexShader = `
