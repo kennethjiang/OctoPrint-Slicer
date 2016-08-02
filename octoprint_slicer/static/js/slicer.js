@@ -23,7 +23,7 @@ $(function() {
         var container;
 
         var camera, cameraTarget, scene, renderer, orbitControl, transformControl,
-            CANVAS_WIDTH = 588,
+        CANVAS_WIDTH = 588,
             CANVAS_HEIGHT = 588;
 
         init();
@@ -44,10 +44,7 @@ $(function() {
                 var mesh = new THREE.Mesh( geometry, material );
                 mesh.scale.set( 0.02, 0.02, 0.02 );
 
-                scene.add( mesh );
-                // Set selection mode to translate
-                transformControls.setMode("translate");
-                transformControls.space = "world";
+                selectModel( mesh );
                 render();
             } );
 
@@ -85,6 +82,7 @@ $(function() {
             orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
             orbitControls.enableDamping = true;
             orbitControls.dampingFactor = 0.25;
+            orbitControls.enablePan = false;
             orbitControls.addEventListener("change", render);
 
             transformControls = new THREE.TransformControls(camera, renderer.domElement);
@@ -92,17 +90,159 @@ $(function() {
             transformControls.setAllowedTranslation("XZ");
             transformControls.setRotationDisableE(true);
             transformControls.addEventListener("change", render);
-            transformControls.enabled = false;
+            transformControls.addEventListener("mouseDown", startTransform);
             scene.add(transformControls);
 
             $("#slicer-viewport button.translate").click(function(event) {
                 // Set selection mode to translate
-                orbitControls.enabled = false;
-                transformControls.enabled = true;
                 transformControls.setMode("translate");
             });
+            // Start transform
+        }
+        function startTransform() {
+            // Disable orbit controls
+            orbitControls.enabled = false;
         }
 
+        // Select model
+        function selectModel(model) {
+            var glowVertexShader = `
+                uniform vec3 viewVector;
+            uniform float c;
+            uniform float p;
+            varying float intensity;
+            void main() {
+                vec3 vNormal = normalize(normalMatrix * normal);
+                vec3 vNormel = normalize(normalMatrix * viewVector);
+                intensity = pow(c - dot(vNormal, vNormel), p);
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+            `;
+            var glowFragmentShader = `
+                uniform vec3 color;
+            varying float intensity;
+            uniform float alpha;
+            void main() {
+                vec3 glow = color * intensity;
+                gl_FragColor = vec4(glow, alpha);
+            }
+            `;
+
+            // Set outline shader
+            var outlineVertexShader = `
+                uniform float offset;
+            void main() {
+                vec4 pos = modelViewMatrix * vec4(position + normal * offset, 1.0);
+                gl_Position = projectionMatrix * pos;
+            }
+            `;
+
+            var outlineFragmentShader = `
+                uniform vec3 color;
+            uniform float alpha;
+            void main() {
+                gl_FragColor = vec4(color, alpha);
+            }
+            `;
+
+            // Create glow material
+            var glowMaterial = new THREE.ShaderMaterial({
+                uniforms: { 
+                    c: {
+                        type: 'f',
+                        value: 1.0
+                    },
+                    p: {
+                        type: 'f',
+                        value: 1.4
+                    },
+                    color: {
+                        type: 'c',
+                        value: new THREE.Color(0xFFFF00)
+                    },
+                    viewVector: {
+                        type: "v3",
+                        value: camera.position
+                    },
+                    alpha: {
+                        type: 'f',
+                        value: 0.9
+                    },
+                },
+                vertexShader: glowVertexShader,
+                fragmentShader: glowFragmentShader,
+                side: THREE.FrontSide,
+                blending: THREE.AdditiveBlending,
+                transparent: true,
+                depthWrite: false
+            });
+
+            // Create outline material
+            var outlineMaterial = new THREE.ShaderMaterial({
+                uniforms: { 
+                    alpha: {
+                        type: 'f',
+                        value: 0.3
+                    },
+                    color: {
+                        type: 'c',
+                        value: new THREE.Color(0xFFFF00)
+                    }
+                },
+                vertexShader: outlineVertexShader,
+                fragmentShader: outlineFragmentShader,
+                side: THREE.FrontSide,
+                blending: THREE.AdditiveBlending,
+                transparent: true,
+                depthWrite: false
+            });
+
+            // Select model
+            transformControls.attach(model);
+
+            // Set select material
+            var selectMaterial = new THREE.MeshLambertMaterial({
+                color: 0xEC9F3B,
+                side: THREE.DoubleSide
+            });
+
+            // Set model's color
+            model.material = selectMaterial;
+
+            // Set adhesion's color
+            if(model.adhesion != null) {
+                model.adhesion.mesh.material = selectMaterial;
+                if(models.adhesion.glow != null)
+                    scene.remove(model.adhesion.glow);
+            }
+
+            // Remove existing glow
+            if(model.glow != null)
+                scene.remove(model.glow);
+
+            // Create glow
+            model.updateMatrix();
+            model.glow = new THREE.Mesh(model.geometry, glowMaterial.clone());
+            model.glow.applyMatrix(model.matrix);
+            model.glow.renderOrder = 1;
+
+            // Add glow to scene
+            scene.add(model.glow);
+
+            // Check if adhesion exists
+            if(model.adhesion != null) {
+
+                // Create adhesion glow
+                model.adhesion.mesh.updateMatrix();
+                model.adhesion.glow = new THREE.Mesh(model.adhesion.mesh.geometry, outlineMaterial.clone());
+                model.adhesion.glow.applyMatrix(model.adhesion.mesh.matrix);
+                model.adhesion.glow.renderOrder = 0;
+
+                // Add glow to scene
+                scene.add(model.adhesion.glow);
+            }
+
+        }
         function render() {
             orbitControls.update();
             transformControls.update();
