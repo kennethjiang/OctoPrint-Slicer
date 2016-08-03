@@ -100,7 +100,7 @@ $(function() {
             transformControls.addEventListener("change", render);
             transformControls.addEventListener("mouseDown", startTransform);
             transformControls.addEventListener("mouseUp", endTransform);
-            //transformControls.addEventListener("mouseUp", this.fixModelY);
+            transformControls.addEventListener("mouseUp", updateModel);
             //transformControls.addEventListener("change", this.updateModelChanges);
             scene.add(transformControls);
 
@@ -128,6 +128,14 @@ $(function() {
             // Enable orbit controls
             orbitControls.enabled = true;
         }
+
+        function updateModel() {
+            var model = transformControls.object;
+            $("#slicer-viewport .translate.values input[name=\"x\"]").val((model.position.x.toFixed(3) == 0 ? 0 : -model.position.x).toFixed(3)).attr("min", '');
+            $("#slicer-viewport .translate.values input[name=\"y\"]").val(model.position.y.toFixed(3)).attr("min", '');
+            $("#slicer-viewport .translate.values input[name=\"z\"]").val(model.position.z.toFixed(3)).attr("min", '');
+        }
+
         function render() {
             orbitControls.update();
             transformControls.update();
