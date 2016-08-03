@@ -76,6 +76,14 @@ $(function() {
                     <span></span>
                     </div>
                     </div>
+                    <div class="values rotate">
+                    <div>
+                    <p><span class="axis x">X</span><input type="number" step="any" name="x" min=""><span title="">°</span></p>
+                    <p><span class="axis y">Y</span><input type="number" step="any" name="y" min=""><span title="">°</span></p>
+                    <p><span class="axis z">Z</span><input type="number" step="any" name="z" min=""><span title="">°</span></p>
+                    <span></span>
+                    </div>
+                    </div>
                     `);
 
             $("#slicer-viewport").append(renderer.domElement);
@@ -100,10 +108,16 @@ $(function() {
                 // Set selection mode to translate
                 transformControls.setMode("translate");
                 $("#slicer-viewport button.translate").removeClass("disabled");
-                $("#slicer-viewport div.values").removeClass("translate rotate scale").addClass(transformControls.getMode());
-                $("#slicer-viewport div.values div").addClass("show").children('p').addClass("show");
+                $("#slicer-viewport .values div").removeClass("show")
+                    $("#slicer-viewport .translate.values div").addClass("show").children('p').addClass("show");
             });
-            // Start transform
+            $("#slicer-viewport button.rotate").click(function(event) {
+                // Set selection mode to rotate 
+                transformControls.setMode("rotate");
+                $("#slicer-viewport button.rotate").removeClass("disabled");
+                $("#slicer-viewport .values div").removeClass("show")
+                    $("#slicer-viewport .rotate.values div").addClass("show").children('p').addClass("show");
+            });
         }
         function startTransform() {
             // Disable orbit controls
