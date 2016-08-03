@@ -46,6 +46,7 @@ $(function() {
 
                 scene.add( mesh );
                 transformControls.attach(mesh);
+                updateTransformInputs();
                 render();
             } );
 
@@ -100,8 +101,7 @@ $(function() {
             transformControls.addEventListener("change", render);
             transformControls.addEventListener("mouseDown", startTransform);
             transformControls.addEventListener("mouseUp", endTransform);
-            transformControls.addEventListener("mouseUp", updateModel);
-            //transformControls.addEventListener("change", this.updateModelChanges);
+            transformControls.addEventListener("change", updateTransformInputs);
             scene.add(transformControls);
 
             $("#slicer-viewport button.translate").click(function(event) {
@@ -118,6 +118,16 @@ $(function() {
                 $("#slicer-viewport .values div").removeClass("show")
                     $("#slicer-viewport .rotate.values div").addClass("show").children('p').addClass("show");
             });
+            $("#slicer-viewport .rotate.values input[name=\"x\"]").change(function() {
+                $(this).blur();
+                if(!isNaN(parseFloat($(this).val()))) {
+                    $(this).val(parseFloat($(this).val()).toFixed(3));
+                    var model = transformControls.object;
+                    model.rotation.x = THREE.Math.degToRad(parseFloat($(this).val()));
+                    render();
+                }
+            });
+
         }
         function startTransform() {
             // Disable orbit controls
@@ -129,11 +139,14 @@ $(function() {
             orbitControls.enabled = true;
         }
 
-        function updateModel() {
+        function updateTransformInputs() {
             var model = transformControls.object;
             $("#slicer-viewport .translate.values input[name=\"x\"]").val((model.position.x.toFixed(3) == 0 ? 0 : -model.position.x).toFixed(3)).attr("min", '');
             $("#slicer-viewport .translate.values input[name=\"y\"]").val(model.position.y.toFixed(3)).attr("min", '');
             $("#slicer-viewport .translate.values input[name=\"z\"]").val(model.position.z.toFixed(3)).attr("min", '');
+            $("#slicer-viewport .rotate.values input[name=\"x\"]").val((model.rotation.x * 180 / Math.PI).toFixed(3)).attr("min", '');
+            $("#slicer-viewport .rotate.values input[name=\"y\"]").val((model.rotation.y * 180 / Math.PI).toFixed(3)).attr("min", '');
+            $("#slicer-viewport .rotate.values input[name=\"z\"]").val((model.rotation.z * 180 / Math.PI).toFixed(3)).attr("min", '');
         }
 
         function render() {
