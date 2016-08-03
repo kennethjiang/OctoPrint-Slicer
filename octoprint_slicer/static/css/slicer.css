@@ -81,7 +81,7 @@
 }
 
 #slicer-viewport > div.values.translate {
-    top: calc(50% - 160px);
+    top: calc(50% - 50px);
 }
 
 #slicer-viewport > div.values.rotate {

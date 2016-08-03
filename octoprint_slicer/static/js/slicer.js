@@ -71,9 +71,8 @@ $(function() {
                     </div>
                     <div class="values translate">
                     <div>
-                    <p><span class="axis x">X</span><input type="number" step="any" name="x"><span></span></p>
-                    <p><span class="axis y">Y</span><input type="number" step="any" name="y"><span></span></p>
-                    <p><span class="axis z">Z</span><input type="number" step="any" name="z"><span></span></p>
+                    <p><span class="axis x">X</span><input type="number" step="any" name="x" min=""><span title="">mm</span></p>
+                    <p><span class="axis z">Z</span><input type="number" step="any" name="z" min=""><span title="">mm</span></p>
                     <span></span>
                     </div>
                     </div>
@@ -100,6 +99,9 @@ $(function() {
             $("#slicer-viewport button.translate").click(function(event) {
                 // Set selection mode to translate
                 transformControls.setMode("translate");
+                $("#slicer-viewport button.translate").removeClass("disabled");
+                $("#slicer-viewport div.values").removeClass("translate rotate scale").addClass(transformControls.getMode());
+                $("#slicer-viewport div.values div").addClass("show").children('p').addClass("show");
             });
             // Start transform
         }
