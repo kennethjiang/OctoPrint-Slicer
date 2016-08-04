@@ -126,25 +126,34 @@ $(function() {
 
         function applyChange(input) {
             input.blur();
-                if(!isNaN(parseFloat(input.val()))) {
-                    input.val(parseFloat(input.val()).toFixed(3));
-                    var model = transformControls.object;
+            if(!isNaN(parseFloat(input.val()))) {
+                input.val(parseFloat(input.val()).toFixed(3));
+                var model = transformControls.object;
 
-                    if (input.closest(".values").hasClass("rotate")) {
-                        switch(input.attr("name")) {
-                            case "x":
-                                model.rotation.x = THREE.Math.degToRad(parseFloat(input.val()));
-                                break;
-                            case "y":
-                                model.rotation.y = THREE.Math.degToRad(parseFloat(input.val()));
-                                break;
-                            case "z":
-                                model.rotation.z = THREE.Math.degToRad(parseFloat(input.val()));
-                                break;
-                        }
+                if (input.closest(".values").hasClass("rotate")) {
+                    switch(input.attr("name")) {
+                        case "x":
+                            model.rotation.x = THREE.Math.degToRad(parseFloat(input.val()));
+                            break;
+                        case "y":
+                            model.rotation.y = THREE.Math.degToRad(parseFloat(input.val()));
+                            break;
+                        case "z":
+                            model.rotation.z = THREE.Math.degToRad(parseFloat(input.val()));
+                            break;
                     }
-                    render();
+                } else if (input.closest(".values").hasClass("translate")) {
+                    switch(input.attr("name")) {
+                        case "x":
+                            model.position.x = -parseFloat(input.val());
+                            break;
+                        case "z":
+                            model.position.z = -parseFloat(input.val());
+                            break;
+                    }
                 }
+                render();
+            }
         }
 
         function startTransform() {
