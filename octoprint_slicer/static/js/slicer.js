@@ -118,17 +118,35 @@ $(function() {
                 $("#slicer-viewport .values div").removeClass("show")
                     $("#slicer-viewport .rotate.values div").addClass("show").children('p').addClass("show");
             });
-            $("#slicer-viewport .rotate.values input[name=\"x\"]").change(function() {
-                $(this).blur();
-                if(!isNaN(parseFloat($(this).val()))) {
-                    $(this).val(parseFloat($(this).val()).toFixed(3));
-                    var model = transformControls.object;
-                    model.rotation.x = THREE.Math.degToRad(parseFloat($(this).val()));
-                    render();
-                }
+            $("#slicer-viewport .values input").change(function() {
+                applyChange($(this));
             });
 
         }
+
+        function applyChange(input) {
+            input.blur();
+                if(!isNaN(parseFloat(input.val()))) {
+                    input.val(parseFloat(input.val()).toFixed(3));
+                    var model = transformControls.object;
+
+                    if (input.closest(".values").hasClass("rotate")) {
+                        switch(input.attr("name")) {
+                            case "x":
+                                model.rotation.x = THREE.Math.degToRad(parseFloat(input.val()));
+                                break;
+                            case "y":
+                                model.rotation.y = THREE.Math.degToRad(parseFloat(input.val()));
+                                break;
+                            case "z":
+                                model.rotation.z = THREE.Math.degToRad(parseFloat(input.val()));
+                                break;
+                        }
+                    }
+                    render();
+                }
+        }
+
         function startTransform() {
             // Disable orbit controls
             orbitControls.enabled = false;
