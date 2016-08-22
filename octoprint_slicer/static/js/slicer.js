@@ -32,10 +32,11 @@ $(function() {
         function init() {
             container = document.getElementById( 'slicer-canvas' );
 
-            camera = new THREE.PerspectiveCamera( 35, 1.0, 0.1, 100 );
-            camera.position.set( 3, 0.15, 3 );
+            camera = new THREE.PerspectiveCamera( 45, 1.0, 0.1, 100 );
+            camera.up.set( 0, 0, 1 );
+            camera.position.set( 3, 2, 3 );
             scene = new THREE.Scene();
-            scene.add( new THREE.GridHelper( 10, 0.2 ) );
+            scene.add( bedFloor() );
 
             var loader = new THREE.STLLoader();
             loader.load(BASEURL + "downloads/files/" + "local" + "/" + "fish_fossilz.stl", function ( geometry ) {
