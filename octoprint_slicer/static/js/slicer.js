@@ -12,13 +12,11 @@ $(function() {
         // self.loginStateViewModel = parameters[0];
         // self.settingsViewModel = parameters[1];
 
-        // TODO: Implement your plugin's view model here.
-        $(document).on("click", ".btn-mini[title='Slice']", function(event) {
-            event.preventDefault();
-            event.stopImmediatePropagation();
+        self.onEventUpdatedFiles = function(payload) {
+        ko.contextFor($('.btn-mini[title="Slice"]')[0]).$root.sliceFile = function() {
             $('a[href="#tab_plugin_slicer"]').tab('show');
-        });
-
+        };
+        };
 
         var container;
 
@@ -26,17 +24,14 @@ $(function() {
         CANVAS_WIDTH = 588,
             CANVAS_HEIGHT = 588;
 
-        init();
-        render();
-
-        function init() {
+        self.init = function() {
             container = document.getElementById( 'slicer-canvas' );
 
             camera = new THREE.PerspectiveCamera( 45, 1.0, 0.1, 100 );
             camera.up.set( 0, 0, 1 );
             camera.position.set( 3, 2, 3 );
             scene = new THREE.Scene();
-            scene.add( bedFloor() );
+            scene.add( self.bedFloor() );
 
             var loader = new THREE.STLLoader();
             loader.load(BASEURL + "downloads/files/" + "local" + "/" + "fish_fossilz.stl", function ( geometry ) {
@@ -47,8 +42,8 @@ $(function() {
 
                 scene.add( mesh );
                 transformControls.attach(mesh);
-                updateTransformInputs();
-                render();
+                self.updateTransformInputs();
+                self.render();
             } );
 
 
@@ -93,16 +88,16 @@ $(function() {
             orbitControls.enableDamping = true;
             orbitControls.dampingFactor = 0.25;
             orbitControls.enablePan = false;
-            orbitControls.addEventListener("change", render);
+            orbitControls.addEventListener("change", self.render);
 
             transformControls = new THREE.TransformControls(camera, renderer.domElement);
             transformControls.space = "world";
             transformControls.setAllowedTranslation("XY");
             transformControls.setRotationDisableE(true);
-            transformControls.addEventListener("change", render);
-            transformControls.addEventListener("mouseDown", startTransform);
-            transformControls.addEventListener("mouseUp", endTransform);
-            transformControls.addEventListener("change", updateTransformInputs);
+            transformControls.addEventListener("change", self.render);
+            transformControls.addEventListener("mouseDown", self.startTransform);
+            transformControls.addEventListener("mouseUp", self.endTransform);
+            transformControls.addEventListener("change", self.updateTransformInputs);
             scene.add(transformControls);
 
             $("#slicer-viewport button.translate").click(function(event) {
@@ -120,12 +115,12 @@ $(function() {
                     $("#slicer-viewport .rotate.values div").addClass("show").children('p').addClass("show");
             });
             $("#slicer-viewport .values input").change(function() {
-                applyChange($(this));
+                self.applyChange($(this));
             });
 
-        }
+        };
 
-        function applyChange(input) {
+        self.applyChange = function(input) {
             input.blur();
             if(!isNaN(parseFloat(input.val()))) {
                 input.val(parseFloat(input.val()).toFixed(3));
@@ -155,28 +150,28 @@ $(function() {
                 }
                 render();
             }
-        }
+        };
 
-        function startTransform() {
+        self.startTransform = function () {
             // Disable orbit controls
             orbitControls.enabled = false;
-        }
+        };
 
-        function endTransform() {
+        self.endTransform = function () {
             // Enable orbit controls
             orbitControls.enabled = true;
-        }
+        };
 
-        function updateTransformInputs() {
+        self.updateTransformInputs = function () {
             var model = transformControls.object;
             $("#slicer-viewport .translate.values input[name=\"x\"]").val((model.position.x.toFixed(3) == 0 ? 0 : -model.position.x).toFixed(3)).attr("min", '');
             $("#slicer-viewport .translate.values input[name=\"y\"]").val(model.position.y.toFixed(3)).attr("min", '');
             $("#slicer-viewport .rotate.values input[name=\"x\"]").val((model.rotation.x * 180 / Math.PI).toFixed(3)).attr("min", '');
             $("#slicer-viewport .rotate.values input[name=\"y\"]").val((model.rotation.y * 180 / Math.PI).toFixed(3)).attr("min", '');
             $("#slicer-viewport .rotate.values input[name=\"z\"]").val((model.rotation.z * 180 / Math.PI).toFixed(3)).attr("min", '');
-        }
+        };
 
-        function bedFloor( segments ) {
+        self.bedFloor = function ( segments ) {
             segments = segments || 20;
             var geometry = new THREE.PlaneGeometry(4, 4, segments, segments);
             var materialEven = new THREE.MeshBasicMaterial({color: 0xccccfc});
@@ -194,11 +189,15 @@ $(function() {
             return new THREE.Mesh(geometry, new THREE.MeshFaceMaterial(materials));
         };
 
-        function render() {
+        self.render = function() {
             orbitControls.update();
             transformControls.update();
             renderer.render( scene, camera );
-        }
+        };
+
+        self.init();
+        self.render();
+
 
     }
 
