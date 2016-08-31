@@ -22,6 +22,7 @@ $(function() {
             CANVAS_HEIGHT = 588;
 
         self.init = function() {
+            self.parts = [];
             self.container = document.getElementById( 'slicer-canvas' );
 
             self.camera = new THREE.PerspectiveCamera( 45, 1.0, 0.1, 100 );
@@ -102,12 +103,19 @@ $(function() {
 
         };
 
-        self.loadSTL = function(target, file, force) {
+        self.loadSTL = function(target, file, force=true) {
+            if (force) {
+                self.parts.forEach((part) => {
+                    self.scene.remove(part);
+                });
+            }
+
             var loader = new THREE.STLLoader();
             loader.load(BASEURL + "downloads/files/" + target + "/" + file, function ( geometry ) {
                 var material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
                 var mesh = new THREE.Mesh( geometry, material );
                 mesh.scale.set( 0.02, 0.02, 0.02 );
+                self.parts.push(mesh);
 
                 self.scene.add( mesh );
                 self.transformControls.attach(mesh);
