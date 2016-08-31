@@ -11,13 +11,18 @@ $(function() {
         // assign the injected parameters, e.g.:
         // self.loginStateViewModel = parameters[0];
         // self.settingsViewModel = parameters[1];
+        self.slicingViewModel = parameters[0];
 
-        self.onEventUpdatedFiles = function(payload) {
-        ko.contextFor($('.btn-mini[title="Slice"]')[0]).$root.sliceFile = function() {
+        self.slicingViewModel.show = function(target, file, force) {
             $('a[href="#tab_plugin_slicer"]').tab('show');
         };
-        };
 
+//        self.onEventUpdatedFiles = function(payload) {
+//            ko.contextFor($('.btn-mini[title="Slice"]')[0]).$root.sliceFile = function() {
+//                $('a[href="#tab_plugin_slicer"]').tab('show');
+//            };
+//        };
+//
         var container;
 
         var camera, cameraTarget, scene, renderer, orbitControl, transformControl,
@@ -206,7 +211,7 @@ $(function() {
             SlicerViewModel,
 
             // e.g. loginStateViewModel, settingsViewModel, ...
-            [ /* "loginStateViewModel", "settingsViewModel" */ ],
+            [ "slicingViewModel", /* "loginStateViewModel", "settingsViewModel" */ ],
 
             // e.g. #settings_plugin_slicer, #tab_plugin_slicer, ...
             [ /* ... */ ]
