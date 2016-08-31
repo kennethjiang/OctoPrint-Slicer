@@ -15,6 +15,7 @@ $(function() {
 
         self.slicingViewModel.show = function(target, file, force) {
             $('a[href="#tab_plugin_slicer"]').tab('show');
+            self.loadSTL(target, file, force);
         };
 
         var CANVAS_WIDTH = 588,
@@ -29,22 +30,7 @@ $(function() {
             self.scene = new THREE.Scene();
             self.scene.add( self.bedFloor() );
 
-            var loader = new THREE.STLLoader();
-            loader.load(BASEURL + "downloads/files/" + "local" + "/" + "fish_fossilz.stl", function ( geometry ) {
-
-                var material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
-                var mesh = new THREE.Mesh( geometry, material );
-                mesh.scale.set( 0.02, 0.02, 0.02 );
-
-                self.scene.add( mesh );
-                self.transformControls.attach(mesh);
-                self.updateTransformInputs();
-                self.render();
-            } );
-
-
             // Lights
-
             self.scene.add( new THREE.AmbientLight(0xffffff, 1.0) );
 
             // renderer
@@ -114,6 +100,20 @@ $(function() {
                 self.applyChange($(this));
             });
 
+        };
+
+        self.loadSTL = function(target, file, force) {
+            var loader = new THREE.STLLoader();
+            loader.load(BASEURL + "downloads/files/" + target + "/" + file, function ( geometry ) {
+                var material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
+                var mesh = new THREE.Mesh( geometry, material );
+                mesh.scale.set( 0.02, 0.02, 0.02 );
+
+                self.scene.add( mesh );
+                self.transformControls.attach(mesh);
+                self.updateTransformInputs();
+                self.render();
+            } );
         };
 
         self.applyChange = function(input) {
