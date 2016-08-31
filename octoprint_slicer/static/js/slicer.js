@@ -17,26 +17,17 @@ $(function() {
             $('a[href="#tab_plugin_slicer"]').tab('show');
         };
 
-//        self.onEventUpdatedFiles = function(payload) {
-//            ko.contextFor($('.btn-mini[title="Slice"]')[0]).$root.sliceFile = function() {
-//                $('a[href="#tab_plugin_slicer"]').tab('show');
-//            };
-//        };
-//
-        var container;
-
-        var camera, cameraTarget, scene, renderer, orbitControl, transformControl,
-        CANVAS_WIDTH = 588,
+        var CANVAS_WIDTH = 588,
             CANVAS_HEIGHT = 588;
 
         self.init = function() {
-            container = document.getElementById( 'slicer-canvas' );
+            self.container = document.getElementById( 'slicer-canvas' );
 
-            camera = new THREE.PerspectiveCamera( 45, 1.0, 0.1, 100 );
-            camera.up.set( 0, 0, 1 );
-            camera.position.set( 3, 2, 3 );
-            scene = new THREE.Scene();
-            scene.add( self.bedFloor() );
+            self.camera = new THREE.PerspectiveCamera( 45, 1.0, 0.1, 100 );
+            self.camera.up.set( 0, 0, 1 );
+            self.camera.position.set( 3, 2, 3 );
+            self.scene = new THREE.Scene();
+            self.scene.add( self.bedFloor() );
 
             var loader = new THREE.STLLoader();
             loader.load(BASEURL + "downloads/files/" + "local" + "/" + "fish_fossilz.stl", function ( geometry ) {
@@ -45,8 +36,8 @@ $(function() {
                 var mesh = new THREE.Mesh( geometry, material );
                 mesh.scale.set( 0.02, 0.02, 0.02 );
 
-                scene.add( mesh );
-                transformControls.attach(mesh);
+                self.scene.add( mesh );
+                self.transformControls.attach(mesh);
                 self.updateTransformInputs();
                 self.render();
             } );
@@ -54,16 +45,16 @@ $(function() {
 
             // Lights
 
-            scene.add( new THREE.AmbientLight(0xffffff, 1.0) );
+            self.scene.add( new THREE.AmbientLight(0xffffff, 1.0) );
 
             // renderer
 
-            renderer = new THREE.WebGLRenderer( { antialias: true } );
-            renderer.setSize( CANVAS_WIDTH, CANVAS_HEIGHT );
-            renderer.setPixelRatio( window.devicePixelRatio );
+            self.renderer = new THREE.WebGLRenderer( { antialias: true } );
+            self.renderer.setSize( CANVAS_WIDTH, CANVAS_HEIGHT );
+            self.renderer.setPixelRatio( window.devicePixelRatio );
 
-            renderer.gammaInput = true;
-            renderer.gammaOutput = true;
+            self.renderer.gammaInput = true;
+            self.renderer.gammaOutput = true;
 
             $("#slicer-viewport").empty().append(`
                     <div class="model">
@@ -88,33 +79,33 @@ $(function() {
                     </div>
                     `);
 
-            $("#slicer-viewport").append(renderer.domElement);
-            orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
-            orbitControls.enableDamping = true;
-            orbitControls.dampingFactor = 0.25;
-            orbitControls.enablePan = false;
-            orbitControls.addEventListener("change", self.render);
+            $("#slicer-viewport").append(self.renderer.domElement);
+            self.orbitControls = new THREE.OrbitControls(self.camera, self.renderer.domElement);
+            self.orbitControls.enableDamping = true;
+            self.orbitControls.dampingFactor = 0.25;
+            self.orbitControls.enablePan = false;
+            self.orbitControls.addEventListener("change", self.render);
 
-            transformControls = new THREE.TransformControls(camera, renderer.domElement);
-            transformControls.space = "world";
-            transformControls.setAllowedTranslation("XY");
-            transformControls.setRotationDisableE(true);
-            transformControls.addEventListener("change", self.render);
-            transformControls.addEventListener("mouseDown", self.startTransform);
-            transformControls.addEventListener("mouseUp", self.endTransform);
-            transformControls.addEventListener("change", self.updateTransformInputs);
-            scene.add(transformControls);
+            self.transformControls = new THREE.TransformControls(self.camera, self.renderer.domElement);
+            self.transformControls.space = "world";
+            self.transformControls.setAllowedTranslation("XY");
+            self.transformControls.setRotationDisableE(true);
+            self.transformControls.addEventListener("change", self.render);
+            self.transformControls.addEventListener("mouseDown", self.startTransform);
+            self.transformControls.addEventListener("mouseUp", self.endTransform);
+            self.transformControls.addEventListener("change", self.updateTransformInputs);
+            self.scene.add(self.transformControls);
 
             $("#slicer-viewport button.translate").click(function(event) {
                 // Set selection mode to translate
-                transformControls.setMode("translate");
+                self.transformControls.setMode("translate");
                 $("#slicer-viewport button.translate").removeClass("disabled");
                 $("#slicer-viewport .values div").removeClass("show")
                     $("#slicer-viewport .translate.values div").addClass("show").children('p').addClass("show");
             });
             $("#slicer-viewport button.rotate").click(function(event) {
                 // Set selection mode to rotate 
-                transformControls.setMode("rotate");
+                self.transformControls.setMode("rotate");
                 $("#slicer-viewport button.rotate").removeClass("disabled");
                 $("#slicer-viewport .values div").removeClass("show")
                     $("#slicer-viewport .rotate.values div").addClass("show").children('p').addClass("show");
@@ -129,7 +120,7 @@ $(function() {
             input.blur();
             if(!isNaN(parseFloat(input.val()))) {
                 input.val(parseFloat(input.val()).toFixed(3));
-                var model = transformControls.object;
+                var model = self.transformControls.object;
 
                 if (input.closest(".values").hasClass("rotate")) {
                     switch(input.attr("name")) {
@@ -159,16 +150,16 @@ $(function() {
 
         self.startTransform = function () {
             // Disable orbit controls
-            orbitControls.enabled = false;
+            self.orbitControls.enabled = false;
         };
 
         self.endTransform = function () {
             // Enable orbit controls
-            orbitControls.enabled = true;
+            self.orbitControls.enabled = true;
         };
 
         self.updateTransformInputs = function () {
-            var model = transformControls.object;
+            var model = self.transformControls.object;
             $("#slicer-viewport .translate.values input[name=\"x\"]").val((model.position.x.toFixed(3) == 0 ? 0 : -model.position.x).toFixed(3)).attr("min", '');
             $("#slicer-viewport .translate.values input[name=\"y\"]").val(model.position.y.toFixed(3)).attr("min", '');
             $("#slicer-viewport .rotate.values input[name=\"x\"]").val((model.rotation.x * 180 / Math.PI).toFixed(3)).attr("min", '');
@@ -195,9 +186,9 @@ $(function() {
         };
 
         self.render = function() {
-            orbitControls.update();
-            transformControls.update();
-            renderer.render( scene, camera );
+            self.orbitControls.update();
+            self.transformControls.update();
+            self.renderer.render( self.scene, self.camera );
         };
 
         self.init();
