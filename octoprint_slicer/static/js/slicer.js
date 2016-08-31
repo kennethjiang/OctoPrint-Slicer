@@ -37,6 +37,7 @@ $(function() {
             // renderer
 
             self.renderer = new THREE.WebGLRenderer( { antialias: true } );
+            self.renderer.setClearColor( 0xdddddd );
             self.renderer.setSize( CANVAS_WIDTH, CANVAS_HEIGHT );
             self.renderer.setPixelRatio( window.devicePixelRatio );
 
