@@ -27,9 +27,10 @@ $(function() {
 
             self.camera = new THREE.PerspectiveCamera( 45, 1.0, 0.1, 100 );
             self.camera.up.set( 0, 0, 1 );
-            self.camera.position.set( 3, 2, 3 );
+            self.camera.position.set( 2, 6, 4 );
             self.scene = new THREE.Scene();
-            self.scene.add( self.bedFloor() );
+            self.drawBedFloor(4, 4);
+            self.drawWalls(4, 4, 4);
 
             // Lights
             self.scene.add( new THREE.AmbientLight(0xffffff, 1.0) );
@@ -37,7 +38,7 @@ $(function() {
             // renderer
 
             self.renderer = new THREE.WebGLRenderer( { antialias: true } );
-            self.renderer.setClearColor( 0xdddddd );
+            self.renderer.setClearColor( 0xCCCCFF );
             self.renderer.setSize( CANVAS_WIDTH, CANVAS_HEIGHT );
             self.renderer.setPixelRatio( window.devicePixelRatio );
 
@@ -92,7 +93,7 @@ $(function() {
                     $("#slicer-viewport .translate.values div").addClass("show").children('p').addClass("show");
             });
             $("#slicer-viewport button.rotate").click(function(event) {
-                // Set selection mode to rotate 
+                // Set selection mode to rotate
                 self.transformControls.setMode("rotate");
                 $("#slicer-viewport button.rotate").removeClass("disabled");
                 $("#slicer-viewport .values div").removeClass("show")
@@ -176,13 +177,12 @@ $(function() {
             $("#slicer-viewport .rotate.values input[name=\"z\"]").val((model.rotation.z * 180 / Math.PI).toFixed(3)).attr("min", '');
         };
 
-        self.bedFloor = function ( segments ) {
+        self.drawBedFloor = function ( width, depth, segments ) {
             segments = segments || 20;
-            var geometry = new THREE.PlaneGeometry(4, 4, segments, segments);
+            var geometry = new THREE.PlaneGeometry(width, depth, segments, segments);
             var materialEven = new THREE.MeshBasicMaterial({color: 0xccccfc});
             var materialOdd = new THREE.MeshBasicMaterial({color: 0x444464});
             var materials = [materialEven, materialOdd];
-        
             for (var x = 0; x < segments; x++) {
               for (var y = 0; y < segments; y++) {
                 var i = x * segments + y;
@@ -190,9 +190,45 @@ $(function() {
                 geometry.faces[ j ].materialIndex = geometry.faces[ j + 1 ].materialIndex = (x + y) % 2;
               }
             }
-        
-            return new THREE.Mesh(geometry, new THREE.MeshFaceMaterial(materials));
+            self.scene.add(new THREE.Mesh(geometry, new THREE.MeshFaceMaterial(materials)));
         };
+
+        self.drawWalls = function ( width, depth, height ) {
+            var wall1 = self.rectShape( depth, height, 0x8888fc );
+            wall1.rotation.x = Math.PI / 2;
+            wall1.position.y = depth/2;
+            wall1.position.z = height/2;
+            self.scene.add(wall1);
+
+            var wall2 = self.rectShape( width, height, 0x8888dc );
+            wall2.rotation.y = Math.PI / 2;
+            wall2.position.x = -width/2;
+            wall2.position.z = height/2;
+            self.scene.add(wall2);
+
+            var wall3 = self.rectShape( depth, height, 0x8888fc );
+            wall3.rotation.x = -Math.PI / 2;
+            wall3.position.y = -depth/2;
+            wall3.position.z = height/2;
+            self.scene.add(wall3);
+
+            var wall4 = self.rectShape( width, height, 0x8888dc );
+            wall4.rotation.y = -Math.PI / 2;
+            wall4.position.x = width/2;
+            wall4.position.z = height/2;
+            self.scene.add(wall4);
+        }
+
+        self.rectShape = function ( rectLength, rectWidth, color ) {
+            var rectShape = new THREE.Shape();
+            rectShape.moveTo( -rectLength/2,-rectWidth/2 );
+            rectShape.lineTo( -rectLength/2, rectWidth/2 );
+            rectShape.lineTo( rectLength/2, rectWidth/2 );
+            rectShape.lineTo( rectLength/2, -rectWidth/2 );
+            rectShape.lineTo( -rectLength/2, -rectWidth/2 );
+            var rectGeom = new THREE.ShapeGeometry( rectShape );
+            return new THREE.Mesh( rectGeom, new THREE.MeshBasicMaterial( { color } ) ) ;
+        }
 
         self.render = function() {
             self.orbitControls.update();
