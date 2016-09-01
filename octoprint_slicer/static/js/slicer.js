@@ -38,7 +38,7 @@ $(function() {
             // renderer
 
             self.renderer = new THREE.WebGLRenderer( { antialias: true } );
-            self.renderer.setClearColor( 0xCCCCFF );
+            self.renderer.setClearColor( 0xd8d8d8 );
             self.renderer.setSize( CANVAS_WIDTH, CANVAS_HEIGHT );
             self.renderer.setPixelRatio( window.devicePixelRatio );
 
@@ -196,26 +196,22 @@ $(function() {
         self.drawWalls = function ( width, depth, height ) {
             var wall1 = self.rectShape( depth, height, 0x8888fc );
             wall1.rotation.x = Math.PI / 2;
-            wall1.position.y = depth/2;
-            wall1.position.z = height/2;
+            wall1.position.set(0, depth/2, height/2);
             self.scene.add(wall1);
 
             var wall2 = self.rectShape( width, height, 0x8888dc );
             wall2.rotation.y = Math.PI / 2;
-            wall2.position.x = -width/2;
-            wall2.position.z = height/2;
+            wall2.position.set(-width/2, 0, height/2);
             self.scene.add(wall2);
 
             var wall3 = self.rectShape( depth, height, 0x8888fc );
             wall3.rotation.x = -Math.PI / 2;
-            wall3.position.y = -depth/2;
-            wall3.position.z = height/2;
+            wall3.position.set(0, -depth/2, height/2);
             self.scene.add(wall3);
 
             var wall4 = self.rectShape( width, height, 0x8888dc );
             wall4.rotation.y = -Math.PI / 2;
-            wall4.position.x = width/2;
-            wall4.position.z = height/2;
+            wall4.position.set(width/2, 0, height/2);
             self.scene.add(wall4);
         }
 
