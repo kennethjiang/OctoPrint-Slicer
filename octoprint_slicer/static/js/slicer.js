@@ -226,6 +226,10 @@ $(function() {
             return new THREE.Mesh( rectGeom, new THREE.MeshBasicMaterial( { color } ) ) ;
         }
 
+        self.fixZPosition = function ( part ) {
+            var boundaryBox = new THREE.Box3().setFromObject(part);
+        }
+
         self.render = function() {
             self.orbitControls.update();
             self.transformControls.update();
