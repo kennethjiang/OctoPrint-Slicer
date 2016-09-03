@@ -227,7 +227,11 @@ $(function() {
         }
 
         self.fixZPosition = function ( part ) {
+            var bedLowMinZ = 0.0;
             var boundaryBox = new THREE.Box3().setFromObject(part);
+            boundaryBox.min.sub(part.mesh.position);
+            boundaryBox.max.sub(part.mesh.position);
+            part.position.y -= part.position.y + boundaryBox.min.y - bedLowMinZ;
         }
 
         self.render = function() {
