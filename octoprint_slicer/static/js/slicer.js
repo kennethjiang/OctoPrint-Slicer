@@ -154,7 +154,8 @@ $(function() {
                             break;
                     }
                 }
-                render();
+                self.fixZPosition(model);
+                self.render();
             }
         };
 
@@ -175,6 +176,8 @@ $(function() {
             $("#slicer-viewport .rotate.values input[name=\"x\"]").val((model.rotation.x * 180 / Math.PI).toFixed(3)).attr("min", '');
             $("#slicer-viewport .rotate.values input[name=\"y\"]").val((model.rotation.y * 180 / Math.PI).toFixed(3)).attr("min", '');
             $("#slicer-viewport .rotate.values input[name=\"z\"]").val((model.rotation.z * 180 / Math.PI).toFixed(3)).attr("min", '');
+            self.fixZPosition(model);
+            self.render();
         };
 
         self.drawBedFloor = function ( width, depth, segments ) {
@@ -229,9 +232,9 @@ $(function() {
         self.fixZPosition = function ( part ) {
             var bedLowMinZ = 0.0;
             var boundaryBox = new THREE.Box3().setFromObject(part);
-            boundaryBox.min.sub(part.mesh.position);
-            boundaryBox.max.sub(part.mesh.position);
-            part.position.y -= part.position.y + boundaryBox.min.y - bedLowMinZ;
+            boundaryBox.min.sub(part.position);
+            boundaryBox.max.sub(part.position);
+            part.position.z -= part.position.z + boundaryBox.min.z - bedLowMinZ;
         }
 
         self.render = function() {
