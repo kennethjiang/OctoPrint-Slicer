@@ -22,7 +22,7 @@ $(function() {
             CANVAS_HEIGHT = 588;
 
         self.init = function() {
-            self.parts = [];
+            self.models = [];
             self.container = document.getElementById( 'slicer-canvas' );
 
             self.camera = new THREE.PerspectiveCamera( 45, 1.0, 0.1, 100 );
@@ -107,8 +107,8 @@ $(function() {
 
         self.loadSTL = function(target, file, force=true) {
             if (force) {
-                self.parts.forEach((part) => {
-                    self.scene.remove(part);
+                self.models.forEach((model) => {
+                    self.scene.remove(model);
                 });
             }
 
@@ -117,7 +117,7 @@ $(function() {
                 var material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
                 var mesh = new THREE.Mesh( geometry, material );
                 mesh.scale.set( 0.02, 0.02, 0.02 );
-                self.parts.push(mesh);
+                self.models.push(mesh);
 
                 self.scene.add( mesh );
                 self.transformControls.attach(mesh);
@@ -229,12 +229,34 @@ $(function() {
             return new THREE.Mesh( rectGeom, new THREE.MeshBasicMaterial( { color } ) ) ;
         }
 
-        self.fixZPosition = function ( part ) {
+        self.fixZPosition = function ( model ) {
             var bedLowMinZ = 0.0;
-            var boundaryBox = new THREE.Box3().setFromObject(part);
-            boundaryBox.min.sub(part.position);
-            boundaryBox.max.sub(part.position);
-            part.position.z -= part.position.z + boundaryBox.min.z - bedLowMinZ;
+            var boundaryBox = new THREE.Box3().setFromObject(model);
+            boundaryBox.min.sub(model.position);
+            boundaryBox.max.sub(model.position);
+            model.position.z -= model.position.z + boundaryBox.min.z - bedLowMinZ;
+        }
+
+        self.saveModel = function( model ) {
+            // Create request
+            var form = new FormData();
+            form.append("file", self.formDataFromModel(model), "/" + modelName);
+            // Send request
+            $.ajax({
+                url: API_BASEURL + "files/local",
+                type: "POST",
+                data: form,
+                processData: false,
+                contentType: false,
+                // On success
+                success: function(data) {
+                }
+            });
+        };
+
+        self.formDataFromModel = function( model ) {
+				    var exporter = new THREE.STLBinaryExporter();
+				    return new Blob([exporter.parse(model)], {type: "text/plain"});
         }
 
         self.render = function() {
