@@ -5,6 +5,27 @@
  * License: AGPLv3
  */
 $(function() {
+    function SlicingSettingsViewModel() {
+        var self = this;
+
+        self.slicers = ko.observableArray();
+
+            $.ajax({
+                url: API_BASEURL + "slicing",
+                type: "GET",
+                dataType: "json",
+                success: function(data) {
+                    self.slicers.removeAll();
+                    for (var slicerName in data) {
+                        self.slicers.push(data[slicerName]);
+                        if (data[slicerName].default) {
+                            self.selectedSlicer = data[slicerName];
+                        }
+                    }
+                }
+            });
+    };
+
     function SlicerViewModel(parameters) {
         var self = this;
 
@@ -13,6 +34,7 @@ $(function() {
         // self.settingsViewModel = parameters[1];
         self.slicingViewModel = parameters[0];
 
+        // Override slicingViewModel.show to surpress default slicing behavior
         self.slicingViewModel.show = function(target, file, force) {
             $('a[href="#tab_plugin_slicer"]').tab('show');
             self.loadSTL(target, file, force);
@@ -22,6 +44,7 @@ $(function() {
             CANVAS_HEIGHT = 588;
 
         self.init = function() {
+            self.settings = new SlicingSettingsViewModel();
             self.models = [];
             self.container = document.getElementById( 'slicer-canvas' );
 
@@ -274,10 +297,6 @@ $(function() {
             alert("asdf");
         };
 
-        self.buttonText = ko.pureComputed(function () {
-            return "asdfasd";
-        });
-
     }
 
     // view model class, parameters for constructor, container to bind to
@@ -289,5 +308,10 @@ $(function() {
 
             // e.g. #settings_plugin_slicer, #tab_plugin_slicer, ...
             [ "#tab_plugin_slicer", ]
+    ],
+    [
+        SlicingSettingsViewModel,
+        [],
+        [],
     ]);
 });

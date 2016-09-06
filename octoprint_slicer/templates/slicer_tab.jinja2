@@ -1,5 +1,10 @@
 <div id="slicer-viewport">
 </div>
+<br />
 <div>
-  <button class="btn btn-block" data-bind="click: slice, text: buttonText()">Slice</button>
+    <select data-bind="options: settings.slicers,
+                       optionsCaption: 'Select a slicer...',
+                       optionsText: 'displayName',
+                       value: settings.selectedSlicer"></select>
+    <button class="btn btn-primary btn-block" data-bind="click: slice">Slice</button>
 </div>
