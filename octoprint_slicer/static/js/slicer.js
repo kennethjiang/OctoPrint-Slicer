@@ -268,6 +268,15 @@ $(function() {
         self.init();
         self.render();
 
+        // User inputs
+
+        self.slice = function() {
+            alert("asdf");
+        };
+
+        self.buttonText = ko.pureComputed(function () {
+            return "asdfasd";
+        });
 
     }
 
@@ -279,6 +288,6 @@ $(function() {
             [ "slicingViewModel", /* "loginStateViewModel", "settingsViewModel" */ ],
 
             // e.g. #settings_plugin_slicer, #tab_plugin_slicer, ...
-            [ /* ... */ ]
+            [ "#tab_plugin_slicer", ]
     ]);
 });
