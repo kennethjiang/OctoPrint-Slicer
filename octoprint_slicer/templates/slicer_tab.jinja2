@@ -1,10 +1,59 @@
 <div id="slicer-viewport">
 </div>
 <br />
+<div id="slicing-settings">
+    <form class="form-vertical">
+        <div class="row">
+            <div class="span3">
+                <div class="control-group">
+                    <label class="control-label">{{ _('Slicer') }}</label>
+                    <div class="controls">
+                        <select data-bind="options: matchingSlicers, optionsText: 'name', optionsValue: 'key', optionsCaption: '{{ _('Select a slicer...') }}', value: slicer, valueAllowUnset: true"></select>
+                    </div>
+                </div>
+            </div>
+            <div class="span3">
+                <div class="control-group">
+                    <label class="control-label">{{ _('Slicing Profile') }}</label>
+                    <div class="controls">
+                        <select data-bind="options: profiles, optionsText: 'name', optionsValue: 'key', optionsCaption: '{{ _('Select a slicing profile...') }}', value: profile, valueAllowUnset: true"></select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="span3">
+                <div class="control-group">
+                    <label class="control-label">{{ _('Printer Profile') }}</label>
+                    <div class="controls">
+                        <select data-bind="options: printerProfiles.profiles.items, optionsText: 'name', optionsValue: 'id', value: printerProfile, optionsCaption: '{{ _('Select a printer profile...') }}'"></select>
+                    </div>
+                </div>
+            </div>
+            <div class="span3">
+                <div class="control-group">
+                    <label class="control-label">{{ _('Output Filename') }}</label>
+                    <div class="controls">
+                        <div class="input-append">
+                            <input type="text" data-bind="value: destinationFilename">
+                            <span class="add-on" data-bind="text: '.' + destinationExtension()"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="span3">
+                <div class="control-group">
+                    <label class="control-label">{{ _('After slicing...') }}</label>
+                    <div class="controls">
+                        <select data-bind="options: afterSlicingOptions, optionsText: 'text', optionsValue: 'value', value: afterSlicing"></select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
 <div>
-    <select data-bind="options: settings.slicers,
-                       optionsCaption: 'Select a slicer...',
-                       optionsText: 'displayName',
-                       value: settings.selectedSlicer"></select>
     <button class="btn btn-primary btn-block" data-bind="click: slice">Slice</button>
 </div>

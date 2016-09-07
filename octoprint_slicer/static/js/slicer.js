@@ -5,27 +5,6 @@
  * License: AGPLv3
  */
 $(function() {
-    function SlicingSettingsViewModel() {
-        var self = this;
-
-        self.slicers = ko.observableArray();
-
-            $.ajax({
-                url: API_BASEURL + "slicing",
-                type: "GET",
-                dataType: "json",
-                success: function(data) {
-                    self.slicers.removeAll();
-                    for (var slicerName in data) {
-                        self.slicers.push(data[slicerName]);
-                        if (data[slicerName].default) {
-                            self.selectedSlicer = data[slicerName];
-                        }
-                    }
-                }
-            });
-    };
-
     function SlicerViewModel(parameters) {
         var self = this;
 
@@ -44,7 +23,6 @@ $(function() {
             CANVAS_HEIGHT = 588;
 
         self.init = function() {
-            self.settings = new SlicingSettingsViewModel();
             self.models = [];
             self.container = document.getElementById( 'slicer-canvas' );
 
@@ -126,6 +104,7 @@ $(function() {
                 self.applyChange($(this));
             });
 
+            ko.applyBindings(self.slicingViewModel, $('#slicing-settings')[0]);
         };
 
         self.loadSTL = function(target, file, force=true) {
@@ -307,11 +286,6 @@ $(function() {
             [ "slicingViewModel", /* "loginStateViewModel", "settingsViewModel" */ ],
 
             // e.g. #settings_plugin_slicer, #tab_plugin_slicer, ...
-            [ "#tab_plugin_slicer", ]
-    ],
-    [
-        SlicingSettingsViewModel,
-        [],
-        [],
+            [ /*... */ ]
     ]);
 });
