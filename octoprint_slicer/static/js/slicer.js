@@ -246,10 +246,14 @@ $(function() {
             model.position.z -= model.position.z + boundaryBox.min.z - bedLowMinZ;
         }
 
+        self.slice = function() {
+            self.saveModel(self.models[0]);
+        }
+
         self.saveModel = function( model ) {
             // Create request
             var form = new FormData();
-            form.append("file", self.formDataFromModel(model), "/" + modelName);
+            form.append("file", self.blobFromModel(model), self.slicingViewModel.file());
             // Send request
             $.ajax({
                 url: API_BASEURL + "files/local",
@@ -263,9 +267,9 @@ $(function() {
             });
         };
 
-        self.formDataFromModel = function( model ) {
-				    var exporter = new THREE.STLBinaryExporter();
-				    return new Blob([exporter.parse(model)], {type: "text/plain"});
+        self.blobFromModel = function( model ) {
+    	    var exporter = new THREE.STLBinaryExporter();
+    	    return new Blob([exporter.parse(model)], {type: "text/plain"});
         }
 
         self.render = function() {
@@ -276,13 +280,6 @@ $(function() {
 
         self.init();
         self.render();
-
-        // User inputs
-
-        self.slice = function() {
-            alert("asdf");
-        };
-
     }
 
     // view model class, parameters for constructor, container to bind to
@@ -293,6 +290,6 @@ $(function() {
         [ "slicingViewModel", /* "loginStateViewModel", "settingsViewModel" */ ],
 
         // e.g. #settings_plugin_slicer, #tab_plugin_slicer, ...
-        [ /*... */ ]
+        [ "#slicer" ]
     ]);
 });
