@@ -110,6 +110,8 @@ $(function() {
                 self.applyChange($(this));
             });
 
+            ko.applyBindings(self.slicingViewModel, $('#slicing-settings')[0]);
+
         };
 
         self.loadSTL = function(target, file, force=true) {
@@ -283,18 +285,6 @@ $(function() {
 
     }
 
-
-    // Subclass as a wrapper for OctoPrint's SlicingViewModel so that it can be bound to a different div
-    function SlicingViewModelWrapper(parameters) {
-        var self = this;
-
-        // assign the injected parameters, e.g.:
-        // self.loginStateViewModel = parameters[0];
-        // self.settingsViewModel = parameters[1];
-        self.slicingViewModel = parameters[0];
-        Object.setPrototypeOf(this, self.slicingViewModel);
-    };
-
     // view model class, parameters for constructor, container to bind to
     OCTOPRINT_VIEWMODELS.push([
         SlicerViewModel,
@@ -304,14 +294,5 @@ $(function() {
 
         // e.g. #settings_plugin_slicer, #tab_plugin_slicer, ...
         [ /*... */ ]
-    ],
-    [
-        SlicingViewModelWrapper,
-        // e.g. loginStateViewModel, settingsViewModel, ...
-        [ "slicingViewModel", /* "loginStateViewModel", "settingsViewModel" */ ],
-
-        // e.g. #settings_plugin_slicer, #tab_plugin_slicer, ...
-        [ "#slicing-settings" ]
-    ]
-    );
+    ]);
 });
