@@ -263,6 +263,7 @@ $(function() {
                 contentType: false,
                 // On success
                 success: function(data) {
+                    self.slicingViewModel.slice();
                 }
             });
         };
