@@ -15,6 +15,12 @@ $(function() {
 
         // Override slicingViewModel.show to surpress default slicing behavior
         self.slicingViewModel.show = function(target, file, force) {
+            self.slicingViewModel.requestData();
+            self.slicingViewModel.target = target;
+            self.slicingViewModel.file(file);
+            self.slicingViewModel.destinationFilename(self.slicingViewModel.file().substr(0, self.slicingViewModel.file().lastIndexOf(".")));
+            self.slicingViewModel.printerProfile(self.slicingViewModel.printerProfiles.currentProfile());
+
             $('a[href="#tab_plugin_slicer"]').tab('show');
             self.loadSTL(target, file, force);
         };
@@ -104,7 +110,6 @@ $(function() {
                 self.applyChange($(this));
             });
 
-            ko.applyBindings(self.slicingViewModel, $('#slicing-settings')[0]);
         };
 
         self.loadSTL = function(target, file, force=true) {
@@ -278,14 +283,35 @@ $(function() {
 
     }
 
+
+    // Subclass as a wrapper for OctoPrint's SlicingViewModel so that it can be bound to a different div
+    function SlicingViewModelWrapper(parameters) {
+        var self = this;
+
+        // assign the injected parameters, e.g.:
+        // self.loginStateViewModel = parameters[0];
+        // self.settingsViewModel = parameters[1];
+        self.slicingViewModel = parameters[0];
+        Object.setPrototypeOf(this, self.slicingViewModel);
+    };
+
     // view model class, parameters for constructor, container to bind to
     OCTOPRINT_VIEWMODELS.push([
-            SlicerViewModel,
+        SlicerViewModel,
 
-            // e.g. loginStateViewModel, settingsViewModel, ...
-            [ "slicingViewModel", /* "loginStateViewModel", "settingsViewModel" */ ],
+        // e.g. loginStateViewModel, settingsViewModel, ...
+        [ "slicingViewModel", /* "loginStateViewModel", "settingsViewModel" */ ],
 
-            // e.g. #settings_plugin_slicer, #tab_plugin_slicer, ...
-            [ /*... */ ]
-    ]);
+        // e.g. #settings_plugin_slicer, #tab_plugin_slicer, ...
+        [ /*... */ ]
+    ],
+    [
+        SlicingViewModelWrapper,
+        // e.g. loginStateViewModel, settingsViewModel, ...
+        [ "slicingViewModel", /* "loginStateViewModel", "settingsViewModel" */ ],
+
+        // e.g. #settings_plugin_slicer, #tab_plugin_slicer, ...
+        [ "#slicing-settings" ]
+    ]
+    );
 });
