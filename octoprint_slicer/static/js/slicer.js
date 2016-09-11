@@ -26,18 +26,23 @@ $(function() {
         };
 
         var CANVAS_WIDTH = 588,
-            CANVAS_HEIGHT = 588;
+            CANVAS_HEIGHT = 588,
+
+            BEDSIZE_X_MM = 200,
+            BEDSIZE_Y_MM = 200,
+            BEDSIZE_Z_MM = 200;
+
 
         self.init = function() {
             self.models = [];
             self.container = document.getElementById( 'slicer-canvas' );
 
-            self.camera = new THREE.PerspectiveCamera( 45, 1.0, 0.1, 100 );
-            self.camera.up.set( 0, 0, 1 );
-            self.camera.position.set( 2, 6, 4 );
+            self.camera = new THREE.PerspectiveCamera( 45, 1.0, 0.1, 5000 );
+            self.camera.up.set( 0, 0, 50 );
+            self.camera.position.set( 100, 300, 200 );
             self.scene = new THREE.Scene();
-            self.drawBedFloor(4, 4);
-            self.drawWalls(4, 4, 4);
+            self.drawBedFloor(BEDSIZE_X_MM, BEDSIZE_Y_MM);
+            self.drawWalls(BEDSIZE_X_MM, BEDSIZE_Y_MM, BEDSIZE_Z_MM);
 
             // Lights
             self.scene.add( new THREE.AmbientLight(0xffffff, 1.0) );
@@ -86,6 +91,7 @@ $(function() {
             self.transformControls.space = "world";
             self.transformControls.setAllowedTranslation("XY");
             self.transformControls.setRotationDisableE(true);
+            self.transformControls.setRotationSnap( THREE.Math.degToRad( 15 ) )
             self.transformControls.addEventListener("change", self.render);
             self.transformControls.addEventListener("mouseDown", self.startTransform);
             self.transformControls.addEventListener("mouseUp", self.endTransform);
@@ -112,6 +118,22 @@ $(function() {
 
             ko.applyBindings(self.slicingViewModel, $('#slicing-settings')[0]);
 
+            window.addEventListener( 'keydown', function ( event ) {
+                switch ( event.keyCode ) {
+                    case 17: // Ctrl
+                        self.transformControls.setRotationSnap(null);
+                        break;
+                }
+            });
+
+            window.addEventListener( 'keyup', function ( event ) {
+                switch ( event.keyCode ) {
+                    case 17: // Ctrl
+                        self.transformControls.setRotationSnap( THREE.Math.degToRad( 15 ) );
+                        break;
+                }
+            });
+
         };
 
         self.loadSTL = function(target, file, force=true) {
@@ -125,7 +147,6 @@ $(function() {
             loader.load(BASEURL + "downloads/files/" + target + "/" + file, function ( geometry ) {
                 var material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
                 var mesh = new THREE.Mesh( geometry, material );
-                mesh.scale.set( 0.02, 0.02, 0.02 );
                 self.models.push(mesh);
 
                 self.scene.add( mesh );
