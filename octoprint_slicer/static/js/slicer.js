@@ -92,7 +92,7 @@ $(function() {
 
             self.transformControls = new THREE.TransformControls(self.camera, self.renderer.domElement);
             self.transformControls.space = "world";
-            self.transformControls.setAllowedTranslation("XY");
+            self.transformControls.setAllowedTranslation("XZ");
             self.transformControls.setRotationDisableE(true);
             self.transformControls.setRotationSnap( THREE.Math.degToRad( 15 ) )
             self.transformControls.addEventListener("change", self.render);
@@ -181,10 +181,10 @@ $(function() {
                 } else if (input.closest(".values").hasClass("translate")) {
                     switch(input.attr("name")) {
                         case "x":
-                            model.position.x = -parseFloat(input.val());
+                            model.position.x = -parseFloat(input.val()); // X in model is -X in three.js
                             break;
                         case "y":
-                            model.position.y = -parseFloat(input.val());
+                            model.position.z = parseFloat(input.val()); // Z in model is Y in three.js
                             break;
                     }
                 }
@@ -205,8 +205,8 @@ $(function() {
 
         self.updateTransformInputs = function () {
             var model = self.transformControls.object;
-            $("#slicer-viewport .translate.values input[name=\"x\"]").val((model.position.x.toFixed(3) == 0 ? 0 : -model.position.x).toFixed(3)).attr("min", '');
-            $("#slicer-viewport .translate.values input[name=\"y\"]").val(model.position.y.toFixed(3)).attr("min", '');
+            $("#slicer-viewport .translate.values input[name=\"x\"]").val((model.position.x.toFixed(3) == 0 ? 0 : -model.position.x).toFixed(3)).attr("min", ''); // X in Model is -X in three.js
+            $("#slicer-viewport .translate.values input[name=\"y\"]").val(model.position.z.toFixed(3)).attr("min", ''); // Z in model is Y in three.js
             $("#slicer-viewport .rotate.values input[name=\"x\"]").val((model.rotation.x * 180 / Math.PI).toFixed(3)).attr("min", '');
             $("#slicer-viewport .rotate.values input[name=\"y\"]").val((model.rotation.y * 180 / Math.PI).toFixed(3)).attr("min", '');
             $("#slicer-viewport .rotate.values input[name=\"z\"]").val((model.rotation.z * 180 / Math.PI).toFixed(3)).attr("min", '');
@@ -270,7 +270,7 @@ $(function() {
             var boundaryBox = new THREE.Box3().setFromObject(model);
             boundaryBox.min.sub(model.position);
             boundaryBox.max.sub(model.position);
-            model.position.z -= model.position.z + boundaryBox.min.z - bedLowMinZ;
+            model.position.y -= model.position.y + boundaryBox.min.y - bedLowMinZ;
         }
 
         self.slice = function() {
