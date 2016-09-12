@@ -39,13 +39,18 @@ $(function() {
 
             self.camera = new THREE.PerspectiveCamera( 45, 1.0, 0.1, 5000 );
             self.camera.up.set( 0, 0, 50 );
-            self.camera.position.set( 100, 300, 200 );
+            self.camera.position.set( 150, 50, 300 );
             self.scene = new THREE.Scene();
             self.drawBedFloor(BEDSIZE_X_MM, BEDSIZE_Y_MM);
             self.drawWalls(BEDSIZE_X_MM, BEDSIZE_Y_MM, BEDSIZE_Z_MM);
 
             // Lights
-            self.scene.add( new THREE.AmbientLight(0xffffff, 1.0) );
+                var hemiLight = new THREE.HemisphereLight( 0xF8F81F, 0xffffff, 1.0 );
+                self.scene.add( hemiLight );
+            var dirLight = new THREE.DirectionalLight(0xF8F81F, 1);
+            dirLight.position.set(0, 0, 500);
+            dirLight.castShadow = true;
+            self.scene.add(dirLight);
 
             // renderer
 
@@ -82,10 +87,21 @@ $(function() {
 
             $("#slicer-viewport").append(self.renderer.domElement);
             self.orbitControls = new THREE.OrbitControls(self.camera, self.renderer.domElement);
-            self.orbitControls.enableDamping = true;
-            self.orbitControls.dampingFactor = 0.25;
             self.orbitControls.enablePan = false;
             self.orbitControls.addEventListener("change", self.render);
+            // How far you can dolly in and out ( PerspectiveCamera only )
+            self.orbitControls.minDistance = 50;
+            self.orbitControls.maxDistance = 1000;
+
+            // How far you can orbit vertically, upper and lower limits.
+            // Range is 0 to Math.PI radians.
+            self.orbitControls.minPolarAngle = Math.PI / 2; // radians
+            self.orbitControls.maxPolarAngle = Math.PI; // radians
+
+            // How far you can orbit horizontally, upper and lower limits.
+            // If set, must be a sub-interval of the interval [ - Math.PI, Math.PI ].
+            self.orbitControls.minAzimuthAngle = - Math.PI; // radians
+            self.orbitControls.maxAzimuthAngle = Math.PI; // radians
 
             self.transformControls = new THREE.TransformControls(self.camera, self.renderer.domElement);
             self.transformControls.space = "world";
@@ -145,7 +161,7 @@ $(function() {
 
             var loader = new THREE.STLLoader();
             loader.load(BASEURL + "downloads/files/" + target + "/" + file, function ( geometry ) {
-                var material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
+                var material = new THREE.MeshPhongMaterial( { color: 0xF8F81F, specular: 0xF8F81F, shininess: 20, morphTargets: true, vertexColors: THREE.FaceColors, shading: THREE.FlatShading } );
                 var mesh = new THREE.Mesh( geometry, material );
                 self.models.push(mesh);
 
@@ -268,10 +284,8 @@ $(function() {
         }
 
         self.slice = function() {
-            self.saveModel(self.models[0]);
-        }
+            model = self.models[0];
 
-        self.saveModel = function( model ) {
             // Create request
             var form = new FormData();
             form.append("file", self.blobFromModel(model), self.slicingViewModel.file());
