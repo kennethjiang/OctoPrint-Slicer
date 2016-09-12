@@ -38,10 +38,10 @@ $(function() {
             self.container = document.getElementById( 'slicer-canvas' );
 
             self.camera = new THREE.PerspectiveCamera( 55, 1.0, 0.1, 5000 );
-            self.camera.position.set( 150, 50, 300 );
+            self.camera.position.set( 200, 200, 100 );
             self.scene = new THREE.Scene();
             self.drawBedFloor(BEDSIZE_X_MM, BEDSIZE_Y_MM);
-            self.drawWalls(BEDSIZE_X_MM, BEDSIZE_Y_MM, BEDSIZE_Z_MM);
+            self.drawWalls(BEDSIZE_X_MM, BEDSIZE_Z_MM, BEDSIZE_Y_MM);
 
             // Lights
             self.scene.add( new THREE.AmbientLight(0xffffff, 1.0) );
@@ -150,6 +150,7 @@ $(function() {
             loader.load(BASEURL + "downloads/files/" + target + "/" + file, function ( geometry ) {
                 var material = new THREE.MeshPhongMaterial( { color: 0xF8F81F, specular: 0xF8F81F, shininess: 20, morphTargets: true, vertexColors: THREE.FaceColors, shading: THREE.FlatShading } );
                 var mesh = new THREE.Mesh( geometry, material );
+                mesh.rotation.set(3 * Math.PI / 2, 0, Math.PI)
                 self.models.push(mesh);
 
                 self.scene.add( mesh );
@@ -213,9 +214,9 @@ $(function() {
             self.render();
         };
 
-        self.drawBedFloor = function ( width, depth, segments ) {
+        self.drawBedFloor = function ( lengthX, lengthZ, segments ) {
             segments = segments || 20;
-            var geometry = new THREE.PlaneGeometry(width, depth, segments, segments);
+            var geometry = new THREE.PlaneGeometry(lengthX, lengthZ, segments, segments);
             var materialEven = new THREE.MeshBasicMaterial({color: 0xccccfc});
             var materialOdd = new THREE.MeshBasicMaterial({color: 0x444464});
             var materials = [materialEven, materialOdd];
@@ -226,38 +227,40 @@ $(function() {
                 geometry.faces[ j ].materialIndex = geometry.faces[ j + 1 ].materialIndex = (x + y) % 2;
               }
             }
-            self.scene.add(new THREE.Mesh(geometry, new THREE.MeshFaceMaterial(materials)));
+            var mesh = new THREE.Mesh(geometry, new THREE.MeshFaceMaterial(materials));
+            mesh.rotation.x = -Math.PI / 2;
+            mesh.receiveShadow = true;
+            self.scene.add(mesh);
         };
 
-        self.drawWalls = function ( width, depth, height ) {
-            var wall1 = self.rectShape( depth, height, 0x8888fc );
-            wall1.rotation.x = Math.PI / 2;
-            wall1.position.set(0, depth/2, height/2);
+        self.drawWalls = function ( lengthX, lengthZ, lengthY ) {
+            var wall1 = self.rectShape( lengthZ, lengthY, 0x8888fc );
+            wall1.rotation.y = - Math.PI / 2;
+            wall1.position.set(lengthX/2, lengthY/2, 0);
             self.scene.add(wall1);
 
-            var wall2 = self.rectShape( width, height, 0x8888dc );
-            wall2.rotation.y = Math.PI / 2;
-            wall2.position.set(-width/2, 0, height/2);
+            var wall1 = self.rectShape( lengthZ, lengthY, 0x8888fc );
+            wall1.rotation.y = Math.PI / 2;
+            wall1.position.set(-lengthX/2, lengthY/2, 0);
+            self.scene.add(wall1);
+
+            var wall2 = self.rectShape( lengthX, lengthY, 0x8888bc );
+            wall2.rotation.x = Math.PI;
+            wall2.position.set(0, lengthY/2, lengthZ/2);
             self.scene.add(wall2);
 
-            var wall3 = self.rectShape( depth, height, 0x8888fc );
-            wall3.rotation.x = -Math.PI / 2;
-            wall3.position.set(0, -depth/2, height/2);
-            self.scene.add(wall3);
-
-            var wall4 = self.rectShape( width, height, 0x8888dc );
-            wall4.rotation.y = -Math.PI / 2;
-            wall4.position.set(width/2, 0, height/2);
+            var wall4 = self.rectShape( lengthX, lengthY, 0x8888bc );
+            wall4.position.set(0, lengthY/2,  -lengthZ/2);
             self.scene.add(wall4);
         }
 
-        self.rectShape = function ( rectLength, rectWidth, color ) {
+        self.rectShape = function ( lengthX, lengthY, color ) {
             var rectShape = new THREE.Shape();
-            rectShape.moveTo( -rectLength/2,-rectWidth/2 );
-            rectShape.lineTo( -rectLength/2, rectWidth/2 );
-            rectShape.lineTo( rectLength/2, rectWidth/2 );
-            rectShape.lineTo( rectLength/2, -rectWidth/2 );
-            rectShape.lineTo( -rectLength/2, -rectWidth/2 );
+            rectShape.moveTo( -lengthX/2,-lengthY/2 );
+            rectShape.lineTo( -lengthX/2, lengthY/2 );
+            rectShape.lineTo( lengthX/2, lengthY/2 );
+            rectShape.lineTo( lengthX/2, -lengthY/2 );
+            rectShape.lineTo( -lengthX/2, -lengthY/2 );
             var rectGeom = new THREE.ShapeGeometry( rectShape );
             return new THREE.Mesh( rectGeom, new THREE.MeshBasicMaterial( { color } ) ) ;
         }
