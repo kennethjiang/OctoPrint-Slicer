@@ -189,26 +189,22 @@ $(function() {
             loader.load(BASEURL + "downloads/files/" + target + "/" + file, function ( geometry ) {
                 var material = new THREE.MeshPhongMaterial( { color: 0xF8F81F, specular: 0xF8F81F, shininess: 20, morphTargets: true, vertexColors: THREE.FaceColors, shading: THREE.FlatShading } );
                 var mesh = new THREE.Mesh( geometry, material );
-                self.applyRotationToModel(mesh);
                 self.models.push(mesh);
 
                 self.scene.add( mesh );
                 self.transformControls.attach(mesh);
-                self.updateTransformInputs();
-                self.render();
+                $('.values input').val(0.0); // reset transformation
+                self.applyChange();
             } );
         };
 
         self.applyChange = function(input) {
-            input.blur();
-            if(!isNaN(parseFloat(input.val()))) {
                 var model = self.transformControls.object;
 
                 self.applyRotationToModel( model );
                 self.applyTranslationToModel( model );
                 self.fixZPosition(model);
                 self.render();
-            }
         };
 
         self.applyRotationToModel = function( model ) {
@@ -224,7 +220,7 @@ $(function() {
                     parseFloat($('.values.translate input[name="y"]').val()),
                     model.position.y); // Y axis in model is Z axis in printer
             model.position.x = t.x;
-            mode.position.z = t.z;
+            model.position.z = t.z;
         }
 
         self.startTransform = function () {
