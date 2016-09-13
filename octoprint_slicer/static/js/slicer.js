@@ -306,7 +306,12 @@ $(function() {
         }
 
         self.slice = function() {
-            model = self.models[0];
+            var model = self.models[0];
+
+            // Initial rotation is only so that user can see how three.js "sees" it.
+            // Now it needs to be reversed so that the slicing uses the real rotation
+            var initRotation = self.rotConverter.printerToThreejs( 0, 0, 0 );
+            model.rotateX(-initRotation.x).rotateY(-initRotation.y).rotateZ(-initRotation.z);
 
             // Create request
             var form = new FormData();
