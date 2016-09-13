@@ -10,12 +10,12 @@ $(function() {
 
         self.threejsToPrinter = function( vector3 ) {
             // X -> -X, Z -> Y, Y -> Z
-            return THREE.Vector3( -vector3.x, vector3.z, vector3.y );
+            return new THREE.Vector3( -vector3.x, vector3.z, vector3.y );
         };
 
         self.printerToThreejs = function( vector3 ) {
             // X -> -X, Z -> Y, Y -> Z
-            return THREE.Vector3( -vector3.x, vector3.z, vector3.y );
+            return new THREE.Vector3( -vector3.x, vector3.z, vector3.y );
         };
 
     };
@@ -189,7 +189,7 @@ $(function() {
             loader.load(BASEURL + "downloads/files/" + target + "/" + file, function ( geometry ) {
                 var material = new THREE.MeshPhongMaterial( { color: 0xF8F81F, specular: 0xF8F81F, shininess: 20, morphTargets: true, vertexColors: THREE.FaceColors, shading: THREE.FlatShading } );
                 var mesh = new THREE.Mesh( geometry, material );
-                self.setModelRotation(mesh);
+                self.applyRotationToModel(mesh);
                 self.models.push(mesh);
 
                 self.scene.add( mesh );
@@ -202,31 +202,29 @@ $(function() {
         self.applyChange = function(input) {
             input.blur();
             if(!isNaN(parseFloat(input.val()))) {
-                input.val(parseFloat(input.val()).toFixed(3));
                 var model = self.transformControls.object;
 
-                if (input.closest(".values").hasClass("rotate")) {
-                    self.setModelRotation( model );
-                } else if (input.closest(".values").hasClass("translate")) {
-                    switch(input.attr("name")) {
-                        case "x":
-                            model.position.x = -parseFloat(input.val()); // X in model is -X in three.js
-                            break;
-                        case "y":
-                            model.position.z = parseFloat(input.val()); // Z in model is Y in three.js
-                            break;
-                    }
-                }
+                self.applyRotationToModel( model );
+                self.applyTranslationToModel( model );
                 self.fixZPosition(model);
                 self.render();
             }
         };
 
-        self.setModelRotation = function( model ) {
+        self.applyRotationToModel = function( model ) {
             model.rotation.setFromVector3( self.rotConverter.printerToThreejs(
                         parseFloat($('.values.rotate input[name="x"]').val()),
                         parseFloat($('.values.rotate input[name="y"]').val()),
                         parseFloat($('.values.rotate input[name="z"]').val()) ) );
+        }
+
+        self.applyTranslationToModel = function( model ) {
+            var t = self.posConverter.printerToThreejs(
+                    parseFloat($('.values.translate input[name="x"]').val()),
+                    parseFloat($('.values.translate input[name="y"]').val()),
+                    model.position.y); // Y axis in model is Z axis in printer
+            model.position.x = t.x;
+            mode.position.z = t.z;
         }
 
         self.startTransform = function () {
@@ -242,8 +240,9 @@ $(function() {
         self.updateTransformInputs = function () {
             var model = self.transformControls.object;
             var rotation = self.rotConverter.threejsToPrinter( model.rotation );
-            $("#slicer-viewport .translate.values input[name=\"x\"]").val((model.position.x.toFixed(3) == 0 ? 0 : -model.position.x).toFixed(3)).attr("min", ''); // X in Model is -X in three.js
-            $("#slicer-viewport .translate.values input[name=\"y\"]").val(model.position.z.toFixed(3)).attr("min", ''); // Z in model is Y in three.js
+            var pos = self.posConverter.threejsToPrinter( model.position );
+            $("#slicer-viewport .translate.values input[name=\"x\"]").val(pos.x.toFixed(3)).attr("min", '');
+            $("#slicer-viewport .translate.values input[name=\"y\"]").val(pos.y.toFixed(3)).attr("min", '');
             $("#slicer-viewport .rotate.values input[name=\"x\"]").val(rotation.x.toFixed(3)).attr("min", '');
             $("#slicer-viewport .rotate.values input[name=\"y\"]").val(rotation.y.toFixed(3)).attr("min", '');
             $("#slicer-viewport .rotate.values input[name=\"z\"]").val(rotation.z.toFixed(3)).attr("min", '');
