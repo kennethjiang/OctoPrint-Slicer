@@ -5,6 +5,42 @@
  * License: AGPLv3
  */
 $(function() {
+    function PositionConverter() {
+        self = this;
+
+        self.threejsToPrinter = function( vector3 ) {
+            // X -> -X, Z -> Y, Y -> Z
+            return THREE.Vector3( -vector3.x, vector3.z, vector3.y );
+        };
+
+        self.printerToThreejs = function( vector3 ) {
+            // X -> -X, Z -> Y, Y -> Z
+            return THREE.Vector3( -vector3.x, vector3.z, vector3.y );
+        };
+
+    };
+
+    function RotationConverter() {
+        self = this;
+
+        self.threejsToPrinter = function( euler ) {
+            return {
+                x: THREE.Math.radToDeg(euler.x - 3 * Math.PI / 2),
+                y: THREE.Math.radToDeg(euler.y),
+                z: THREE.Math.radToDeg(euler.z - Math.PI)
+            };
+        };
+
+        self.printerToThreejs = function( x, y, z ) {
+            return new THREE.Vector3(
+                    THREE.Math.degToRad(x) + 3 * Math.PI / 2,
+                    THREE.Math.degToRad(y),
+                    THREE.Math.degToRad(z) + Math.PI);
+        };
+
+    };
+
+
     function SlicerViewModel(parameters) {
         var self = this;
 
@@ -35,6 +71,9 @@ $(function() {
 
         self.init = function() {
             self.models = [];
+            self.posConverter = new PositionConverter();
+            self.rotConverter = new RotationConverter();
+
             self.container = document.getElementById( 'slicer-canvas' );
 
             self.camera = new THREE.PerspectiveCamera( 55, 1.0, 0.1, 5000 );
@@ -74,9 +113,9 @@ $(function() {
                     </div>
                     <div class="values rotate">
                     <div>
-                    <p><span class="axis x">X</span><input type="number" step="any" name="x" min=""><span title="">°</span></p>
-                    <p><span class="axis y">Y</span><input type="number" step="any" name="y" min=""><span title="">°</span></p>
-                    <p><span class="axis z">Z</span><input type="number" step="any" name="z" min=""><span title="">°</span></p>
+                    <p><span class="axis x">X</span><input type="number" value="0.0" step="any" name="x" min=""><span title="">°</span></p>
+                    <p><span class="axis y">Y</span><input type="number" value="0.0" step="any" name="y" min=""><span title="">°</span></p>
+                    <p><span class="axis z">Z</span><input type="number" value="0.0" step="any" name="z" min=""><span title="">°</span></p>
                     <span></span>
                     </div>
                     </div>
@@ -150,7 +189,7 @@ $(function() {
             loader.load(BASEURL + "downloads/files/" + target + "/" + file, function ( geometry ) {
                 var material = new THREE.MeshPhongMaterial( { color: 0xF8F81F, specular: 0xF8F81F, shininess: 20, morphTargets: true, vertexColors: THREE.FaceColors, shading: THREE.FlatShading } );
                 var mesh = new THREE.Mesh( geometry, material );
-                mesh.rotation.set(3 * Math.PI / 2, 0, Math.PI)
+                self.setModelRotation(mesh);
                 self.models.push(mesh);
 
                 self.scene.add( mesh );
@@ -167,17 +206,7 @@ $(function() {
                 var model = self.transformControls.object;
 
                 if (input.closest(".values").hasClass("rotate")) {
-                    switch(input.attr("name")) {
-                        case "x":
-                            model.rotation.x = THREE.Math.degToRad(parseFloat(input.val()));
-                            break;
-                        case "y":
-                            model.rotation.y = THREE.Math.degToRad(parseFloat(input.val()));
-                            break;
-                        case "z":
-                            model.rotation.z = THREE.Math.degToRad(parseFloat(input.val()));
-                            break;
-                    }
+                    self.setModelRotation( model );
                 } else if (input.closest(".values").hasClass("translate")) {
                     switch(input.attr("name")) {
                         case "x":
@@ -193,6 +222,13 @@ $(function() {
             }
         };
 
+        self.setModelRotation = function( model ) {
+            model.rotation.setFromVector3( self.rotConverter.printerToThreejs(
+                        parseFloat($('.values.rotate input[name="x"]').val()),
+                        parseFloat($('.values.rotate input[name="y"]').val()),
+                        parseFloat($('.values.rotate input[name="z"]').val()) ) );
+        }
+
         self.startTransform = function () {
             // Disable orbit controls
             self.orbitControls.enabled = false;
@@ -205,11 +241,12 @@ $(function() {
 
         self.updateTransformInputs = function () {
             var model = self.transformControls.object;
+            var rotation = self.rotConverter.threejsToPrinter( model.rotation );
             $("#slicer-viewport .translate.values input[name=\"x\"]").val((model.position.x.toFixed(3) == 0 ? 0 : -model.position.x).toFixed(3)).attr("min", ''); // X in Model is -X in three.js
             $("#slicer-viewport .translate.values input[name=\"y\"]").val(model.position.z.toFixed(3)).attr("min", ''); // Z in model is Y in three.js
-            $("#slicer-viewport .rotate.values input[name=\"x\"]").val((model.rotation.x * 180 / Math.PI).toFixed(3)).attr("min", '');
-            $("#slicer-viewport .rotate.values input[name=\"y\"]").val((model.rotation.y * 180 / Math.PI).toFixed(3)).attr("min", '');
-            $("#slicer-viewport .rotate.values input[name=\"z\"]").val((model.rotation.z * 180 / Math.PI).toFixed(3)).attr("min", '');
+            $("#slicer-viewport .rotate.values input[name=\"x\"]").val(rotation.x.toFixed(3)).attr("min", '');
+            $("#slicer-viewport .rotate.values input[name=\"y\"]").val(rotation.y.toFixed(3)).attr("min", '');
+            $("#slicer-viewport .rotate.values input[name=\"z\"]").val(rotation.z.toFixed(3)).attr("min", '');
             self.fixZPosition(model);
             self.render();
         };
