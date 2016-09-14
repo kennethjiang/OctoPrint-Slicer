@@ -38,7 +38,7 @@ $(function() {
             self.container = document.getElementById( 'slicer-canvas' );
 
             self.camera = new THREE.PerspectiveCamera( 45, 1.0, 0.1, 5000 );
-            self.camera.up.set( 0, 0, 50 );
+            self.camera.up.set( 0, 0, 1 );
             self.camera.position.set( 100, 300, 200 );
             self.scene = new THREE.Scene();
             self.drawBedFloor(BEDSIZE_X_MM, BEDSIZE_Y_MM);
@@ -46,12 +46,19 @@ $(function() {
 
             // Lights
             self.scene.add( new THREE.AmbientLight(0xffffff, 1.0) );
+            var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.8 );
+            directionalLight.castShadow = true;
+            directionalLight.position.set( 0, 0, 500 );
+            self.scene.add( directionalLight );
+
+            self.scene.add(new THREE.AxisHelper(50));
 
             // renderer
 
             self.renderer = new THREE.WebGLRenderer( { antialias: true } );
             self.renderer.setClearColor( 0xd8d8d8 );
             self.renderer.setSize( CANVAS_WIDTH, CANVAS_HEIGHT );
+            self.renderer.shadowMapEnabled = true;
             self.renderer.setPixelRatio( window.devicePixelRatio );
 
             self.renderer.gammaInput = true;
@@ -145,8 +152,9 @@ $(function() {
 
             var loader = new THREE.STLLoader();
             loader.load(BASEURL + "downloads/files/" + target + "/" + file, function ( geometry ) {
-                var material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
+                var material = new THREE.MeshPhongMaterial({color: 0xff5533, specular: 0xff5533});
                 var mesh = new THREE.Mesh( geometry, material );
+                mesh.castShadow = true;
                 self.models.push(mesh);
 
                 self.scene.add( mesh );
@@ -223,7 +231,9 @@ $(function() {
                 geometry.faces[ j ].materialIndex = geometry.faces[ j + 1 ].materialIndex = (x + y) % 2;
               }
             }
-            self.scene.add(new THREE.Mesh(geometry, new THREE.MeshFaceMaterial(materials)));
+            var mesh = new THREE.Mesh(geometry, new THREE.MeshFaceMaterial(materials));
+            mesh.receiveShadow = true;
+            self.scene.add(mesh);
         };
 
         self.drawWalls = function ( width, depth, height ) {
