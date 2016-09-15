@@ -39,7 +39,7 @@ $(function() {
 
             self.camera = new THREE.PerspectiveCamera( 45, 1.0, 0.1, 5000 );
             self.camera.up.set( 0, 0, 1 );
-            self.camera.position.set( 100, 300, 200 );
+            self.camera.position.set( -100, -200, 250 );
             self.scene = new THREE.Scene();
             self.drawBedFloor(BEDSIZE_X_MM, BEDSIZE_Y_MM);
             self.drawWalls(BEDSIZE_X_MM, BEDSIZE_Y_MM, BEDSIZE_Z_MM);
@@ -96,8 +96,8 @@ $(function() {
 
             self.transformControls = new THREE.TransformControls(self.camera, self.renderer.domElement);
             self.transformControls.space = "world";
-            self.transformControls.setAllowedTranslation("XY");
-            self.transformControls.setRotationDisableE(true);
+            //self.transformControls.setAllowedTranslation("XY");
+            //self.transformControls.setRotationDisableE(true);
             self.transformControls.setRotationSnap( THREE.Math.degToRad( 15 ) )
             self.transformControls.addEventListener("change", self.render);
             self.transformControls.addEventListener("mouseDown", self.startTransform);
@@ -185,10 +185,10 @@ $(function() {
                 } else if (input.closest(".values").hasClass("translate")) {
                     switch(input.attr("name")) {
                         case "x":
-                            model.position.x = -parseFloat(input.val());
+                            model.position.x = parseFloat(input.val());
                             break;
                         case "y":
-                            model.position.y = -parseFloat(input.val());
+                            model.position.y = parseFloat(input.val());
                             break;
                     }
                 }
@@ -209,7 +209,7 @@ $(function() {
 
         self.updateTransformInputs = function () {
             var model = self.transformControls.object;
-            $("#slicer-viewport .translate.values input[name=\"x\"]").val((model.position.x.toFixed(3) == 0 ? 0 : -model.position.x).toFixed(3)).attr("min", '');
+            $("#slicer-viewport .translate.values input[name=\"x\"]").val(model.position.x.toFixed(3)).attr("min", '');
             $("#slicer-viewport .translate.values input[name=\"y\"]").val(model.position.y.toFixed(3)).attr("min", '');
             $("#slicer-viewport .rotate.values input[name=\"x\"]").val((model.rotation.x * 180 / Math.PI).toFixed(3)).attr("min", '');
             $("#slicer-viewport .rotate.values input[name=\"y\"]").val((model.rotation.y * 180 / Math.PI).toFixed(3)).attr("min", '');

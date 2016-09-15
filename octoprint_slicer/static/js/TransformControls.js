@@ -1,13 +1,10 @@
 /**
  * @author arodic / https://github.com/arodic
- * @author donovan6000 / http://exploitkings.com
  */
- /*jshint sub:true*/
 
 ( function () {
 
 	'use strict';
-
 
 	var GizmoMaterial = function ( parameters ) {
 
@@ -106,9 +103,9 @@
 			var planeMaterial = new THREE.MeshBasicMaterial( { visible: false, side: THREE.DoubleSide } );
 
 			var planes = {
-				"XY": new THREE.Mesh( planeGeometry, planeMaterial ),
-				"YZ": new THREE.Mesh( planeGeometry, planeMaterial ),
-				"XZ": new THREE.Mesh( planeGeometry, planeMaterial ),
+				"XY":   new THREE.Mesh( planeGeometry, planeMaterial ),
+				"YZ":   new THREE.Mesh( planeGeometry, planeMaterial ),
+				"XZ":   new THREE.Mesh( planeGeometry, planeMaterial ),
 				"XYZE": new THREE.Mesh( planeGeometry, planeMaterial )
 			};
 
@@ -132,23 +129,17 @@
 				for ( var name in gizmoMap ) {
 
 					for ( i = gizmoMap[ name ].length; i --; ) {
-					
-						if ( scope.mode !== "translate" || ( ( ( name === "XYZ" || scope.allowedTranslation.search( name ) !== - 1 ) && ( scope.allowedTranslation === "XYZXZ" || name.length != 2 ) ) ) ) {
-						
-							if ( ! scope.rotationDisableE || name !== "E" ) {
-							
-								var object = gizmoMap[ name ][ i ][ 0 ];
-								var position = gizmoMap[ name ][ i ][ 1 ];
-								var rotation = gizmoMap[ name ][ i ][ 2 ];
 
-								object.name = name;
+						var object = gizmoMap[ name ][ i ][ 0 ];
+						var position = gizmoMap[ name ][ i ][ 1 ];
+						var rotation = gizmoMap[ name ][ i ][ 2 ];
 
-								if ( position ) object.position.set( position[ 0 ], position[ 1 ], position[ 2 ] );
-								if ( rotation ) object.rotation.set( rotation[ 0 ], rotation[ 1 ], rotation[ 2 ] );
+						object.name = name;
 
-								parent.add( object );
-							}
-						}
+						if ( position ) object.position.set( position[ 0 ], position[ 1 ], position[ 2 ] );
+						if ( rotation ) object.rotation.set( rotation[ 0 ], rotation[ 1 ], rotation[ 2 ] );
+
+						parent.add( object );
 
 					}
 
@@ -230,10 +221,8 @@
 
 	};
 
-	THREE.TransformGizmoTranslate = function ( allowedTranslation ) {
+	THREE.TransformGizmoTranslate = function () {
 
-		this.mode = "translate";
-		this.allowedTranslation = allowedTranslation;
 		THREE.TransformGizmo.call( this );
 
 		var arrowGeometry = new THREE.Geometry();
@@ -244,18 +233,18 @@
 		arrowGeometry.merge( mesh.geometry, mesh.matrix );
 
 		var lineXGeometry = new THREE.BufferGeometry();
-		lineXGeometry.addAttribute( 'position', new THREE.Float32Attribute( [ 0, 0, 0, - 1, 0, 0 ], 3 ) );
+		lineXGeometry.addAttribute( 'position', new THREE.Float32Attribute( [ 0, 0, 0,  1, 0, 0 ], 3 ) );
 
 		var lineYGeometry = new THREE.BufferGeometry();
-		lineYGeometry.addAttribute( 'position', new THREE.Float32Attribute( [ 0, 0, 0, 0, 1, 0 ], 3 ) );
+		lineYGeometry.addAttribute( 'position', new THREE.Float32Attribute( [ 0, 0, 0,  0, 1, 0 ], 3 ) );
 
 		var lineZGeometry = new THREE.BufferGeometry();
-		lineZGeometry.addAttribute( 'position', new THREE.Float32Attribute( [ 0, 0, 0, 0, 0, 1 ], 3 ) );
+		lineZGeometry.addAttribute( 'position', new THREE.Float32Attribute( [ 0, 0, 0,  0, 0, 1 ], 3 ) );
 
 		this.handleGizmos = {
 
 			X: [
-				[ new THREE.Mesh( arrowGeometry, new GizmoMaterial( { color: 0xff0000 } ) ), [ - 0.5, 0, 0 ], [ 0, 0, Math.PI / 2 ] ],
+				[ new THREE.Mesh( arrowGeometry, new GizmoMaterial( { color: 0xff0000 } ) ), [ 0.5, 0, 0 ], [ 0, 0, - Math.PI / 2 ] ],
 				[ new THREE.Line( lineXGeometry, new GizmoLineMaterial( { color: 0xff0000 } ) ) ]
 			],
 
@@ -270,19 +259,19 @@
 			],
 
 			XYZ: [
-				[ new THREE.Mesh( new THREE.OctahedronGeometry( 0.1, 0 ), new GizmoMaterial( { color: 0xffffff, opacity: 0.25, side: THREE.DoubleSide } ) ), [ 0, 0, 0 ], [ 0, 0, 0 ] ]
+				[ new THREE.Mesh( new THREE.OctahedronGeometry( 0.1, 0 ), new GizmoMaterial( { color: 0xffffff, opacity: 0.25 } ) ), [ 0, 0, 0 ], [ 0, 0, 0 ] ]
 			],
 
 			XY: [
-				[ new THREE.Mesh( new THREE.PlaneBufferGeometry( 0.29, 0.29 ), new GizmoMaterial( { color: 0xffff00, opacity: 0.25, side: THREE.DoubleSide } ) ), [ - 0.15, 0.15, 0 ] ]
+				[ new THREE.Mesh( new THREE.PlaneBufferGeometry( 0.29, 0.29 ), new GizmoMaterial( { color: 0xffff00, opacity: 0.25 } ) ), [ 0.15, 0.15, 0 ] ]
 			],
 
 			YZ: [
-				[ new THREE.Mesh( new THREE.PlaneBufferGeometry( - 0.29, 0.29 ), new GizmoMaterial( { color: 0x00ffff, opacity: 0.25, side: THREE.DoubleSide } ) ), [ 0, 0.15, 0.15 ], [ 0, Math.PI / 2, 0 ] ]
+				[ new THREE.Mesh( new THREE.PlaneBufferGeometry( 0.29, 0.29 ), new GizmoMaterial( { color: 0x00ffff, opacity: 0.25 } ) ), [ 0, 0.15, 0.15 ], [ 0, Math.PI / 2, 0 ] ]
 			],
 
 			XZ: [
-				[ new THREE.Mesh( new THREE.PlaneBufferGeometry( 0.29, 0.29 ), new GizmoMaterial( { color: 0xff00ff, opacity: 0.25, side: THREE.DoubleSide } ) ), [ - 0.15, 0, 0.15 ], [ - Math.PI / 2, 0, 0 ] ]
+				[ new THREE.Mesh( new THREE.PlaneBufferGeometry( 0.29, 0.29 ), new GizmoMaterial( { color: 0xff00ff, opacity: 0.25 } ) ), [ 0.15, 0, 0.15 ], [ - Math.PI / 2, 0, 0 ] ]
 			]
 
 		};
@@ -290,15 +279,15 @@
 		this.pickerGizmos = {
 
 			X: [
-				[ new THREE.Mesh( new THREE.CylinderGeometry( 0.2, 0, 1, 4, 1, false ), pickerMaterial ), [ - 0.6, 0, 0 ], [ 0, 0, - Math.PI / 2 ] ]
+				[ new THREE.Mesh( new THREE.CylinderBufferGeometry( 0.2, 0, 1, 4, 1, false ), pickerMaterial ), [ 0.6, 0, 0 ], [ 0, 0, - Math.PI / 2 ] ]
 			],
 
 			Y: [
-				[ new THREE.Mesh( new THREE.CylinderGeometry( 0.2, 0, 1, 4, 1, false ), pickerMaterial ), [ 0, 0.6, 0 ] ]
+				[ new THREE.Mesh( new THREE.CylinderBufferGeometry( 0.2, 0, 1, 4, 1, false ), pickerMaterial ), [ 0, 0.6, 0 ] ]
 			],
 
 			Z: [
-				[ new THREE.Mesh( new THREE.CylinderGeometry( 0.2, 0, 1, 4, 1, false ), pickerMaterial ), [ 0, 0, 0.6 ], [ Math.PI / 2, 0, 0 ] ]
+				[ new THREE.Mesh( new THREE.CylinderBufferGeometry( 0.2, 0, 1, 4, 1, false ), pickerMaterial ), [ 0, 0, 0.6 ], [ Math.PI / 2, 0, 0 ] ]
 			],
 
 			XYZ: [
@@ -306,15 +295,15 @@
 			],
 
 			XY: [
-				[ new THREE.Mesh( new THREE.CubeGeometry( 0.4, 0.4, 0.4 ), pickerMaterial ), [ - 0.2, 0.2, 0 ] ]
+				[ new THREE.Mesh( new THREE.PlaneBufferGeometry( 0.4, 0.4 ), pickerMaterial ), [ 0.2, 0.2, 0 ] ]
 			],
 
 			YZ: [
-				[ new THREE.Mesh( new THREE.CubeGeometry( 0.4, 0.4, 0.4 ), pickerMaterial ), [ 0, 0.2, 0.2 ], [ 0, - Math.PI / 2, 0 ] ]
+				[ new THREE.Mesh( new THREE.PlaneBufferGeometry( 0.4, 0.4 ), pickerMaterial ), [ 0, 0.2, 0.2 ], [ 0, Math.PI / 2, 0 ] ]
 			],
 
 			XZ: [
-				[ new THREE.Mesh( new THREE.CubeGeometry( 0.4, 0.4, 0.4 ), pickerMaterial ), [ - 0.2, 0, 0.2 ], [ - Math.PI / 2, 0, 0 ] ]
+				[ new THREE.Mesh( new THREE.PlaneBufferGeometry( 0.4, 0.4 ), pickerMaterial ), [ 0.2, 0, 0.2 ], [ - Math.PI / 2, 0, 0 ] ]
 			]
 
 		};
@@ -365,10 +354,8 @@
 	THREE.TransformGizmoTranslate.prototype = Object.create( THREE.TransformGizmo.prototype );
 	THREE.TransformGizmoTranslate.prototype.constructor = THREE.TransformGizmoTranslate;
 
-	THREE.TransformGizmoRotate = function ( rotationDisableE ) {
-	
-		this.mode = "rotate";
-		this.rotationDisableE = rotationDisableE;
+	THREE.TransformGizmoRotate = function () {
+
 		THREE.TransformGizmo.call( this );
 
 		var CircleGeometry = function ( radius, facing, arc ) {
@@ -417,19 +404,19 @@
 		this.pickerGizmos = {
 
 			X: [
-				[ new THREE.Mesh( new THREE.TorusGeometry( 1, 0.12, 4, 12, Math.PI ), pickerMaterial ), [ 0, 0, 0 ], [ 0, - Math.PI / 2, - Math.PI / 2 ] ]
+				[ new THREE.Mesh( new THREE.TorusBufferGeometry( 1, 0.12, 4, 12, Math.PI ), pickerMaterial ), [ 0, 0, 0 ], [ 0, - Math.PI / 2, - Math.PI / 2 ] ]
 			],
 
 			Y: [
-				[ new THREE.Mesh( new THREE.TorusGeometry( 1, 0.12, 4, 12, Math.PI ), pickerMaterial ), [ 0, 0, 0 ], [ Math.PI / 2, 0, 0 ] ]
+				[ new THREE.Mesh( new THREE.TorusBufferGeometry( 1, 0.12, 4, 12, Math.PI ), pickerMaterial ), [ 0, 0, 0 ], [ Math.PI / 2, 0, 0 ] ]
 			],
 
 			Z: [
-				[ new THREE.Mesh( new THREE.TorusGeometry( 1, 0.12, 4, 12, Math.PI ), pickerMaterial ), [ 0, 0, 0 ], [ 0, 0, - Math.PI / 2 ] ]
+				[ new THREE.Mesh( new THREE.TorusBufferGeometry( 1, 0.12, 4, 12, Math.PI ), pickerMaterial ), [ 0, 0, 0 ], [ 0, 0, - Math.PI / 2 ] ]
 			],
 
 			E: [
-				[ new THREE.Mesh( new THREE.TorusGeometry( 1.25, 0.12, 2, 24 ), pickerMaterial ) ]
+				[ new THREE.Mesh( new THREE.TorusBufferGeometry( 1.25, 0.12, 2, 24 ), pickerMaterial ) ]
 			],
 
 			XYZE: [
@@ -518,8 +505,7 @@
 	THREE.TransformGizmoRotate.prototype.constructor = THREE.TransformGizmoRotate;
 
 	THREE.TransformGizmoScale = function () {
-	
-		this.mode = "scale";
+
 		THREE.TransformGizmo.call( this );
 
 		var arrowGeometry = new THREE.Geometry();
@@ -530,18 +516,18 @@
 		arrowGeometry.merge( mesh.geometry, mesh.matrix );
 
 		var lineXGeometry = new THREE.BufferGeometry();
-		lineXGeometry.addAttribute( 'position', new THREE.Float32Attribute( [ 0, 0, 0, - 1, 0, 0 ], 3 ) );
+		lineXGeometry.addAttribute( 'position', new THREE.Float32Attribute( [ 0, 0, 0,  1, 0, 0 ], 3 ) );
 
 		var lineYGeometry = new THREE.BufferGeometry();
-		lineYGeometry.addAttribute( 'position', new THREE.Float32Attribute( [ 0, 0, 0, 0, 1, 0 ], 3 ) );
+		lineYGeometry.addAttribute( 'position', new THREE.Float32Attribute( [ 0, 0, 0,  0, 1, 0 ], 3 ) );
 
 		var lineZGeometry = new THREE.BufferGeometry();
-		lineZGeometry.addAttribute( 'position', new THREE.Float32Attribute( [ 0, 0, 0, 0, 0, 1 ], 3 ) );
+		lineZGeometry.addAttribute( 'position', new THREE.Float32Attribute( [ 0, 0, 0,  0, 0, 1 ], 3 ) );
 
 		this.handleGizmos = {
 
 			X: [
-				[ new THREE.Mesh( arrowGeometry, new GizmoMaterial( { color: 0xff0000 } ) ), [ - 0.5, 0, 0 ], [ 0, 0, Math.PI / 2 ] ],
+				[ new THREE.Mesh( arrowGeometry, new GizmoMaterial( { color: 0xff0000 } ) ), [ 0.5, 0, 0 ], [ 0, 0, - Math.PI / 2 ] ],
 				[ new THREE.Line( lineXGeometry, new GizmoLineMaterial( { color: 0xff0000 } ) ) ]
 			],
 
@@ -556,7 +542,7 @@
 			],
 
 			XYZ: [
-				[ new THREE.Mesh( new THREE.BoxGeometry( 0.125, 0.125, 0.125 ), new GizmoMaterial( { color: 0xffffff, opacity: 0.25 } ) ) ]
+				[ new THREE.Mesh( new THREE.BoxBufferGeometry( 0.125, 0.125, 0.125 ), new GizmoMaterial( { color: 0xffffff, opacity: 0.25 } ) ) ]
 			]
 
 		};
@@ -564,19 +550,19 @@
 		this.pickerGizmos = {
 
 			X: [
-				[ new THREE.Mesh( new THREE.CylinderGeometry( 0.2, 0, 1, 4, 1, false ), pickerMaterial ), [ - 0.6, 0, 0 ], [ 0, 0, - Math.PI / 2 ] ]
+				[ new THREE.Mesh( new THREE.CylinderBufferGeometry( 0.2, 0, 1, 4, 1, false ), pickerMaterial ), [ 0.6, 0, 0 ], [ 0, 0, - Math.PI / 2 ] ]
 			],
 
 			Y: [
-				[ new THREE.Mesh( new THREE.CylinderGeometry( 0.2, 0, 1, 4, 1, false ), pickerMaterial ), [ 0, 0.6, 0 ] ]
+				[ new THREE.Mesh( new THREE.CylinderBufferGeometry( 0.2, 0, 1, 4, 1, false ), pickerMaterial ), [ 0, 0.6, 0 ] ]
 			],
 
 			Z: [
-				[ new THREE.Mesh( new THREE.CylinderGeometry( 0.2, 0, 1, 4, 1, false ), pickerMaterial ), [ 0, 0, 0.6 ], [ Math.PI / 2, 0, 0 ] ]
+				[ new THREE.Mesh( new THREE.CylinderBufferGeometry( 0.2, 0, 1, 4, 1, false ), pickerMaterial ), [ 0, 0, 0.6 ], [ Math.PI / 2, 0, 0 ] ]
 			],
 
 			XYZ: [
-				[ new THREE.Mesh( new THREE.BoxGeometry( 0.4, 0.4, 0.4 ), pickerMaterial ) ]
+				[ new THREE.Mesh( new THREE.BoxBufferGeometry( 0.4, 0.4, 0.4 ), pickerMaterial ) ]
 			]
 
 		};
@@ -630,11 +616,8 @@
 		this.object = undefined;
 		this.visible = false;
 		this.translationSnap = null;
-		this.scaleSnap = null;
 		this.rotationSnap = null;
-		this.rotationDisableE = false;
 		this.space = "world";
-		this.allowedTranslation = "XYZXZ";
 		this.size = 1;
 		this.axis = null;
 
@@ -645,8 +628,8 @@
 		var _plane = "XY";
 		var _gizmo = {
 
-			"translate": new THREE.TransformGizmoTranslate( this.allowedTranslation ),
-			"rotate": new THREE.TransformGizmoRotate( this.rotationDisableE ),
+			"translate": new THREE.TransformGizmoTranslate(),
+			"rotate": new THREE.TransformGizmoRotate(),
 			"scale": new THREE.TransformGizmoScale()
 		};
 
@@ -694,12 +677,12 @@
 		var oldScale = new THREE.Vector3();
 		var oldRotationMatrix = new THREE.Matrix4();
 
-		var parentRotationMatrix = new THREE.Matrix4();
+		var parentRotationMatrix  = new THREE.Matrix4();
 		var parentScale = new THREE.Vector3();
 
 		var worldPosition = new THREE.Vector3();
 		var worldRotation = new THREE.Euler();
-		var worldRotationMatrix = new THREE.Matrix4();
+		var worldRotationMatrix  = new THREE.Matrix4();
 		var camPosition = new THREE.Vector3();
 		var camRotation = new THREE.Euler();
 
@@ -709,10 +692,11 @@
 		domElement.addEventListener( "mousemove", onPointerHover, false );
 		domElement.addEventListener( "touchmove", onPointerHover, false );
 
-		document.addEventListener( "mousemove", onPointerMove, false );
+		domElement.addEventListener( "mousemove", onPointerMove, false );
 		domElement.addEventListener( "touchmove", onPointerMove, false );
 
-		document.addEventListener( "mouseup", onPointerUp, false );
+		domElement.addEventListener( "mouseup", onPointerUp, false );
+		domElement.addEventListener( "mouseout", onPointerUp, false );
 		domElement.addEventListener( "touchend", onPointerUp, false );
 		domElement.addEventListener( "touchcancel", onPointerUp, false );
 		domElement.addEventListener( "touchleave", onPointerUp, false );
@@ -725,11 +709,11 @@
 			domElement.removeEventListener( "mousemove", onPointerHover );
 			domElement.removeEventListener( "touchmove", onPointerHover );
 
-			document.removeEventListener( "mousemove", onPointerMove );
+			domElement.removeEventListener( "mousemove", onPointerMove );
 			domElement.removeEventListener( "touchmove", onPointerMove );
 
-			document.removeEventListener( "mouseup", onPointerUp );
-
+			domElement.removeEventListener( "mouseup", onPointerUp );
+			domElement.removeEventListener( "mouseout", onPointerUp );
 			domElement.removeEventListener( "touchend", onPointerUp );
 			domElement.removeEventListener( "touchcancel", onPointerUp );
 			domElement.removeEventListener( "touchleave", onPointerUp );
@@ -751,10 +735,11 @@
 			this.axis = null;
 
 		};
-		
-		this.getMode = function() {
-		
+
+		this.getMode = function () {
+
 			return _mode;
+
 		};
 
 		this.setMode = function ( mode ) {
@@ -775,12 +760,6 @@
 			scope.translationSnap = translationSnap;
 
 		};
-		
-		this.setScaleSnap = function ( scaleSnap ) {
-
-			scope.scaleSnap = scaleSnap;
-
-		};
 
 		this.setRotationSnap = function ( rotationSnap ) {
 
@@ -799,37 +778,6 @@
 		this.setSpace = function ( space ) {
 
 			scope.space = space;
-			this.update();
-			scope.dispatchEvent( changeEvent );
-
-		};
-		
-		this.setAllowedTranslation = function ( allowedTranslation ) {
-		
-			if ( allowedTranslation === "XYZ" )
-				allowedTranslation = "XYZXZ";
-
-			scope.allowedTranslation = allowedTranslation;
-			
-			scope.remove( _gizmo["translate"] );
-			_gizmo["translate"] = new THREE.TransformGizmoTranslate( this.allowedTranslation );
-			_gizmo["translate"].visible = ( "translate" === _mode );
-			scope.add( _gizmo["translate"] );
-			
-			this.update();
-			scope.dispatchEvent( changeEvent );
-
-		};
-		
-		this.setRotationDisableE = function ( rotationDisableE ) {
-
-			scope.rotationDisableE = rotationDisableE;
-			
-			scope.remove( _gizmo["rotate"] );
-			_gizmo["rotate"] = new THREE.TransformGizmoRotate( this.rotationDisableE );
-			_gizmo["rotate"].visible = ( "rotate" === _mode );
-			scope.add( _gizmo["rotate"] );
-			
 			this.update();
 			scope.dispatchEvent( changeEvent );
 
@@ -969,9 +917,9 @@
 
 					point.applyMatrix4( tempMatrix.getInverse( worldRotationMatrix ) );
 
-					if ( scope.axis.search( "X" ) === - 1 || scope.allowedTranslation.search( "X" ) === - 1 ) point.x = 0;
-					if ( scope.axis.search( "Y" ) === - 1 || scope.allowedTranslation.search( "Y" ) === - 1 ) point.y = 0;
-					if ( scope.axis.search( "Z" ) === - 1 || scope.allowedTranslation.search( "Z" ) === - 1 ) point.z = 0;
+					if ( scope.axis.search( "X" ) === - 1 ) point.x = 0;
+					if ( scope.axis.search( "Y" ) === - 1 ) point.y = 0;
+					if ( scope.axis.search( "Z" ) === - 1 ) point.z = 0;
 
 					point.applyMatrix4( oldRotationMatrix );
 
@@ -982,9 +930,9 @@
 
 				if ( scope.space === "world" || scope.axis.search( "XYZ" ) !== - 1 ) {
 
-					if ( scope.axis.search( "X" ) === - 1 || scope.allowedTranslation.search( "X" ) === - 1 ) point.x = 0;
-					if ( scope.axis.search( "Y" ) === - 1 || scope.allowedTranslation.search( "Y" ) === - 1 ) point.y = 0;
-					if ( scope.axis.search( "Z" ) === - 1 || scope.allowedTranslation.search( "Z" ) === - 1 ) point.z = 0;
+					if ( scope.axis.search( "X" ) === - 1 ) point.x = 0;
+					if ( scope.axis.search( "Y" ) === - 1 ) point.y = 0;
+					if ( scope.axis.search( "Z" ) === - 1 ) point.z = 0;
 
 					point.applyMatrix4( tempMatrix.getInverse( parentRotationMatrix ) );
 
@@ -1001,9 +949,9 @@
 
 					}
 
-					if ( scope.axis.search( "X" ) !== - 1 && scope.allowedTranslation.search( "X" ) !== - 1 ) scope.object.position.x = Math.round( scope.object.position.x / scope.translationSnap ) * scope.translationSnap;
-					if ( scope.axis.search( "Y" ) !== - 1 && scope.allowedTranslation.search( "Y" ) !== - 1 ) scope.object.position.y = Math.round( scope.object.position.y / scope.translationSnap ) * scope.translationSnap;
-					if ( scope.axis.search( "Z" ) !== - 1 && scope.allowedTranslation.search( "Z" ) !== - 1 ) scope.object.position.z = Math.round( scope.object.position.z / scope.translationSnap ) * scope.translationSnap;
+					if ( scope.axis.search( "X" ) !== - 1 ) scope.object.position.x = Math.round( scope.object.position.x / scope.translationSnap ) * scope.translationSnap;
+					if ( scope.axis.search( "Y" ) !== - 1 ) scope.object.position.y = Math.round( scope.object.position.y / scope.translationSnap ) * scope.translationSnap;
+					if ( scope.axis.search( "Z" ) !== - 1 ) scope.object.position.z = Math.round( scope.object.position.z / scope.translationSnap ) * scope.translationSnap;
 
 					if ( scope.space === "local" ) {
 
@@ -1022,7 +970,7 @@
 
 					if ( scope.axis === "XYZ" ) {
 
-						scale = 1 + ( ( point.y ) / 50 );
+						scale = 1 + ( ( point.y ) / Math.max( oldScale.x, oldScale.y, oldScale.z ) );
 
 						scope.object.scale.x = oldScale.x * scale;
 						scope.object.scale.y = oldScale.y * scale;
@@ -1032,43 +980,12 @@
 
 						point.applyMatrix4( tempMatrix.getInverse( worldRotationMatrix ) );
 
-						if ( scope.axis === "X" ) scope.object.scale.x = oldScale.x * ( 1 - point.x / 50 );
-						if ( scope.axis === "Y" ) scope.object.scale.y = oldScale.y * ( 1 + point.y / 50 );
-						if ( scope.axis === "Z" ) scope.object.scale.z = oldScale.z * ( 1 + point.z / 50 );
+						if ( scope.axis === "X" ) scope.object.scale.x = oldScale.x * ( 1 + point.x / oldScale.x );
+						if ( scope.axis === "Y" ) scope.object.scale.y = oldScale.y * ( 1 + point.y / oldScale.y );
+						if ( scope.axis === "Z" ) scope.object.scale.z = oldScale.z * ( 1 + point.z / oldScale.z );
 
 					}
-					
-					if ( scope.scaleSnap !== null ) {
-					
-						if ( scope.axis.search( "X" ) !== - 1 ) {
-						
-							scope.object.scale.x = Math.round( scope.object.scale.x / scope.scaleSnap ) * scope.scaleSnap;
-						
-						}
-						
-						if ( scope.axis.search( "Y" ) !== - 1 ) {
-						
-							scope.object.scale.y = Math.round( scope.object.scale.y / scope.scaleSnap ) * scope.scaleSnap;
-							
-						}
-						
-						if ( scope.axis.search( "Z" ) !== - 1 ) {
-						
-							scope.object.scale.z = Math.round( scope.object.scale.z / scope.scaleSnap ) * scope.scaleSnap;
-							
-						}
-						
-					}
-					
-					if( scope.object.scale.x <= 0 )
-						scope.object.scale.x = 0.000000000001;
-					
-					if( scope.object.scale.y <= 0 )
-						scope.object.scale.y = 0.000000000001;
-					
-					if( scope.object.scale.z <= 0 )
-						scope.object.scale.z = 0.000000000001;
-				
+
 				}
 
 			} else if ( _mode === "rotate" ) {
@@ -1183,17 +1100,32 @@
 
 		function onPointerUp( event ) {
 
+			event.preventDefault(); // Prevent MouseEvent on mobile
+
 			if ( event.button !== undefined && event.button !== 0 ) return;
 
 			if ( _dragging && ( scope.axis !== null ) ) {
 
 				mouseUpEvent.mode = _mode;
-				scope.dispatchEvent( mouseUpEvent )
+				scope.dispatchEvent( mouseUpEvent );
 
 			}
 
 			_dragging = false;
-			onPointerHover( event );
+
+			if ( 'TouchEvent' in window && event instanceof TouchEvent ) {
+
+				// Force "rollover"
+
+				scope.axis = null;
+				scope.update();
+				scope.dispatchEvent( changeEvent );
+
+			} else {
+
+				onPointerHover( event );
+
+			}
 
 		}
 

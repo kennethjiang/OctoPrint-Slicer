@@ -8,7 +8,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libav-tools \
     avrdude \
     curl \
-    cura-engine
+    cura-engine \
+    vim
 
 RUN apt-get clean \
     && rm -rf /tmp/* /var/tmp/*  \
