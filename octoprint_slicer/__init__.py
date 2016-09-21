@@ -127,7 +127,6 @@ class SlicerPlugin(octoprint.plugin.SettingsPlugin,
 	# Upload event
 	@octoprint.plugin.BlueprintPlugin.route("/upload", methods=["POST"])
 	def upload(self) :
-		import pdb; pdb.set_trace();
 		# Check if uploading everything
 		if "Slicer Profile Name" in flask.request.values and "Slicer Name" in flask.request.values and "Printer Profile Name" in flask.request.values and "Slicer Profile Content" in flask.request.values and "After Slicing Action" in flask.request.values :
 
@@ -170,9 +169,9 @@ class SlicerPlugin(octoprint.plugin.SettingsPlugin,
 			if modelModified :
 				fd, modelTemp = tempfile.mkstemp()
 				os.close(fd)
-				shutil.move(modelLocation, modelTemp)
+				shutil.copy(modelLocation, modelTemp)
 
-			fd, temp = tempfile.mkstemp(suffix=".stl")
+			fd, temp = tempfile.mkstemp()
 			os.close(fd)
 
 			output = open(temp, "wb")
@@ -180,9 +179,9 @@ class SlicerPlugin(octoprint.plugin.SettingsPlugin,
 				output.write(chr(ord(character)))
 			output.close()
 
-			profileName = "temp-" + str(uuid.uuid1())
+			self.tempProfileName = "temp-" + str(uuid.uuid1())
 			if flask.request.values["Slicer Name"] == "cura" :
-				self.convertCuraToProfile(temp, profileName, profileName, '')
+				self.convertCuraToProfile(temp, self.tempProfileName, self.tempProfileName, '')
 			elif flask.request.values["Slicer Name"] == "slic3r" :
 				self.convertSlic3rToProfile(temp, '', '', '')
 
@@ -300,9 +299,9 @@ class SlicerPlugin(octoprint.plugin.SettingsPlugin,
 			fd, destFile = tempfile.mkstemp()
 			os.close(fd)
 			self._slicing_manager.slice(flask.request.values["Slicer Name"],
-					modelTemp, #source path
+					modelLocation, #source path
 					destFile,
-					profileName,
+					self.tempProfileName,
 					self)
 
 			# Return ok
@@ -311,8 +310,8 @@ class SlicerPlugin(octoprint.plugin.SettingsPlugin,
 		# Return error
 		return flask.jsonify(dict(value = "Error"))
 
-	def __call():
-		import pdb; pdb.set_trace();
+	def __call__(self, *callback_args, **callback_kwargs):
+		self._slicing_manager.delete_profile("cura", self.tempProfileName)
 
 	def convertCuraToProfile(self, input, name, displayName, description) :
 
