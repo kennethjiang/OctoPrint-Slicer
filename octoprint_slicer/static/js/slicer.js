@@ -27,6 +27,8 @@ $(function() {
         var self = this;
 
         self["profile.layer_height"] = ko.observable(0.2);
+        self["profile.print_bed_temperature"] = ko.observable(60);
+        //self["profile.print_temperature"] = ko.observable(180);
     }
 
     function SlicerViewModel(parameters) {

@@ -63,13 +63,14 @@
                    <label class="control-label">Printing temperature</label>
                    <div class="controls">
                        <input type="number" tabindex="-1" min="150" max="315" step="1">
+                       <!--input data-bind="numericValue: $data['profile.print_temperature']" type="number" tabindex="-1" min="150" max="315" step="1"-->
                        <span class="add-on">°C</span>
                    </div>
                </div>
                <div title="Heatbed temperature" class="input-append">
                    <label class="control-label">Heatbed temperature</label>
                    <div class="controls">
-                       <input type="number" tabindex="-1" min="0" max="110" step="1">
+                       <input data-bind="numericValue: $data['profile.print_bed_temperature']" type="number" tabindex="-1" min="0" max="110" step="1">
                        <span class="add-on">°C</span>
                    </div>
                </div>
