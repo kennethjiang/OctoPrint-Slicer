@@ -26,11 +26,16 @@ $(function() {
     function BasicOverridesViewModel(parameters) {
         var self = this;
 
-        var ARRAY_KEYS = ["profile.print_temperature"];
+        const ARRAY_KEYS = ["profile.print_temperature"];
+
 
         self["profile.layer_height"] = ko.observable(0.2);
         self["profile.print_bed_temperature"] = ko.observable(60);
         self["profile.print_temperature"] = ko.observable(180);
+        self["profile.fill_density"] = ko.observable(20);
+        self["profile.wall_thickness"] = ko.observable(0.8);
+        self["profile.print_speed"] = ko.observable(50);
+        self["profile.solid_layer_thickness"] = ko.observable(0.8);
 
         self.toJS = function() {
             var result = ko.toJS(self);
@@ -39,7 +44,6 @@ $(function() {
                     result[key] = [result[key]];
                 }
             }
-
             return result;
         }
     }
