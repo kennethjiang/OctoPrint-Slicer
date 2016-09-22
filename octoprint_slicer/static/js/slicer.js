@@ -110,16 +110,7 @@ $(function() {
 
             $("#slicer-viewport").empty().append(`
                     <div class="model">
-                    <button class="translate disabled" title="Translate"><img src="` + PLUGIN_BASEURL + `slicer/static/img/translate.png"></button>
                     <button class="rotate" title="Rotate"><img src="` + PLUGIN_BASEURL + `slicer/static/img/rotate.png"></button>
-                    <button class="scale" title="Scale"><img src="` + PLUGIN_BASEURL + `slicer/static/img/scale.png"></button>
-                    </div>
-                    <div class="values translate">
-                    <div>
-                    <p><span class="axis x">X</span><input type="number" step="any" name="x" min=""><span title="">mm</span></p>
-                    <p><span class="axis y">Y</span><input type="number" step="any" name="y" min=""><span title="">mm</span></p>
-                    <span></span>
-                    </div>
                     </div>
                     <div class="values rotate">
                     <div>
@@ -149,13 +140,6 @@ $(function() {
             self.transformControls.addEventListener("change", self.updateTransformInputs);
             self.scene.add(self.transformControls);
 
-            $("#slicer-viewport button.translate").click(function(event) {
-                // Set selection mode to translate
-                self.transformControls.setMode("translate");
-                $("#slicer-viewport button.translate").removeClass("disabled");
-                $("#slicer-viewport .values div").removeClass("show")
-                    $("#slicer-viewport .translate.values div").addClass("show").children('p').addClass("show");
-            });
             $("#slicer-viewport button.rotate").click(function(event) {
                 // Set selection mode to rotate
                 self.transformControls.setMode("rotate");
@@ -203,6 +187,7 @@ $(function() {
 
                 self.scene.add( mesh );
                 self.transformControls.attach(mesh);
+                self.transformControls.setMode("rotate");
                 self.updateTransformInputs();
                 self.render();
             } );
@@ -226,15 +211,6 @@ $(function() {
                             model.rotation.z = THREE.Math.degToRad(parseFloat(input.val()));
                             break;
                     }
-                } else if (input.closest(".values").hasClass("translate")) {
-                    switch(input.attr("name")) {
-                        case "x":
-                            model.position.x = parseFloat(input.val());
-                            break;
-                        case "y":
-                            model.position.y = parseFloat(input.val());
-                            break;
-                    }
                 }
                 self.fixZPosition(model);
                 self.render();
@@ -253,8 +229,6 @@ $(function() {
 
         self.updateTransformInputs = function () {
             var model = self.transformControls.object;
-            $("#slicer-viewport .translate.values input[name=\"x\"]").val(model.position.x.toFixed(3)).attr("min", '');
-            $("#slicer-viewport .translate.values input[name=\"y\"]").val(model.position.y.toFixed(3)).attr("min", '');
             $("#slicer-viewport .rotate.values input[name=\"x\"]").val((model.rotation.x * 180 / Math.PI).toFixed(3)).attr("min", '');
             $("#slicer-viewport .rotate.values input[name=\"y\"]").val((model.rotation.y * 180 / Math.PI).toFixed(3)).attr("min", '');
             $("#slicer-viewport .rotate.values input[name=\"z\"]").val((model.rotation.z * 180 / Math.PI).toFixed(3)).attr("min", '');
