@@ -4,7 +4,7 @@
 <div>
 <ul class="nav nav-tabs">
   <li class="active"><a data-toggle="tab" href="#general">General</a></li>
-  <li><a data-toggle="tab" href="#basic">Basic</a></li>
+  <li><a data-toggle="tab" href="#basic_profile">Basic</a></li>
   <li><a data-toggle="tab" href="#advanced">Advanced</a></li>
 </ul>
 </div>
@@ -54,7 +54,7 @@
         </form>
     </div>
   </div>
-  <div id="basic" class="tab-pane fade">
+  <div id="basic_overrides" class="tab-pane fade">
     <div class="wrapper">
         <form class="form-horizontal">
            <div class="row">
@@ -76,7 +76,7 @@
                <div title="Height of each layer" class="input-append">
                    <label class="control-label">Layer height</label>
                    <div class="controls">
-                       <input type="number" tabindex="-1" min="0.01" max="0.35" step="0.01">
+                       <input data-bind="value: layer_height" type="number" tabindex="-1" min="0.01" max="0.35" step="0.01">
                        <span class="add-on">mm</span>
                    </div>
                </div>

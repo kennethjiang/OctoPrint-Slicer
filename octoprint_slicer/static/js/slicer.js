@@ -5,6 +5,12 @@
  * License: AGPLv3
  */
 $(function() {
+    function BasicOverridesViewModel(parameters) {
+        var self = this;
+
+        this.layer_height = ko.observable(0.2);
+    }
+
     function SlicerViewModel(parameters) {
         var self = this;
 
@@ -12,6 +18,7 @@ $(function() {
         // self.loginStateViewModel = parameters[0];
         // self.settingsViewModel = parameters[1];
         self.slicingViewModel = parameters[0];
+        self.basicOverridesViewModel = parameters[1];
 
         // Override slicingViewModel.show to surpress default slicing behavior
         self.slicingViewModel.show = function(target, file, force) {
@@ -294,7 +301,45 @@ $(function() {
                 contentType: false,
                 // On success
                 success: function(data) {
-                    self.slicingViewModel.slice();
+                    var slicingVM = self.slicingViewModel;
+
+                    var destinationFilename = slicingVM._sanitize(slicingVM.destinationFilename());
+
+                    var destinationExtensions = slicingVM.data[slicingVM.slicer()] && slicingVM.data[slicingVM.slicer()].extensions && slicingVM.data[slicingVM.slicer()].extensions.destination
+                                                ? slicingVM.data[slicingVM.slicer()].extensions.destination
+                                                : ["???"];
+                    if (!_.any(destinationExtensions, function(extension) {
+                            return _.endsWith(destinationFilename.toLowerCase(), "." + extension.toLowerCase());
+                        })) {
+                        destinationFilename = destinationFilename + "." + destinationExtensions[0];
+                    }
+
+                    var data = {
+                        command: "slice",
+                        slicer: slicingVM.slicer(),
+                        profile: slicingVM.profile(),
+                        printerProfile: slicingVM.printerProfile(),
+                        destination: destinationFilename,
+                        overrides: ko.toJS(self.basicOverridesViewModel)
+                    };
+
+                    if (slicingVM.afterSlicing() == "print") {
+                        data["print"] = true;
+                    } else if (slicingVM.afterSlicing() == "select") {
+                        data["select"] = true;
+                    }
+
+                    $.ajax({
+                        url: API_BASEURL + "files/" + slicingVM.target + "/" + slicingVM.file(),
+                        type: "POST",
+                        dataType: "json",
+                        contentType: "application/json; charset=UTF-8",
+                        data: JSON.stringify(data)
+                    });
+                    slicingVM.destinationFilename(undefined);
+                    slicingVM.slicer(slicingVM.defaultSlicer);
+                    slicingVM.profile(slicingVM.defaultProfile);
+
                 }
             });
         };
@@ -319,9 +364,14 @@ $(function() {
         SlicerViewModel,
 
         // e.g. loginStateViewModel, settingsViewModel, ...
-        [ "slicingViewModel", /* "loginStateViewModel", "settingsViewModel" */ ],
+        [ "slicingViewModel", "basicOverridesViewModel" ],
 
         // e.g. #settings_plugin_slicer, #tab_plugin_slicer, ...
         [ "#slicer" ]
+    ],
+    [
+        BasicOverridesViewModel,
+        [],
+        [ "#basic_overrides"]
     ]);
 });
