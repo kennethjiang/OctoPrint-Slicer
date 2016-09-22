@@ -26,9 +26,22 @@ $(function() {
     function BasicOverridesViewModel(parameters) {
         var self = this;
 
+        var ARRAY_KEYS = ["profile.print_temperature"];
+
         self["profile.layer_height"] = ko.observable(0.2);
         self["profile.print_bed_temperature"] = ko.observable(60);
-        //self["profile.print_temperature"] = ko.observable(180);
+        self["profile.print_temperature"] = ko.observable(180);
+
+        self.toJS = function() {
+            var result = ko.toJS(self);
+            for (var key in result) {
+                if (_.contains(ARRAY_KEYS, key)) {
+                    result[key] = [result[key]];
+                }
+            }
+
+            return result;
+        }
     }
 
     function SlicerViewModel(parameters) {
@@ -341,7 +354,7 @@ $(function() {
                         printerProfile: slicingVM.printerProfile(),
                         destination: destinationFilename,
                     };
-                    _.extend(data, ko.toJS(self.basicOverridesViewModel));
+                    _.extend(data, self.basicOverridesViewModel.toJS());
 
                     if (slicingVM.afterSlicing() == "print") {
                         data["print"] = true;
