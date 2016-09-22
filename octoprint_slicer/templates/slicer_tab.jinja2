@@ -5,7 +5,6 @@
 <ul class="nav nav-tabs">
   <li class="active"><a data-toggle="tab" href="#general">General</a></li>
   <li><a data-toggle="tab" href="#basic_overrides">Basic</a></li>
-  <li><a data-toggle="tab" href="#advanced">Advanced</a></li>
 </ul>
 </div>
 <div class="tab-content">
@@ -24,12 +23,6 @@
                         <label class="control-label">{{ _('Printer Profile') }}</label>
                         <div class="controls">
                             <select data-bind="options: printerProfiles.profiles.items, optionsText: 'name', optionsValue: 'id', value: printerProfile, optionsCaption: '{{ _('Select a printer profile...') }}'"></select>
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label class="control-label">{{ _('After slicing...') }}</label>
-                        <div class="controls">
-                            <select data-bind="options: afterSlicingOptions, optionsText: 'text', optionsValue: 'value', value: afterSlicing"></select>
                         </div>
                     </div>
                 </div>
