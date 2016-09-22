@@ -330,7 +330,7 @@ $(function() {
                     }
 
                     $.ajax({
-                        url: API_BASEURL + "files/" + slicingVM.target + "/" + slicingVM.file(),
+                        url: API_BASEURL + "plugin/slicer/files/" + slicingVM.target + "/" + slicingVM.file(),
                         type: "POST",
                         dataType: "json",
                         contentType: "application/json; charset=UTF-8",
