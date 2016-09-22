@@ -4,7 +4,7 @@
 <div>
 <ul class="nav nav-tabs">
   <li class="active"><a data-toggle="tab" href="#general">General</a></li>
-  <li><a data-toggle="tab" href="#basic_profile">Basic</a></li>
+  <li><a data-toggle="tab" href="#basic_overrides">Basic</a></li>
   <li><a data-toggle="tab" href="#advanced">Advanced</a></li>
 </ul>
 </div>
@@ -76,7 +76,7 @@
                <div title="Height of each layer" class="input-append">
                    <label class="control-label">Layer height</label>
                    <div class="controls">
-                       <input data-bind="value: layer_height" type="number" tabindex="-1" min="0.01" max="0.35" step="0.01">
+                       <input data-bind="numericValue: $data['profile.layer_height']" type="number" tabindex="-1" min="0.01" max="0.35" step="0.01">
                        <span class="add-on">mm</span>
                    </div>
                </div>

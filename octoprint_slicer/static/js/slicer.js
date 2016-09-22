@@ -5,10 +5,28 @@
  * License: AGPLv3
  */
 $(function() {
+    ko.bindingHandlers.numericValue = {
+        init : function(element, valueAccessor, allBindings, data, context) {
+            var interceptor = ko.computed({
+                read: function() {
+                    return ko.unwrap(valueAccessor());
+                },
+                write: function(value) {
+                    if (!isNaN(value)) {
+                        valueAccessor()(parseFloat(value));
+                    }
+                },
+                disposeWhenNodeIsRemoved: element
+            });
+
+            ko.applyBindingsToNode(element, { value: interceptor }, context);
+        }
+    };
+
     function BasicOverridesViewModel(parameters) {
         var self = this;
 
-        this.layer_height = ko.observable(0.2);
+        self["profile.layer_height"] = ko.observable(0.2);
     }
 
     function SlicerViewModel(parameters) {
@@ -320,8 +338,8 @@ $(function() {
                         profile: slicingVM.profile(),
                         printerProfile: slicingVM.printerProfile(),
                         destination: destinationFilename,
-                        overrides: ko.toJS(self.basicOverridesViewModel)
                     };
+                    _.extend(data, ko.toJS(self.basicOverridesViewModel));
 
                     if (slicingVM.afterSlicing() == "print") {
                         data["print"] = true;
