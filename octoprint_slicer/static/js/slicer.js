@@ -5,49 +5,6 @@
  * License: AGPLv3
  */
 $(function() {
-    ko.bindingHandlers.numericValue = {
-        init : function(element, valueAccessor, allBindings, data, context) {
-            var interceptor = ko.computed({
-                read: function() {
-                    return ko.unwrap(valueAccessor());
-                },
-                write: function(value) {
-                    if (!isNaN(value)) {
-                        valueAccessor()(parseFloat(value));
-                    }
-                },
-                disposeWhenNodeIsRemoved: element
-            });
-
-            ko.applyBindingsToNode(element, { value: interceptor }, context);
-        }
-    };
-
-    function BasicOverridesViewModel(parameters) {
-        var self = this;
-
-        const ARRAY_KEYS = ["profile.print_temperature"];
-
-
-        self["profile.layer_height"] = ko.observable(0.2);
-        self["profile.print_bed_temperature"] = ko.observable(60);
-        self["profile.print_temperature"] = ko.observable(180);
-        self["profile.fill_density"] = ko.observable(20);
-        self["profile.wall_thickness"] = ko.observable(0.8);
-        self["profile.print_speed"] = ko.observable(50);
-        self["profile.solid_layer_thickness"] = ko.observable(0.8);
-
-        self.toJS = function() {
-            var result = ko.toJS(self);
-            for (var key in result) {
-                if (_.contains(ARRAY_KEYS, key)) {
-                    result[key] = [result[key]];
-                }
-            }
-            return result;
-        }
-    }
-
     function SlicerViewModel(parameters) {
         var self = this;
 
@@ -296,14 +253,9 @@ $(function() {
         }
 
         self.slice = function() {
-            self.saveModel(self.models[0]);
-        }
-
-        self.saveModel = function( model ) {
-            // Create request
+            var model = self.models[0];
             var form = new FormData();
             form.append("file", self.blobFromModel(model), self.slicingViewModel.file());
-            // Send request
             $.ajax({
                 url: API_BASEURL + "files/local",
                 type: "POST",
@@ -312,6 +264,7 @@ $(function() {
                 contentType: false,
                 // On success
                 success: function(data) {
+                    debugger;
                     var slicingVM = self.slicingViewModel;
 
                     var destinationFilename = slicingVM._sanitize(slicingVM.destinationFilename());
@@ -375,10 +328,5 @@ $(function() {
 
         // e.g. #settings_plugin_slicer, #tab_plugin_slicer, ...
         [ "#slicer" ]
-    ],
-    [
-        BasicOverridesViewModel,
-        [],
-        [ "#basic_overrides"]
     ]);
 });
