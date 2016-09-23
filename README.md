@@ -1,6 +1,10 @@
-# OctoPrint-Slicer
+# OctoPrint Slicer
 
-**TODO:** Describe what your plugin does.
+A full-blown GUI-based slicer. Rotate and scale model; set layer height and other critical parameters.
+
+A picture is worth 1000 words:
+
+![Slicer plugin screenshot](/master/docs/screenshot1.png?raw=true "Slicer Screen Shot")
 
 ## Setup
 
@@ -8,10 +12,3 @@ Install via the bundled [Plugin Manager](https://github.com/foosel/OctoPrint/wik
 or manually using this URL:
 
     https://github.com/kennethjiang/OctoPrint-Slicer/archive/master.zip
-
-**TODO:** Describe how to install your plugin, if more needs to be done than just installing it via pip or through
-the plugin manager.
-
-## Configuration
-
-**TODO:** Describe your plugin's configuration options (if any).
