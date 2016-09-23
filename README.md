@@ -4,7 +4,7 @@ A full-blown GUI-based slicer. Rotate and scale model; set layer height and othe
 
 A picture is worth 1000 words:
 
-![Slicer plugin screenshot](/master/docs/screenshot1.png?raw=true "Slicer Screen Shot")
+![Slicer plugin screenshot](/docs/screenshot1.png?raw=true "Slicer Screen Shot")
 
 ## Setup
 
