@@ -347,10 +347,6 @@ $(function() {
                         contentType: "application/json; charset=UTF-8",
                         data: JSON.stringify(data)
                     });
-                    slicingVM.destinationFilename(undefined);
-                    slicingVM.slicer(slicingVM.defaultSlicer);
-                    slicingVM.profile(slicingVM.defaultProfile);
-
                 }
             });
         };
