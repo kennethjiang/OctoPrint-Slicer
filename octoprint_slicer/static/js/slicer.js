@@ -264,7 +264,6 @@ $(function() {
                 contentType: false,
                 // On success
                 success: function(data) {
-                    debugger;
                     var slicingVM = self.slicingViewModel;
 
                     var destinationFilename = slicingVM._sanitize(slicingVM.destinationFilename());

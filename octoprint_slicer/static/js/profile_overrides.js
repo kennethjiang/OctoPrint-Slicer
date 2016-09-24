@@ -42,12 +42,12 @@ $(function() {
         // initialize all observables
         _.forEach(ALL_KEYS, function(k) { self["profile." + k] = ko.observable(); });
 
-        self.updateOverrides = function(profile) {
+        self.updateOverridesFromProfile = function(profile) {
             _.forEach(ITEM_KEYS, function(k) { self["profile." + k]( profile[k] ); });
             _.forEach(ARRAY_KEYS, function(k) { self["profile." + k]( profile[k][0] ); });
         };
 
-        self.updateOverridesFromProfile = function(newValue) {
+        self.updateOverrides = function(newValue) {
             var slicing = self.slicingViewModel;
 
             if ( slicing.profile() && slicing.slicer() ) {
@@ -56,17 +56,23 @@ $(function() {
 					type: "GET",
 					// On success
 					success: function(data) {
-                        self.updateOverrides(data.data);
+                        self.updateOverridesFromProfile(data.data);
                     }
                 });
             }
         };
 
-        self.slicingViewModel.profile.subscribe( self.updateOverridesFromProfile );
-        self.slicingViewModel.slicer.subscribe( self.updateOverridesFromProfile );
+        self.slicingViewModel.profile.subscribe( self.updateOverrides );
+        self.slicingViewModel.slicer.subscribe( self.updateOverrides );
 
         self.toJS = function() {
-            var result = ko.toJS(self);
+            var result = ko.mapping.toJS(self, {
+                ignore: ["slicingViewModel",
+                         "updateOverridesFromProfile",
+                         "updateOverrides",
+                         "toJS"]
+            });
+
             for (var key in result) {
                 if (_.contains(ARRAY_KEYS, key.replace("profile.", ""))) {
                     result[key] = [result[key]];
