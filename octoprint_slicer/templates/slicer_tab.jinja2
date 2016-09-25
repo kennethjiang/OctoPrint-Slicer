@@ -5,6 +5,7 @@
 <ul class="nav nav-tabs">
   <li class="active"><a data-toggle="tab" href="#general">General</a></li>
   <li><a data-toggle="tab" href="#basic_overrides">Basic</a></li>
+  <li><a data-toggle="tab" href="#advanced_overrides">Advanced</a></li>
 </ul>
 </div>
 <div class="tab-content">
@@ -48,62 +49,85 @@
     </div>
   </div>
   <div id="basic_overrides" class="tab-pane fade">
+      <div class="wrapper">
+          <form class="form-horizontal">
+              <div class="row">
+                  <div class="span3">
+                      <div title="Printing temperature" class="input-append">
+                          <label class="control-label">Printing temperature</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.print_temperature']" type="number" tabindex="-1" min="150" max="315" step="1">
+                              <span class="add-on">°C</span>
+                          </div>
+                      </div>
+                      <div title="Heatbed temperature" class="input-append">
+                          <label class="control-label">Heatbed temperature</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.print_bed_temperature']" type="number" tabindex="-1" min="0" max="110" step="1">
+                              <span class="add-on">°C</span>
+                          </div>
+                      </div>
+                      <div title="Height of each layer" class="input-append">
+                          <label class="control-label">Layer height</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.layer_height']" type="number" tabindex="-1" min="0.01" max="0.35" step="0.01">
+                              <span class="add-on">mm</span>
+                          </div>
+                      </div>
+                      <div title="Percentage of the model that is filled in" class="input-append">
+                          <label class="control-label">Fill density</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.fill_density']" type="number" tabindex="-1" min="0" max="100" step="0.01">
+                              <span class="add-on">%</span>
+                          </div>
+                      </div>
+                  </div>
+                  <div class="span3">
+                      <div title="Shell thickness" class="input-append">
+                          <label class="control-label">Shell thickness</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.wall_thickness']" type="number" tabindex="-1" min="0.1" max="2" step="0.05">
+                              <span class="add-on">mm</span>
+                          </div>
+                      </div>
+                      <div title="Speed of the extruder's movements while printing" class="input-append">
+                          <label class="control-label">Print speed</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.print_speed']" type="number" tabindex="-1" min="2" max="150" step="0.1">
+                              <span class="add-on">mm/s</span>
+                          </div>
+                      </div>
+                      <div title="Top and bottom thickness" class="input-append">
+                          <label class="control-label">Top/bottom</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.solid_layer_thickness']" type="number" tabindex="-1" min="0.1" max="2" step="0.05">
+                              <span class="add-on">mm</span>
+                          </div>
+                      </div>
+                      <div title="Support for overhangs" class="input-append">
+                          <label class="control-label">Support</label>
+                          <div class="controls">
+                              <select data-bind="options: $data.optionsForKey('support'), value: $data['profile.support'], valueAllowUnset: false"></select>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </form>
+      </div>
+  </div>
+  <div id="advanced_overrides" class="tab-pane fade">
     <div class="wrapper">
         <form class="form-horizontal">
            <div class="row">
-             <div class="span3">
-               <div title="Printing temperature" class="input-append">
-                   <label class="control-label">Printing temperature</label>
-                   <div class="controls">
-                       <input data-bind="numericValue: $data['profile.print_temperature']" type="number" tabindex="-1" min="150" max="315" step="1">
-                       <span class="add-on">°C</span>
-                   </div>
-               </div>
-               <div title="Heatbed temperature" class="input-append">
-                   <label class="control-label">Heatbed temperature</label>
-                   <div class="controls">
-                       <input data-bind="numericValue: $data['profile.print_bed_temperature']" type="number" tabindex="-1" min="0" max="110" step="1">
-                       <span class="add-on">°C</span>
-                   </div>
-               </div>
-               <div title="Height of each layer" class="input-append">
-                   <label class="control-label">Layer height</label>
-                   <div class="controls">
-                       <input data-bind="numericValue: $data['profile.layer_height']" type="number" tabindex="-1" min="0.01" max="0.35" step="0.01">
-                       <span class="add-on">mm</span>
-                   </div>
-               </div>
-               <div title="Percentage of the model that is filled in" class="input-append">
-                   <label class="control-label">Fill density</label>
-                   <div class="controls">
-                       <input data-bind="numericValue: $data['profile.fill_density']" type="number" tabindex="-1" min="0" max="100" step="0.01">
-                       <span class="add-on">%</span>
-                   </div>
-               </div>
-             </div>
-             <div class="span3">
-               <div title="Shell thickness" class="input-append">
-                   <label class="control-label">Shell thickness</label>
-                   <div class="controls">
-                       <input data-bind="numericValue: $data['profile.wall_thickness']" type="number" tabindex="-1" min="0.1" max="2" step="0.05">
-                       <span class="add-on">mm</span>
-                   </div>
-               </div>
-               <div title="Speed of the extruder's movements while printing" class="input-append">
-                   <label class="control-label">Print speed</label>
-                   <div class="controls">
-                       <input data-bind="numericValue: $data['profile.print_speed']" type="number" tabindex="-1" min="2" max="150" step="0.1">
-                       <span class="add-on">mm/s</span>
-                   </div>
-               </div>
-               <div title="Top and bottom thickness" class="input-append">
-                   <label class="control-label">Top/bottom</label>
-                   <div class="controls">
-                       <input data-bind="numericValue: $data['profile.solid_layer_thickness']" type="number" tabindex="-1" min="0.1" max="2" step="0.05">
-                       <span class="add-on">mm</span>
-                   </div>
-               </div>
-              </div>
+               <div class="span3">
+                    <div title="Printing temperature" class="input-append">
+                        <label class="control-label">Printing temperature</label>
+                        <div class="controls">
+                            <input data-bind="numericValue: $data['profile.print_temperature']" type="number" tabindex="-1" min="150" max="315" step="1">
+                            <span class="add-on">°C</span>
+                        </div>
+                    </div>
+                </div>
             </div>
           </form>
        </div>

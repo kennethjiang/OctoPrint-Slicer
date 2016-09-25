@@ -271,3 +271,10 @@
     margin-left: 3px;
     margin-bottom: 10px;
 }
+
+.input-append select {
+    display: inline;
+    width: 120px;
+    margin-left: 3px;
+    margin-bottom: 10px;
+}

@@ -25,14 +25,16 @@ $(function() {
 
     function BasicOverridesViewModel(parameters) {
         var ARRAY_KEYS = ["print_temperature"],
+            ENUM_KEYS = { "support" : ko.observableArray(["none", "buildplate", "everywhere"])},
             ITEM_KEYS = ["layer_height",
                         "print_bed_temperature",
                         "fill_density",
                         "wall_thickness",
                         "print_speed",
-                        "solid_layer_thickness"];
+                        "solid_layer_thickness",
+                        "support"];
 
-        var ALL_KEYS = ITEM_KEYS.concat(ARRAY_KEYS);
+        var ALL_KEYS = ITEM_KEYS.concat(ARRAY_KEYS).concat(Object.keys(ENUM_KEYS));
 
 
         var self = this;
@@ -42,8 +44,13 @@ $(function() {
         // initialize all observables
         _.forEach(ALL_KEYS, function(k) { self["profile." + k] = ko.observable(); });
 
+        self.optionsForKey = function(key) {
+            return ENUM_KEYS[key];
+        };
+
         self.updateOverridesFromProfile = function(profile) {
             _.forEach(ITEM_KEYS, function(k) { self["profile." + k]( profile[k] ); });
+            _.forEach(ENUM_KEYS, function(v, k) { self["profile." + k]( profile[k] ); });
             _.forEach(ARRAY_KEYS, function(k) { self["profile." + k]( profile[k][0] ); });
         };
 
