@@ -23,23 +23,14 @@ $(function() {
         }
     };
 
-    function BasicOverridesViewModel(parameters) {
-        var ARRAY_KEYS = ["print_temperature"],
-            ENUM_KEYS = { "support" : ko.observableArray(["none", "buildplate", "everywhere"])},
-            ITEM_KEYS = ["layer_height",
-                        "print_bed_temperature",
-                        "fill_density",
-                        "wall_thickness",
-                        "print_speed",
-                        "solid_layer_thickness",
-                        "support"];
-
-        var ALL_KEYS = ITEM_KEYS.concat(ARRAY_KEYS).concat(Object.keys(ENUM_KEYS));
-
-
+    function OverridesViewModel(parameters, array_keys, enum_keys, item_keys) {
         var self = this;
-
         self.slicingViewModel = parameters[0];
+
+        var ARRAY_KEYS = (typeof array_keys === 'undefined') ? [] : array_keys,
+            ENUM_KEYS = (typeof enum_keys === 'undefined') ? {} : enum_keys,
+            ITEM_KEYS = (typeof item_keys === 'undefined') ? [] : item_keys;
+        var ALL_KEYS = ITEM_KEYS.concat(ARRAY_KEYS).concat(Object.keys(ENUM_KEYS));
 
         // initialize all observables
         _.forEach(ALL_KEYS, function(k) { self["profile." + k] = ko.observable(); });
@@ -77,7 +68,8 @@ $(function() {
                 ignore: ["slicingViewModel",
                          "updateOverridesFromProfile",
                          "updateOverrides",
-                         "toJS"]
+                         "toJS",
+                         "optionsForKey"]
             });
 
             for (var key in result) {
@@ -86,8 +78,22 @@ $(function() {
                 }
             }
             return result;
-        }
+        };
     }
+
+    function BasicOverridesViewModel(parameters) {
+        OverridesViewModel.call(this, parameters,
+                            ["print_temperature"],
+                            { "support" : ko.observableArray(["none", "buildplate", "everywhere"])},
+                            ["layer_height",
+                            "print_bed_temperature",
+                            "fill_density",
+                            "wall_thickness",
+                            "print_speed",
+                            "solid_layer_thickness",
+                            "support"]);
+    }
+
 
     // view model class, parameters for constructor, container to bind to
     OCTOPRINT_VIEWMODELS.push([
