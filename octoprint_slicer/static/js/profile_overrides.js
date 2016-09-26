@@ -94,11 +94,23 @@ $(function() {
                             "support"]);
     }
 
+    function AdvancedOverridesViewModel(parameters) {
+        OverridesViewModel.call(this, parameters,
+                            [],
+                            { "platform_adhesion" : ko.observableArray(["none", "brim", "raft"])},
+                            []);
+    }
+
 
     // view model class, parameters for constructor, container to bind to
     OCTOPRINT_VIEWMODELS.push([
         BasicOverridesViewModel,
         [ "slicingViewModel" ],
         [ "#basic_overrides" ]
+    ],
+    [
+        AdvancedOverridesViewModel,
+        [ "slicingViewModel" ],
+        [ "#advanced_overrides" ]
     ]);
 });

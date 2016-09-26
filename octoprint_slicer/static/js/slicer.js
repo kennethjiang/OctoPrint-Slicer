@@ -13,6 +13,7 @@ $(function() {
         // self.settingsViewModel = parameters[1];
         self.slicingViewModel = parameters[0];
         self.basicOverridesViewModel = parameters[1];
+        self.advancedOverridesViewModel = parameters[2];
 
         // Override slicingViewModel.show to surpress default slicing behavior
         self.slicingViewModel.show = function(target, file, force) {
@@ -285,6 +286,7 @@ $(function() {
                         destination: destinationFilename,
                     };
                     _.extend(data, self.basicOverridesViewModel.toJS());
+                    _.extend(data, self.advancedOverridesViewModel.toJS());
 
                     if (slicingVM.afterSlicing() == "print") {
                         data["print"] = true;
@@ -323,7 +325,7 @@ $(function() {
         SlicerViewModel,
 
         // e.g. loginStateViewModel, settingsViewModel, ...
-        [ "slicingViewModel", "basicOverridesViewModel" ],
+        [ "slicingViewModel", "basicOverridesViewModel", "advancedOverridesViewModel" ],
 
         // e.g. #settings_plugin_slicer, #tab_plugin_slicer, ...
         [ "#slicer" ]

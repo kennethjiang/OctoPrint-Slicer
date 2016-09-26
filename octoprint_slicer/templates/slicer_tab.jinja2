@@ -120,11 +120,10 @@
         <form class="form-horizontal">
            <div class="row">
                <div class="span3">
-                    <div title="Printing temperature" class="input-append">
-                        <label class="control-label">Printing temperature</label>
+                    <div title="Platform adhesion type" class="input-append">
+                        <label class="control-label">Adhension</label>
                         <div class="controls">
-                            <input data-bind="numericValue: $data['profile.print_temperature']" type="number" tabindex="-1" min="150" max="315" step="1">
-                            <span class="add-on">°C</span>
+                          <select data-bind="options: $data.optionsForKey('platform_adhesion'), value: $data['profile.platform_adhesion'], valueAllowUnset: false"></select>
                         </div>
                     </div>
                 </div>
