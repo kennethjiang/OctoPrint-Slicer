@@ -52,10 +52,6 @@ $(function() {
             directionalLight.position.set( 0, 0, 500 );
             self.scene.add( directionalLight );
 
-            self.scene.add(new THREE.AxisHelper(50));
-
-            // renderer
-
             self.renderer = new THREE.WebGLRenderer( { antialias: true } );
             self.renderer.setClearColor( 0xd8d8d8 );
             self.renderer.setSize( CANVAS_WIDTH, CANVAS_HEIGHT );
