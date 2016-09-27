@@ -36,7 +36,6 @@ $(function() {
 
 
         self.init = function() {
-            self.models = [];
             self.container = document.getElementById( 'slicer-canvas' );
 
             self.camera = new THREE.PerspectiveCamera( 45, 1.0, 0.1, 5000 );
@@ -129,22 +128,20 @@ $(function() {
 
         };
 
-        self.loadSTL = function(target, file, force=true) {
-            if (force) {
-                self.models.forEach((model) => {
-                    self.scene.remove(model);
-                });
+        self.loadSTL = function(target, file) {
+            if (self.model) {
+                self.scene.remove(self.model);
+                self.transformControls.detach();
             }
 
             var loader = new THREE.STLLoader();
             loader.load(BASEURL + "downloads/files/" + target + "/" + file, function ( geometry ) {
                 var material = new THREE.MeshPhongMaterial({color: 0xff5533, specular: 0xff5533});
-                var mesh = new THREE.Mesh( geometry, material );
-                mesh.castShadow = true;
-                self.models.push(mesh);
+                self.model = new THREE.Mesh( geometry, material );
+                self.model.castShadow = true;
 
-                self.scene.add( mesh );
-                self.transformControls.attach(mesh);
+                self.scene.add( self.model );
+                self.transformControls.attach(self.model);
                 self.transformControls.setMode("rotate");
                 self.updateTransformInputs();
                 self.render();
@@ -254,9 +251,8 @@ $(function() {
         }
 
         self.slice = function() {
-            var model = self.models[0];
             var form = new FormData();
-            form.append("file", self.blobFromModel(model), self.slicingViewModel.file());
+            form.append("file", self.blobFromModel(self.model), self.slicingViewModel.file());
             $.ajax({
                 url: API_BASEURL + "files/local",
                 type: "POST",
