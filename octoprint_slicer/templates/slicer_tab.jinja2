@@ -116,20 +116,28 @@
       </div>
   </div>
   <div id="advanced_overrides" class="tab-pane fade">
-    <div class="wrapper">
-        <form class="form-horizontal">
-           <div class="row">
-               <div class="span3">
-                    <div title="Platform adhesion type" class="input-append">
-                        <label class="control-label">Adhension</label>
-                        <div class="controls">
-                          <select data-bind="options: $data.optionsForKey('platform_adhesion'), value: $data['profile.platform_adhesion'], valueAllowUnset: false"></select>
-                        </div>
-                    </div>
-                </div>
-            </div>
+      <div class="wrapper">
+          <form class="form-horizontal">
+              <div class="row">
+                  <div class="span3">
+                      <div title="Platform adhesion type" class="input-append">
+                          <label class="control-label">Adhension</label>
+                          <div class="controls">
+                            <select data-bind="options: $data.optionsForKey('platform_adhesion'), value: $data['profile.platform_adhesion'], valueAllowUnset: false"></select>
+                          </div>
+                      </div>
+                  </div>
+                  <div class="span3">
+                      <div title="Enable filament retraction" class="input-append">
+                          <label class="control-label">Retraction</label>
+                          <div class="controls">
+                              <input type="checkbox" data-bind="checked: $data['profile.retraction_enable']">
+                          </div>
+                      </div>
+                  </div>
+              </div>
           </form>
-       </div>
+      </div>
   </div>
 </div>
 <div id="slicer">
