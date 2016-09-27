@@ -278,3 +278,8 @@
     margin-left: 3px;
     margin-bottom: 10px;
 }
+
+.input-append textarea {
+    width: 100%;
+    min-height: 180px;
+}
