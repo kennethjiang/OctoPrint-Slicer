@@ -98,7 +98,13 @@ $(function() {
         OverridesViewModel.call(this, parameters,
                             [],
                             { "platform_adhesion" : ko.observableArray(["none", "brim", "raft"])},
-                            ["retraction_enable"]);
+                            ["retraction_enable",
+                             "travel_speed",
+                             "outer_shell_speed",
+                             "inner_shell_speed",
+                             "infill_speed",
+                             "bottom_layer_speed"
+                             ]);
     }
 
 

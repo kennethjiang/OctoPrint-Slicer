@@ -120,14 +120,49 @@
           <form class="form-horizontal">
               <div class="row">
                   <div class="span3">
+                      <div title="Travel speed while not printing" class="input-append">
+                          <label class="control-label">Travel speed</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.travel_speed']" type="number" tabindex="-1" min="0" max="300" step="1">
+                              <span class="add-on">mm/s</span>
+                          </div>
+                      </div>
+                      <div title="Speed while printing infill" class="input-append">
+                          <label class="control-label">Infill speed</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.infill_speed']" type="number" tabindex="-1" min="0" max="300" step="1">
+                              <span class="add-on">mm/s</span>
+                          </div>
+                      </div>
+                      <div title="Speed while printing outer shell" class="input-append">
+                          <label class="control-label">Outer shell speed</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.outer_shell_speed']" type="number" tabindex="-1" min="0" max="300" step="1">
+                              <span class="add-on">mm/s</span>
+                          </div>
+                      </div>
+                      <div title="Speed while printing inner shell" class="input-append">
+                          <label class="control-label">Inner shell speed</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.inner_shell_speed']" type="number" tabindex="-1" min="0" max="300" step="1">
+                              <span class="add-on">mm/s</span>
+                          </div>
+                      </div>
+                      <div title="Speed while printing Bottom layer" class="input-append">
+                          <label class="control-label">Bottom layer speed</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.bottom_layer_speed']" type="number" tabindex="-1" min="0" max="300" step="1">
+                              <span class="add-on">mm/s</span>
+                          </div>
+                      </div>
+                  </div>
+                  <div class="span3">
                       <div title="Platform adhesion type" class="input-append">
                           <label class="control-label">Adhension</label>
                           <div class="controls">
                             <select data-bind="options: $data.optionsForKey('platform_adhesion'), value: $data['profile.platform_adhesion'], valueAllowUnset: false"></select>
                           </div>
                       </div>
-                  </div>
-                  <div class="span3">
                       <div title="Enable filament retraction" class="input-append">
                           <label class="control-label">Retraction</label>
                           <div class="controls">
