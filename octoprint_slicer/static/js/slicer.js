@@ -34,6 +34,20 @@ $(function() {
             BEDSIZE_Y_MM = 200,
             BEDSIZE_Z_MM = 200;
 
+        var effectController = {
+                    shininess: 40.0,
+                    ka: 0.17,
+                    kd: 0.51,
+                    ks: 0.2,
+                    hue:        0.121,
+                    saturation: 0.73,
+                    lightness:  0.66,
+                    lhue:        0.04,
+                    lsaturation: 0.01,  // non-zero so that fractions will be shown
+                    llightness:  1.0,
+                };
+
+
 
         self.init = function() {
             self.container = document.getElementById( 'slicer-canvas' );
@@ -46,16 +60,21 @@ $(function() {
             self.drawWalls(BEDSIZE_X_MM, BEDSIZE_Y_MM, BEDSIZE_Z_MM);
 
             // Lights
-            self.scene.add( new THREE.AmbientLight(0xffffff, 1.0) );
-            var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.8 );
-            directionalLight.castShadow = true;
-            directionalLight.position.set( 0, 0, 500 );
+            var ambientLight = new THREE.AmbientLight( 0x333333 );  // 0.2
+            ambientLight.color.setHSL( effectController.hue, effectController.saturation, effectController.lightness * effectController.ka );
+            self.scene.add( ambientLight );
+            var directionalLight = new THREE.DirectionalLight( 0xffffff, 1.0);
+            directionalLight.color.setHSL( effectController.lhue, effectController.lsaturation, effectController.llightness );
+            directionalLight.position.set( 100, 100, 500 );
             self.scene.add( directionalLight );
+            var directionalLight2= new THREE.DirectionalLight( 0xffffff, 1.0);
+            directionalLight2.color.setHSL( effectController.lhue, effectController.lsaturation, effectController.llightness );
+            directionalLight2.position.set( 100, 100, -500);
+            self.scene.add( directionalLight2);
 
             self.renderer = new THREE.WebGLRenderer( { antialias: true } );
             self.renderer.setClearColor( 0xd8d8d8 );
             self.renderer.setSize( CANVAS_WIDTH, CANVAS_HEIGHT );
-            self.renderer.shadowMapEnabled = true;
             self.renderer.setPixelRatio( window.devicePixelRatio );
 
             self.renderer.gammaInput = true;
@@ -132,10 +151,15 @@ $(function() {
 
             var loader = new THREE.STLLoader();
             loader.load(BASEURL + "downloads/files/" + target + "/" + file, function ( geometry ) {
-                var material = new THREE.MeshPhongMaterial({color: 0xff5533, specular: 0xff5533});
-                self.model = new THREE.Mesh( geometry, material );
-                self.model.castShadow = true;
+                var diffuseColor = new THREE.Color();
+                diffuseColor.setHSL( effectController.hue, effectController.saturation, effectController.lightness );
+                var specularColor = new THREE.Color();
+                specularColor.copy( diffuseColor );
+                diffuseColor.multiplyScalar( effectController.kd );
+                specularColor.multiplyScalar( effectController.ks );
+                var material = new THREE.MeshPhongMaterial({ color: diffuseColor, specular: specularColor, shading: THREE.SmoothShading, side: THREE.DoubleSide, shininess: effectController.shininess });
 
+                self.model = new THREE.Mesh( geometry, material );
                 self.scene.add( self.model );
                 self.transformControls.attach(self.model);
                 self.transformControls.setMode("rotate");
