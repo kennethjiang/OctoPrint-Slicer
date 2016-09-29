@@ -37,8 +37,8 @@ $(function() {
         var effectController = {
                     shininess: 40.0,
                     ka: 0.17,
-                    kd: 0.51,
-                    ks: 0.2,
+                    kd: 0.625,
+                    ks: 0.55,
                     hue:        0.121,
                     saturation: 0.73,
                     lightness:  0.66,
