@@ -144,6 +144,10 @@
     display: block;
 }
 
+#slicer-viewport > div.values > div > p.checkbox {
+    margin: 5px 33px;
+}
+
 #slicer-viewport > div.values > div > p > input {
     width: 75px;
     height: 15px;
@@ -274,4 +278,8 @@
 .input-append textarea {
     width: 100%;
     min-height: 180px;
+}
+
+#tab_plugin_slicer .checkbox {
+    padding-top: 5px;
 }
