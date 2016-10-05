@@ -104,6 +104,7 @@ $(function() {
                              "outer_shell_speed",
                              "inner_shell_speed",
                              "infill_speed",
+                             "fan_enabled",
                              "bottom_layer_speed"
                              ]);
     }

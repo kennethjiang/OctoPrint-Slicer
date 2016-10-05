@@ -169,6 +169,12 @@
                             <select data-bind="options: $data.optionsForKey('platform_adhesion'), value: $data['profile.platform_adhesion'], valueAllowUnset: false"></select>
                           </div>
                       </div>
+                      <div title="Enable cooling fan" class="input-append">
+                          <label class="control-label">Cooling fan</label>
+                          <div class="controls">
+                              <input type="checkbox" data-bind="checked: $data['profile.fan_enabled']"></input>
+                          </div>
+                      </div>
                       <div title="Enable filament retraction" class="input-append">
                           <label class="control-label">Retraction</label>
                           <div class="controls">
