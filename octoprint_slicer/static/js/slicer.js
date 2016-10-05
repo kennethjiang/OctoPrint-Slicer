@@ -81,18 +81,28 @@ $(function() {
             self.renderer.gammaOutput = true;
 
             $("#slicer-viewport").empty().append(`
-                    <div class="model">
+                <div class="model">
                     <button class="rotate" title="Rotate"><img src="` + PLUGIN_BASEURL + `slicer/static/img/rotate.png"></button>
-                    </div>
-                    <div class="values rotate">
+                    <button class="scale disabled" title="Scale"><img src="` + PLUGIN_BASEURL + `slicer/static/img/scale.png"></button>
+                </div>
+                <div class="values rotate">
                     <div>
-                    <p><span class="axis x">X</span><input type="number" step="any" name="x" min=""><span title="">°</span></p>
-                    <p><span class="axis y">Y</span><input type="number" step="any" name="y" min=""><span title="">°</span></p>
-                    <p><span class="axis z">Z</span><input type="number" step="any" name="z" min=""><span title="">°</span></p>
-                    <span></span>
+                        <p><span class="axis x">X</span><input type="number" step="any" name="x" min=""><span title="">°</span></p>
+                        <p><span class="axis y">Y</span><input type="number" step="any" name="y" min=""><span title="">°</span></p>
+                        <p><span class="axis z">Z</span><input type="number" step="any" name="z" min=""><span title="">°</span></p>
+                        <span></span>
                     </div>
+               </div>
+                <div class="values scale">
+                    <div>
+                        <p><span class="axis x">X</span><input type="number" step="any" name="x" min=""><span title="">%</span></p>
+                        <p><span class="axis y">Y</span><input type="number" step="any" name="y" min=""><span title="">%</span></p>
+                        <p><span class="axis z">Z</span><input type="number" step="any" name="z" min=""><span title="">%</span></p>
+                        <p><label><input type="checkbox" value="">Lock</label></p>
+                        <span></span>
                     </div>
-                    `);
+               </div>
+            `);
 
             $("#slicer-viewport").append(self.renderer.domElement);
             self.orbitControls = new THREE.OrbitControls(self.camera, self.renderer.domElement);
@@ -116,8 +126,15 @@ $(function() {
                 // Set selection mode to rotate
                 self.transformControls.setMode("rotate");
                 $("#slicer-viewport button.rotate").removeClass("disabled");
-                $("#slicer-viewport .values div").removeClass("show")
-                    $("#slicer-viewport .rotate.values div").addClass("show").children('p').addClass("show");
+                $("#slicer-viewport .values div").removeClass("show");
+                $("#slicer-viewport .rotate.values div").addClass("show").children('p').addClass("show");
+            });
+            $("#slicer-viewport button.scale").click(function(event) {
+				// Set selection mode to scale
+				self.transformControls.setMode("scale");
+                $("#slicer-viewport button.scale").removeClass("disabled");
+                $("#slicer-viewport .values div").removeClass("show");
+                $("#slicer-viewport .scale.values div").addClass("show").children('p').addClass("show");
             });
             $("#slicer-viewport .values input").change(function() {
                 self.applyChange($(this));
