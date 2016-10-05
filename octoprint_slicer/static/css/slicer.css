@@ -29,17 +29,9 @@
     z-index: 1;
 }
 
-#slicer-viewport > div.filament {
-    left: auto;
-    right: 0;
-    top: calc(50% - 2px);
-    transform: translateY(-50%);
-    flex-direction: column;
-}
-
 #slicer-viewport > div.model {
     left: 0;
-    top: calc(50% - 2px);
+    top: 14%;
     transform: translateY(-50%);
     flex-direction: column;
 }
@@ -81,15 +73,15 @@
 }
 
 #slicer-viewport > div.values.translate {
-    top: calc(50% - 50px);
+    top: calc(14% - 50px);
 }
 
 #slicer-viewport > div.values.rotate {
-    top: calc(50% - 6px);
+    top: calc(14% - 26px);
 }
 
 #slicer-viewport > div.values.scale {
-    top: calc(50% - 74px);
+    top: calc(14% + 18px);
 }
 
 #slicer-viewport > div.cutShape {
@@ -150,6 +142,10 @@
 
 #slicer-viewport > div.values > div > p.show {
     display: block;
+}
+
+#slicer-viewport > div.values > div > p.checkbox {
+    margin: 5px 33px;
 }
 
 #slicer-viewport > div.values > div > p > input {
@@ -282,4 +278,8 @@
 .input-append textarea {
     width: 100%;
     min-height: 180px;
+}
+
+#tab_plugin_slicer .checkbox {
+    padding-top: 5px;
 }

@@ -15,6 +15,8 @@ $(function() {
         self.basicOverridesViewModel = parameters[1];
         self.advancedOverridesViewModel = parameters[2];
 
+        self.lockScale = true;
+
         // Override slicingViewModel.show to surpress default slicing behavior
         self.slicingViewModel.show = function(target, file, force) {
             self.slicingViewModel.requestData();
@@ -81,18 +83,28 @@ $(function() {
             self.renderer.gammaOutput = true;
 
             $("#slicer-viewport").empty().append(`
-                    <div class="model">
+                <div class="model">
                     <button class="rotate" title="Rotate"><img src="` + PLUGIN_BASEURL + `slicer/static/img/rotate.png"></button>
-                    </div>
-                    <div class="values rotate">
+                    <button class="scale disabled" title="Scale"><img src="` + PLUGIN_BASEURL + `slicer/static/img/scale.png"></button>
+                </div>
+                <div class="values rotate">
                     <div>
-                    <p><span class="axis x">X</span><input type="number" step="any" name="x" min=""><span title="">°</span></p>
-                    <p><span class="axis y">Y</span><input type="number" step="any" name="y" min=""><span title="">°</span></p>
-                    <p><span class="axis z">Z</span><input type="number" step="any" name="z" min=""><span title="">°</span></p>
-                    <span></span>
+                        <p><span class="axis x">X</span><input type="number" step="any" name="x" min=""><span title="">°</span></p>
+                        <p><span class="axis y">Y</span><input type="number" step="any" name="y" min=""><span title="">°</span></p>
+                        <p><span class="axis z">Z</span><input type="number" step="any" name="z" min=""><span title="">°</span></p>
+                        <span></span>
                     </div>
+               </div>
+                <div class="values scale">
+                    <div>
+                        <p><span class="axis x">X</span><input type="number" step="0.001" name="x" min="0.001"></p>
+                        <p><span class="axis y">Y</span><input type="number" step="0.001" name="y" min="0.001"></p>
+                        <p><span class="axis z">Z</span><input type="number" step="0.001" name="z" min="0.001"></p>
+                        <p class="checkbox"><label><input type="checkbox" checked>Lock</label></p>
+                        <span></span>
                     </div>
-                    `);
+               </div>
+            `);
 
             $("#slicer-viewport").append(self.renderer.domElement);
             self.orbitControls = new THREE.OrbitControls(self.camera, self.renderer.domElement);
@@ -114,10 +126,16 @@ $(function() {
 
             $("#slicer-viewport button.rotate").click(function(event) {
                 // Set selection mode to rotate
-                self.transformControls.setMode("rotate");
-                $("#slicer-viewport button.rotate").removeClass("disabled");
-                $("#slicer-viewport .values div").removeClass("show")
-                    $("#slicer-viewport .rotate.values div").addClass("show").children('p').addClass("show");
+                self.transformControls.setMode("rotate"); $("#slicer-viewport button.rotate").removeClass("disabled");
+                $("#slicer-viewport .values div").removeClass("show");
+                $("#slicer-viewport .rotate.values div").addClass("show").children('p').addClass("show");
+            });
+            $("#slicer-viewport button.scale").click(function(event) {
+				// Set selection mode to scale
+				self.transformControls.setMode("scale");
+                $("#slicer-viewport button.scale").removeClass("disabled");
+                $("#slicer-viewport .values div").removeClass("show");
+                $("#slicer-viewport .scale.values div").addClass("show").children('p').addClass("show");
             });
             $("#slicer-viewport .values input").change(function() {
                 self.applyChange($(this));
@@ -170,23 +188,24 @@ $(function() {
 
         self.applyChange = function(input) {
             input.blur();
-            if(!isNaN(parseFloat(input.val()))) {
+            if(input[0].type == "checkbox") {
+                self.lockScale = input[0].checked;
+            }
+            else if(input[0].type == "number" && !isNaN(parseFloat(input.val()))) {
                 input.val(parseFloat(input.val()).toFixed(3));
                 var model = self.transformControls.object;
 
-                if (input.closest(".values").hasClass("rotate")) {
-                    switch(input.attr("name")) {
-                        case "x":
-                            model.rotation.x = THREE.Math.degToRad(parseFloat(input.val()));
-                            break;
-                        case "y":
-                            model.rotation.y = THREE.Math.degToRad(parseFloat(input.val()));
-                            break;
-                        case "z":
-                            model.rotation.z = THREE.Math.degToRad(parseFloat(input.val()));
-                            break;
-                    }
+                if (input.closest(".values").hasClass("scale") && self.lockScale) {
+                    $("#slicer-viewport .scale.values input").val(input.val());
+                console.log($("#slicer-viewport .scale.values input[name=\"x\"]").val());
                 }
+
+                model.rotation.x =  THREE.Math.degToRad($("#slicer-viewport .rotate.values input[name=\"x\"]").val());
+                model.rotation.y =  THREE.Math.degToRad($("#slicer-viewport .rotate.values input[name=\"y\"]").val());
+                model.rotation.z =  THREE.Math.degToRad($("#slicer-viewport .rotate.values input[name=\"z\"]").val());
+                model.scale.x =  parseFloat($("#slicer-viewport .scale.values input[name=\"x\"]").val())
+                model.scale.y =  parseFloat($("#slicer-viewport .scale.values input[name=\"y\"]").val())
+                model.scale.z =  parseFloat($("#slicer-viewport .scale.values input[name=\"z\"]").val())
                 self.fixZPosition(model);
                 self.render();
             }
@@ -207,6 +226,10 @@ $(function() {
             $("#slicer-viewport .rotate.values input[name=\"x\"]").val((model.rotation.x * 180 / Math.PI).toFixed(3)).attr("min", '');
             $("#slicer-viewport .rotate.values input[name=\"y\"]").val((model.rotation.y * 180 / Math.PI).toFixed(3)).attr("min", '');
             $("#slicer-viewport .rotate.values input[name=\"z\"]").val((model.rotation.z * 180 / Math.PI).toFixed(3)).attr("min", '');
+            $("#slicer-viewport .scale.values input[name=\"x\"]").val(model.scale.x.toFixed(3)).attr("min", '');
+            $("#slicer-viewport .scale.values input[name=\"y\"]").val(model.scale.y.toFixed(3)).attr("min", '');
+            $("#slicer-viewport .scale.values input[name=\"z\"]").val(model.scale.z.toFixed(3)).attr("min", '');
+            $("#slicer-viewport .scale.values input[type=\"checkbox\"]").checked = self.lockScale;
             self.fixZPosition(model);
             self.render();
         };

@@ -171,13 +171,13 @@
                       </div>
                       <div title="Enable cooling fan" class="input-append">
                           <label class="control-label">Cooling fan</label>
-                          <div class="controls">
+                          <div class="controls checkbox">
                               <input type="checkbox" data-bind="checked: $data['profile.fan_enabled']"></input>
                           </div>
                       </div>
                       <div title="Enable filament retraction" class="input-append">
                           <label class="control-label">Retraction</label>
-                          <div class="controls">
+                          <div class="controls checkbox">
                               <input type="checkbox" data-bind="checked: $data['profile.retraction_enable']"></input>
                           </div>
                       </div>
@@ -208,5 +208,5 @@
   </div>
 </div>
 <div id="slicer">
-    <button class="btn btn-primary btn-block" data-bind="click: function() { if ($data.slicingViewModel.enableSliceButton()) { $data.slice() } }, css: {disabled: !$data.slicingViewModel.enableSliceButton()}">Slice</button>
+    <button class="btn btn-primary btn-block" data-bind="click: function() { if ($data.slicingViewModel.enableSliceButton()) { $data.slice() } }, css: {disabled: !$data.slicingViewModel.enableSliceButton()}">Slice it!</button>
 </div>
