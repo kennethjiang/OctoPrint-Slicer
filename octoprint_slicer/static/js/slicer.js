@@ -114,7 +114,7 @@ $(function() {
             self.orbitControls.addEventListener("change", self.render);
 
             self.transformControls = new THREE.TransformControls(self.camera, self.renderer.domElement);
-            self.transformControls.space = "world";
+            self.transformControls.space = "local";
             //self.transformControls.setAllowedTranslation("XY");
             //self.transformControls.setRotationDisableE(true);
             self.transformControls.setRotationSnap( THREE.Math.degToRad( 15 ) )
@@ -177,7 +177,13 @@ $(function() {
                 specularColor.multiplyScalar( effectController.ks );
                 var material = new THREE.MeshPhongMaterial({ color: diffuseColor, specular: specularColor, shading: THREE.SmoothShading, side: THREE.DoubleSide, shininess: effectController.shininess });
 
-                self.model = new THREE.Mesh( geometry, material );
+                // center model's origin
+                var stlModel = new THREE.Mesh( geometry, material );
+                var center = new THREE.Box3().setFromObject(stlModel).center()
+                self.model = new THREE.Object3D();
+                self.model.add(stlModel);
+                stlModel.position.copy(center.negate());
+
                 self.scene.add( self.model );
                 self.transformControls.attach(self.model);
                 self.transformControls.setMode("rotate");
