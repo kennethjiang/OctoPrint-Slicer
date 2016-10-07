@@ -7,6 +7,17 @@
 $(function() {
     function SlicerViewModel(parameters) {
         var self = this;
+        self.canvas = document.getElementById( 'slicer-canvas' );
+
+        //check if webGL is present. If not disable Slicer plugin
+        try {
+            var ctx = self.canvas.getContext('webgl') || self.canvas.getContext('experimental-webgl');
+            var exts = ctx.getSupportedExtensions();
+        }
+        catch (e) {
+            $('#tab_plugin_slicer').empty().append("<h3>Slicer Plugin is disabled because your browser doesn't support WebGL</h3>");
+            return;
+        }
 
         // assign the injected parameters, e.g.:
         // self.loginStateViewModel = parameters[0];
@@ -52,8 +63,6 @@ $(function() {
 
 
         self.init = function() {
-            self.container = document.getElementById( 'slicer-canvas' );
-
             self.camera = new THREE.PerspectiveCamera( 45, 1.0, 0.1, 5000 );
             self.camera.up.set( 0, 0, 1 );
             self.camera.position.set( -100, -200, 250 );
@@ -74,7 +83,7 @@ $(function() {
             directionalLight2.position.set( 100, 100, -500);
             self.scene.add( directionalLight2);
 
-            self.renderer = new THREE.WebGLRenderer( { antialias: true } );
+            self.renderer = new THREE.WebGLRenderer( { canvas: self.canvas, antialias: true } );
             self.renderer.setClearColor( 0xd8d8d8 );
             self.renderer.setSize( CANVAS_WIDTH, CANVAS_HEIGHT );
             self.renderer.setPixelRatio( window.devicePixelRatio );
