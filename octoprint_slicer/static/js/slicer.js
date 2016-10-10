@@ -11,7 +11,8 @@ $(function() {
 
         //check if webGL is present. If not disable Slicer plugin
         try {
-            var ctx = self.canvas.getContext('webgl') || self.canvas.getContext('experimental-webgl');
+            var c = document.createElement("canvas");
+            var ctx = c.getContext('webgl') || self.canvas.getContext('experimental-webgl');
             var exts = ctx.getSupportedExtensions();
         }
         catch (e) {
@@ -90,6 +91,32 @@ $(function() {
 
             self.renderer.gammaInput = true;
             self.renderer.gammaOutput = true;
+
+
+    var canvas = document.createElement('canvas');
+    var size = 256; // CHANGED
+    canvas.width = size;
+    canvas.height = size;
+    var context = canvas.getContext('2d');
+    context.fillStyle = '#ff0000'; // CHANGED
+    context.textAlign = 'center';
+    context.font = '24px Arial';
+    context.fillText("some text", size / 2, size / 2);
+
+    var amap = new THREE.Texture(canvas);
+    amap.needsUpdate = true;
+
+    var mat = new THREE.SpriteMaterial({
+        map: amap,
+        transparent: false,
+        useScreenCoordinates: false,
+        color: 0xffffff // CHANGED
+    });
+
+    var sp = new THREE.Sprite(mat);
+    sp.scale.set( 100, 100, 100 ); // CHANGED
+    sp.position.set(0, 100, 10);
+    self.scene.add(sp);
 
             $("#slicer-viewport").empty().append(`
                 <div class="model">
