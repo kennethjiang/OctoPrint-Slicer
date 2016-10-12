@@ -249,6 +249,29 @@ $(function() {
             self.render();
         };
 
+        self.createText = function(font, text) {
+            var textGeometry = new THREE.TextGeometry( text, {
+              font: font,
+              size: 10,
+              height: 0.1,
+              material: 0, extrudeMaterial: 1
+            });
+            var materialFront = new THREE.MeshBasicMaterial( { color: 0xE9F50F} );
+            var materialSide = new THREE.MeshBasicMaterial( { color: 0x8A8A8A} );
+            var materialArray = [ materialFront, materialSide ];
+            var textMaterial = new THREE.MeshFaceMaterial(materialArray);
+
+            var mesh = new THREE.Mesh( textGeometry, textMaterial );
+            textGeometry.computeBoundingBox();
+            var textWidth = textGeometry.boundingBox.max.x - textGeometry.boundingBox.min.x;
+            switch (text) {
+                case "Front":
+                    mesh.position.set(-0.5*textWidth, -95, 1.0);
+                    break;
+            }
+            self.scene.add(mesh);
+        };
+
         self.drawBedFloor = function ( width, depth, segments ) {
             segments = segments || 20;
             var geometry = new THREE.PlaneGeometry(width, depth, segments, segments);
@@ -265,6 +288,12 @@ $(function() {
             var mesh = new THREE.Mesh(geometry, new THREE.MeshFaceMaterial(materials));
             mesh.receiveShadow = true;
             self.scene.add(mesh);
+
+            //Add text to indicate front/back of print bed
+            var loader = new THREE.FontLoader();
+            loader.load( PLUGIN_BASEURL + "slicer/static/js/optimer_bold.typeface.json", function ( font ) {
+                self.createText(font, "Front");
+                } );
         };
 
         self.drawWalls = function ( width, depth, height ) {
