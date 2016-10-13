@@ -93,14 +93,22 @@ $(function() {
 
             $("#slicer-viewport").empty().append(`
                 <div class="model">
-                    <button class="rotate" title="Rotate"><img src="` + PLUGIN_BASEURL + `slicer/static/img/rotate.png"></button>
+                    <button class="translate" title="Move"><img src="` + PLUGIN_BASEURL + `slicer/static/img/translate.png"></button>
+                    <button class="rotate disabled" title="Rotate"><img src="` + PLUGIN_BASEURL + `slicer/static/img/rotate.png"></button>
                     <button class="scale disabled" title="Scale"><img src="` + PLUGIN_BASEURL + `slicer/static/img/scale.png"></button>
                 </div>
+                <div class="values translate">
+                    <div>
+                        <p><span class="axis x">X</span><input type="number" step="any" name="x"><span title="">mm</span></p>
+                        <p><span class="axis y">Y</span><input type="number" step="any" name="y"><span title="">mm</span></p>
+                        <span></span>
+                    </div>
+               </div>
                 <div class="values rotate">
                     <div>
-                        <p><span class="axis x">X</span><input type="number" step="any" name="x" min=""><span title="">°</span></p>
-                        <p><span class="axis y">Y</span><input type="number" step="any" name="y" min=""><span title="">°</span></p>
-                        <p><span class="axis z">Z</span><input type="number" step="any" name="z" min=""><span title="">°</span></p>
+                        <p><span class="axis x">X</span><input type="number" step="any" name="x"><span title="">°</span></p>
+                        <p><span class="axis y">Y</span><input type="number" step="any" name="y"><span title="">°</span></p>
+                        <p><span class="axis z">Z</span><input type="number" step="any" name="z"><span title="">°</span></p>
                         <span></span>
                     </div>
                </div>
@@ -133,9 +141,17 @@ $(function() {
             self.transformControls.addEventListener("change", self.updateTransformInputs);
             self.scene.add(self.transformControls);
 
+            $("#slicer-viewport button.translate").click(function(event) {
+                // Set selection mode to translate
+                self.transformControls.setMode("translate");
+                $("#slicer-viewport button.translate").removeClass("disabled");
+                $("#slicer-viewport .values div").removeClass("show");
+                $("#slicer-viewport .translate.values div").addClass("show").children('p').addClass("show");
+            });
             $("#slicer-viewport button.rotate").click(function(event) {
                 // Set selection mode to rotate
-                self.transformControls.setMode("rotate"); $("#slicer-viewport button.rotate").removeClass("disabled");
+                self.transformControls.setMode("rotate");
+                $("#slicer-viewport button.rotate").removeClass("disabled");
                 $("#slicer-viewport .values div").removeClass("show");
                 $("#slicer-viewport .rotate.values div").addClass("show").children('p').addClass("show");
             });
@@ -215,6 +231,8 @@ $(function() {
                 console.log($("#slicer-viewport .scale.values input[name=\"x\"]").val());
                 }
 
+                model.position.x =  parseFloat($("#slicer-viewport .translate.values input[name=\"x\"]").val())
+                model.position.y =  parseFloat($("#slicer-viewport .translate.values input[name=\"y\"]").val())
                 model.rotation.x =  THREE.Math.degToRad($("#slicer-viewport .rotate.values input[name=\"x\"]").val());
                 model.rotation.y =  THREE.Math.degToRad($("#slicer-viewport .rotate.values input[name=\"y\"]").val());
                 model.rotation.z =  THREE.Math.degToRad($("#slicer-viewport .rotate.values input[name=\"z\"]").val());
@@ -238,6 +256,8 @@ $(function() {
 
         self.updateTransformInputs = function () {
             var model = self.transformControls.object;
+            $("#slicer-viewport .translate.values input[name=\"x\"]").val(model.position.x.toFixed(3)).attr("min", '');
+            $("#slicer-viewport .translate.values input[name=\"y\"]").val(model.position.y.toFixed(3)).attr("min", '');
             $("#slicer-viewport .rotate.values input[name=\"x\"]").val((model.rotation.x * 180 / Math.PI).toFixed(3)).attr("min", '');
             $("#slicer-viewport .rotate.values input[name=\"y\"]").val((model.rotation.y * 180 / Math.PI).toFixed(3)).attr("min", '');
             $("#slicer-viewport .rotate.values input[name=\"z\"]").val((model.rotation.z * 180 / Math.PI).toFixed(3)).attr("min", '');
