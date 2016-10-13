@@ -264,9 +264,19 @@ $(function() {
             var mesh = new THREE.Mesh( textGeometry, textMaterial );
             textGeometry.computeBoundingBox();
             var textWidth = textGeometry.boundingBox.max.x - textGeometry.boundingBox.min.x;
+            var textHeight = textGeometry.boundingBox.max.y - textGeometry.boundingBox.min.y;
             switch (text) {
                 case "Front":
-                    mesh.position.set(-0.5*textWidth, -95, 1.0);
+                    mesh.position.set(-textWidth/2, -100, 1.0);
+                    break;
+                case "Back":
+                    mesh.position.set(-textWidth/2, 100-textHeight, 1.0);
+                    break;
+                case "Left":
+                    mesh.position.set(-100, -textHeight/2, 1.0);
+                    break;
+                case "Right":
+                    mesh.position.set(100-textWidth, -textHeight/2, 1.0);
                     break;
             }
             self.scene.add(mesh);
@@ -293,7 +303,11 @@ $(function() {
             var loader = new THREE.FontLoader();
             loader.load( PLUGIN_BASEURL + "slicer/static/js/optimer_bold.typeface.json", function ( font ) {
                 self.createText(font, "Front");
-                } );
+                self.createText(font, "Back");
+                self.createText(font, "Left");
+                self.createText(font, "Right");
+                self.render();
+            } );
         };
 
         self.drawWalls = function ( width, depth, height ) {
