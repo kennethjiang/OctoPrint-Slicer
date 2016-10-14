@@ -131,7 +131,7 @@ $(function() {
             self.orbitControls.addEventListener("change", self.render);
 
             self.transformControls = new THREE.TransformControls(self.camera, self.renderer.domElement);
-            self.transformControls.space = "local";
+            self.transformControls.space = "world";
             //self.transformControls.setAllowedTranslation("XY");
             //self.transformControls.setRotationDisableE(true);
             self.transformControls.setRotationSnap( THREE.Math.degToRad( 15 ) )
@@ -401,6 +401,7 @@ $(function() {
                         profile: slicingVM.profile(),
                         printerProfile: slicingVM.printerProfile(),
                         destination: destinationFilename,
+                        position: {"x": 100.0+self.model.position.x, "y": 100+self.model.position.y}
                     };
                     _.extend(data, self.basicOverridesViewModel.toJS());
                     _.extend(data, self.advancedOverridesViewModel.toJS());
