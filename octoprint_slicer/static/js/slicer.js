@@ -60,8 +60,6 @@ $(function() {
                     llightness:  1.0,
                 };
 
-
-
         self.init = function() {
             self.camera = new THREE.PerspectiveCamera( 45, 1.0, 0.1, 5000 );
             self.camera.up.set( 0, 0, 1 );
@@ -276,7 +274,7 @@ $(function() {
               height: 0.1,
               material: 0, extrudeMaterial: 1
             });
-            var materialFront = new THREE.MeshBasicMaterial( { color: 0xE9F50F} );
+            var materialFront = new THREE.MeshBasicMaterial( { color: 0x048e06} );
             var materialSide = new THREE.MeshBasicMaterial( { color: 0x8A8A8A} );
             var materialArray = [ materialFront, materialSide ];
             var textMaterial = new THREE.MeshFaceMaterial(materialArray);
