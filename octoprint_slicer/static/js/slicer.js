@@ -89,37 +89,41 @@ $(function() {
             self.renderer.gammaInput = true;
             self.renderer.gammaOutput = true;
 
-            $("#slicer-viewport").empty().append(`
-                <div class="model">
-                    <button class="translate" title="Move"><img src="` + PLUGIN_BASEURL + `slicer/static/img/translate.png"></button>
-                    <button class="rotate disabled" title="Rotate"><img src="` + PLUGIN_BASEURL + `slicer/static/img/rotate.png"></button>
-                    <button class="scale disabled" title="Scale"><img src="` + PLUGIN_BASEURL + `slicer/static/img/scale.png"></button>
-                </div>
-                <div class="values translate">
-                    <div>
-                        <p><span class="axis x">X</span><input type="number" step="any" name="x"><span title="">mm</span></p>
-                        <p><span class="axis y">Y</span><input type="number" step="any" name="y"><span title="">mm</span></p>
-                        <span></span>
-                    </div>
-               </div>
-                <div class="values rotate">
-                    <div>
-                        <p><span class="axis x">X</span><input type="number" step="any" name="x"><span title="">°</span></p>
-                        <p><span class="axis y">Y</span><input type="number" step="any" name="y"><span title="">°</span></p>
-                        <p><span class="axis z">Z</span><input type="number" step="any" name="z"><span title="">°</span></p>
-                        <span></span>
-                    </div>
-               </div>
-                <div class="values scale">
-                    <div>
-                        <p><span class="axis x">X</span><input type="number" step="0.001" name="x" min="0.001"></p>
-                        <p><span class="axis y">Y</span><input type="number" step="0.001" name="y" min="0.001"></p>
-                        <p><span class="axis z">Z</span><input type="number" step="0.001" name="z" min="0.001"></p>
-                        <p class="checkbox"><label><input type="checkbox" checked>Lock</label></p>
-                        <span></span>
-                    </div>
-               </div>
-            `);
+            $("#slicer-viewport").empty().append('<div class="model">\
+                    <button class="translate" title="Move"><img src="'
+                + PLUGIN_BASEURL
+                + 'slicer/static/img/translate.png"></button>\
+                    <button class="rotate disabled" title="Rotate"><img src="'
+                + PLUGIN_BASEURL
+                + 'slicer/static/img/rotate.png"></button>\
+                    <button class="scale disabled" title="Scale"><img src="'
+                + PLUGIN_BASEURL
+                + 'slicer/static/img/scale.png"></button>\
+                </div>\
+                <div class="values translate">\
+                    <div>\
+                        <p><span class="axis x">X</span><input type="number" step="any" name="x"><span title="">mm</span></p>\
+                        <p><span class="axis y">Y</span><input type="number" step="any" name="y"><span title="">mm</span></p>\
+                        <span></span>\
+                    </div>\
+               </div>\
+                <div class="values rotate">\
+                    <div>\
+                        <p><span class="axis x">X</span><input type="number" step="any" name="x"><span title="">°</span></p>\
+                        <p><span class="axis y">Y</span><input type="number" step="any" name="y"><span title="">°</span></p>\
+                        <p><span class="axis z">Z</span><input type="number" step="any" name="z"><span title="">°</span></p>\
+                        <span></span>\
+                    </div>\
+               </div>\
+                <div class="values scale">\
+                    <div>\
+                        <p><span class="axis x">X</span><input type="number" step="0.001" name="x" min="0.001"></p>\
+                        <p><span class="axis y">Y</span><input type="number" step="0.001" name="y" min="0.001"></p>\
+                        <p><span class="axis z">Z</span><input type="number" step="0.001" name="z" min="0.001"></p>\
+                        <p class="checkbox"><label><input type="checkbox" checked>Lock</label></p>\
+                        <span></span>\
+                    </div>\
+               </div>');
 
             $("#slicer-viewport").append(self.renderer.domElement);
             self.orbitControls = new THREE.OrbitControls(self.camera, self.renderer.domElement);
@@ -358,7 +362,7 @@ $(function() {
             rectShape.lineTo( rectLength/2, -rectWidth/2 );
             rectShape.lineTo( -rectLength/2, -rectWidth/2 );
             var rectGeom = new THREE.ShapeGeometry( rectShape );
-            return new THREE.Mesh( rectGeom, new THREE.MeshBasicMaterial( { color } ) ) ;
+            return new THREE.Mesh( rectGeom, new THREE.MeshBasicMaterial( { color: color } ) ) ;
         }
 
         self.fixZPosition = function ( model ) {
