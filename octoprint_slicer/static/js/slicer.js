@@ -40,12 +40,40 @@ $(function() {
             self.loadSTL(target, file, force);
         };
 
-        var CANVAS_WIDTH = 588,
-            CANVAS_HEIGHT = 588,
+        // Print bed size
+        self.BEDSIZE_X_MM = 200;
+        self.BEDSIZE_Y_MM = 200;
+        self.BEDSIZE_Z_MM = 200;
 
-            BEDSIZE_X_MM = 200,
-            BEDSIZE_Y_MM = 200,
-            BEDSIZE_Z_MM = 200;
+        self.updatePrinterProfile = function(printerProfile) {
+            if (! self.printerProfiles) {
+                $.ajax({
+                    url: API_BASEURL + "printerprofiles",
+                    type: "GET",
+                    dataType: "json",
+                    success: function(data) {
+                        self.printerProfiles = data;
+                        self.updatePrinterBed(printerProfile);
+                    }
+                });
+            } else {
+                self.updatePrinterBed(printerProfile);
+            }
+        }
+
+        self.slicingViewModel.printerProfile.subscribe( self.updatePrinterProfile );
+
+        self.updatePrinterBed = function(printerProfile) {
+            var dim = self.printerProfiles.profiles[printerProfile].volume
+            self.BEDSIZE_X_MM = dim.width;
+            self.BEDSIZE_Y_MM = dim.depth;
+            self.BEDSIZE_Z_MM = dim.height;
+            self.drawBedFloor(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM);
+            self.drawWalls(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM, self.BEDSIZE_Z_MM);
+        }
+
+        var CANVAS_WIDTH = 588,
+            CANVAS_HEIGHT = 588;
 
         var effectController = {
                     shininess: 40.0,
@@ -65,8 +93,6 @@ $(function() {
             self.camera.up.set( 0, 0, 1 );
             self.camera.position.set( -100, -200, 250 );
             self.scene = new THREE.Scene();
-            self.drawBedFloor(BEDSIZE_X_MM, BEDSIZE_Y_MM);
-            self.drawWalls(BEDSIZE_X_MM, BEDSIZE_Y_MM, BEDSIZE_Z_MM);
 
             // Lights
             var ambientLight = new THREE.AmbientLight( 0x333333 );  // 0.2
@@ -80,6 +106,12 @@ $(function() {
             directionalLight2.color.setHSL( effectController.lhue, effectController.lsaturation, effectController.llightness );
             directionalLight2.position.set( 100, 100, -500);
             self.scene.add( directionalLight2);
+
+            //Walls and Floor
+            self.walls = new THREE.Object3D();
+            self.floor = new THREE.Object3D();
+            self.scene.add(self.walls);
+            self.scene.add(self.floor);
 
             self.renderer = new THREE.WebGLRenderer( { canvas: self.canvas, antialias: true } );
             self.renderer.setClearColor( 0xd8d8d8 );
@@ -271,7 +303,7 @@ $(function() {
             self.render();
         };
 
-        self.createText = function(font, text) {
+        self.createText = function(font, text, width, depth, parentObj) {
             var textGeometry = new THREE.TextGeometry( text, {
               font: font,
               size: 10,
@@ -289,22 +321,27 @@ $(function() {
             var textHeight = textGeometry.boundingBox.max.y - textGeometry.boundingBox.min.y;
             switch (text) {
                 case "Front":
-                    mesh.position.set(-textWidth/2, -100, 1.0);
+                    mesh.position.set(-textWidth/2.0, -depth/2.0, 1.0);
                     break;
                 case "Back":
-                    mesh.position.set(-textWidth/2, 100-textHeight, 1.0);
+                    mesh.position.set(-textWidth/2.0, depth/2.0-textHeight, 1.0);
                     break;
                 case "Left":
-                    mesh.position.set(-100, -textHeight/2, 1.0);
+                    mesh.position.set(-width/2.0, -textHeight/2, 1.0);
                     break;
                 case "Right":
-                    mesh.position.set(100-textWidth, -textHeight/2, 1.0);
+                    mesh.position.set(width/2.0-textWidth, -textHeight/2, 1.0);
                     break;
             }
-            self.scene.add(mesh);
+            parentObj.add(mesh);
         };
 
         self.drawBedFloor = function ( width, depth, segments ) {
+            for(var i = self.floor.children.length - 1; i >= 0; i--) {
+                 var obj = self.floor.children[i];
+                 self.floor.remove(obj);
+            }
+
             segments = segments || 20;
             var geometry = new THREE.PlaneGeometry(width, depth, segments, segments);
             var materialEven = new THREE.MeshBasicMaterial({color: 0xccccfc});
@@ -319,39 +356,44 @@ $(function() {
             }
             var mesh = new THREE.Mesh(geometry, new THREE.MeshFaceMaterial(materials));
             mesh.receiveShadow = true;
-            self.scene.add(mesh);
+            self.floor.add(mesh);
 
             //Add text to indicate front/back of print bed
             var loader = new THREE.FontLoader();
             loader.load( PLUGIN_BASEURL + "slicer/static/js/optimer_bold.typeface.json", function ( font ) {
-                self.createText(font, "Front");
-                self.createText(font, "Back");
-                self.createText(font, "Left");
-                self.createText(font, "Right");
+                self.createText(font, "Front", width, depth, self.floor);
+                self.createText(font, "Back", width, depth, self.floor);
+                self.createText(font, "Left", width, depth, self.floor);
+                self.createText(font, "Right", width, depth, self.floor);
                 self.render();
             } );
         };
 
         self.drawWalls = function ( width, depth, height ) {
-            var wall1 = self.rectShape( depth, height, 0x8888fc );
+            for(var i = self.walls.children.length - 1; i >= 0; i--) {
+                 var obj = self.walls.children[i];
+                 self.walls.remove(obj);
+            }
+
+            var wall1 = self.rectShape( width, height, 0x8888fc );
             wall1.rotation.x = Math.PI / 2;
             wall1.position.set(0, depth/2, height/2);
-            self.scene.add(wall1);
+            self.walls.add(wall1);
 
-            var wall2 = self.rectShape( width, height, 0x8888dc );
+            var wall2 = self.rectShape( height, depth, 0x8888dc );
             wall2.rotation.y = Math.PI / 2;
             wall2.position.set(-width/2, 0, height/2);
-            self.scene.add(wall2);
+            self.walls.add(wall2);
 
-            var wall3 = self.rectShape( depth, height, 0x8888fc );
+            var wall3 = self.rectShape( width, height, 0x8888fc );
             wall3.rotation.x = -Math.PI / 2;
             wall3.position.set(0, -depth/2, height/2);
-            self.scene.add(wall3);
+            self.walls.add(wall3);
 
-            var wall4 = self.rectShape( width, height, 0x8888dc );
+            var wall4 = self.rectShape( height, depth, 0x8888dc );
             wall4.rotation.y = -Math.PI / 2;
             wall4.position.set(width/2, 0, height/2);
-            self.scene.add(wall4);
+            self.walls.add(wall4);
         }
 
         self.rectShape = function ( rectLength, rectWidth, color ) {
@@ -403,7 +445,8 @@ $(function() {
                         profile: slicingVM.profile(),
                         printerProfile: slicingVM.printerProfile(),
                         destination: destinationFilename,
-                        position: {"x": 100.0+self.model.position.x, "y": 100+self.model.position.y}
+                        position: { "x": self.BEDSIZE_X_MM/2.0+self.model.position.x,
+                            "y": self.BEDSIZE_Y_MM/2.0+self.model.position.y }
                     };
                     _.extend(data, self.basicOverridesViewModel.toJS());
                     _.extend(data, self.advancedOverridesViewModel.toJS());
