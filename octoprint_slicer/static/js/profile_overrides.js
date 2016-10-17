@@ -48,7 +48,9 @@ $(function() {
         self.updateOverrides = function(newValue) {
             var slicing = self.slicingViewModel;
 
-            if ( slicing.profile() && slicing.slicer() ) {
+            if ( slicing.profile() && slicing.slicer()
+                    && self.previousProfile != slicing.profile()
+                    && self.previousSlicer != slicing.slicer() ) {
 				$.ajax({
 					url: API_BASEURL + "slicing/" + slicing.slicer() + "/profiles/" + slicing.profile(),
 					type: "GET",
@@ -58,6 +60,8 @@ $(function() {
                     }
                 });
             }
+            self.previousProfile = slicing.profile();
+            self.previousSlicer = slicing.slicer();
         };
 
         self.slicingViewModel.profile.subscribe( self.updateOverrides );
