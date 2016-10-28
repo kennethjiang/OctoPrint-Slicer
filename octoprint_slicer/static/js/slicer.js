@@ -64,10 +64,12 @@ $(function() {
         self.slicingViewModel.printerProfile.subscribe( self.updatePrinterProfile );
 
         self.updatePrinterBed = function(printerProfile) {
-            var dim = self.printerProfiles.profiles[printerProfile].volume
-            self.BEDSIZE_X_MM = dim.width;
-            self.BEDSIZE_Y_MM = dim.depth;
-            self.BEDSIZE_Z_MM = dim.height;
+            if ( self.printerProfiles && printerProfile ) {
+                var dim = self.printerProfiles.profiles[printerProfile].volume
+                self.BEDSIZE_X_MM = dim.width;
+                self.BEDSIZE_Y_MM = dim.depth;
+                self.BEDSIZE_Z_MM = dim.height;
+            }
             self.drawBedFloor(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM);
             self.drawWalls(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM, self.BEDSIZE_Z_MM);
         }
@@ -174,6 +176,7 @@ $(function() {
             self.transformControls.addEventListener("mouseUp", self.endTransform);
             self.transformControls.addEventListener("change", self.updateTransformInputs);
             self.scene.add(self.transformControls);
+            self.updatePrinterBed();
 
             $("#slicer-viewport button.translate").click(function(event) {
                 // Set selection mode to translate
