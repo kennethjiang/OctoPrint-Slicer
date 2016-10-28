@@ -73,15 +73,15 @@
 }
 
 #slicer-viewport > div.values.translate {
-    top: calc(14% - 50px);
+    top: 34px;
 }
 
 #slicer-viewport > div.values.rotate {
-    top: calc(14% - 26px);
+    top: calc(34px + 44px);
 }
 
 #slicer-viewport > div.values.scale {
-    top: calc(14% + 18px);
+    top: calc(34px + 2*44px);
 }
 
 #slicer-viewport > div.cutShape {
