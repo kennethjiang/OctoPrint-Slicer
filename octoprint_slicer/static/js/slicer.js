@@ -178,23 +178,17 @@ $(function() {
             $("#slicer-viewport button.translate").click(function(event) {
                 // Set selection mode to translate
                 self.transformControls.setMode("translate");
-                $("#slicer-viewport button.translate").removeClass("disabled");
-                $("#slicer-viewport .values div").removeClass("show");
-                $("#slicer-viewport .translate.values div").addClass("show").children('p').addClass("show");
+                self.toggleValueInputs($("#slicer-viewport .translate.values div"));
             });
             $("#slicer-viewport button.rotate").click(function(event) {
                 // Set selection mode to rotate
                 self.transformControls.setMode("rotate");
-                $("#slicer-viewport button.rotate").removeClass("disabled");
-                $("#slicer-viewport .values div").removeClass("show");
-                $("#slicer-viewport .rotate.values div").addClass("show").children('p').addClass("show");
+                self.toggleValueInputs($("#slicer-viewport .rotate.values div"));
             });
             $("#slicer-viewport button.scale").click(function(event) {
 				// Set selection mode to scale
 				self.transformControls.setMode("scale");
-                $("#slicer-viewport button.scale").removeClass("disabled");
-                $("#slicer-viewport .values div").removeClass("show");
-                $("#slicer-viewport .scale.values div").addClass("show").children('p').addClass("show");
+                self.toggleValueInputs($("#slicer-viewport .scale.values div"));
             });
             $("#slicer-viewport .values input").change(function() {
                 self.applyChange($(this));
@@ -249,6 +243,15 @@ $(function() {
                 self.updateTransformInputs();
                 self.render();
             } );
+        };
+
+        self.toggleValueInputs = function(parentDiv) {
+            if ( parentDiv.hasClass("show") ) {
+                parentDiv.removeClass("show").children('p').removeClass("show");
+            } else {
+                $("#slicer-viewport .values div").removeClass("show");
+                parentDiv.addClass("show").children('p').addClass("show");
+            }
         };
 
         self.applyChange = function(input) {
