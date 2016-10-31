@@ -49,8 +49,7 @@ $(function() {
             var slicing = self.slicingViewModel;
 
             if ( slicing.profile() && slicing.slicer()
-                    && self.previousProfile != slicing.profile()
-                    && self.previousSlicer != slicing.slicer() ) {
+                    && (self.previousProfile != slicing.profile() || self.previousSlicer != slicing.slicer()) ) {
 				$.ajax({
 					url: API_BASEURL + "slicing/" + slicing.slicer() + "/profiles/" + slicing.profile(),
 					type: "GET",
