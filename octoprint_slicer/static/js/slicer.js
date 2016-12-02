@@ -44,6 +44,8 @@ $(function() {
         self.BEDSIZE_X_MM = 200;
         self.BEDSIZE_Y_MM = 200;
         self.BEDSIZE_Z_MM = 200;
+        self.ORIGIN_OFFSET_X_MM = 0;
+        self.ORIGIN_OFFSET_Y_MM = 0;
 
         self.updatePrinterProfile = function(printerProfile) {
             if (! self.printerProfiles) {
@@ -69,6 +71,13 @@ $(function() {
                 self.BEDSIZE_X_MM = dim.width;
                 self.BEDSIZE_Y_MM = dim.depth;
                 self.BEDSIZE_Z_MM = dim.height;
+                if ( self.printerProfiles.profiles[printerProfile]["volume"]["origin"] == "lowerleft" ) {
+                    self.ORIGIN_OFFSET_X_MM = self.BEDSIZE_X_MM/2.0;
+                    self.ORIGIN_OFFSET_Y_MM = self.BEDSIZE_Y_MM/2.0;
+                } else {
+                    self.ORIGIN_OFFSET_X_MM = 0;
+                    self.ORIGIN_OFFSET_Y_MM = 0;
+                }
             }
             self.drawBedFloor(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM);
             self.drawWalls(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM, self.BEDSIZE_Z_MM);
@@ -451,8 +460,8 @@ $(function() {
                         profile: slicingVM.profile(),
                         printerProfile: slicingVM.printerProfile(),
                         destination: destinationFilename,
-                        position: { "x": self.BEDSIZE_X_MM/2.0+self.model.position.x,
-                            "y": self.BEDSIZE_Y_MM/2.0+self.model.position.y }
+                        position: { "x": self.ORIGIN_OFFSET_X_MM+self.model.position.x,
+                            "y": self.ORIGIN_OFFSET_Y_MM+self.model.position.y }
                     };
                     _.extend(data, self.basicOverridesViewModel.toJS());
                     _.extend(data, self.advancedOverridesViewModel.toJS());
