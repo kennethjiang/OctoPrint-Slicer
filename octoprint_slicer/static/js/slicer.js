@@ -30,10 +30,15 @@ $(function() {
 
         // Override slicingViewModel.show to surpress default slicing behavior
         self.slicingViewModel.show = function(target, file, force) {
+            var filename = file.substr(0, file.lastIndexOf("."));
+            if (filename.lastIndexOf("/") != 0) {
+                filename = filename.substr(filename.lastIndexOf("/") + 1);
+            }
+
             self.slicingViewModel.requestData();
             self.slicingViewModel.target = target;
             self.slicingViewModel.file(file);
-            self.slicingViewModel.destinationFilename(self.slicingViewModel.file().substr(0, self.slicingViewModel.file().lastIndexOf(".")));
+            self.slicingViewModel.destinationFilename(filename);
             self.slicingViewModel.printerProfile(self.slicingViewModel.printerProfiles.currentProfile());
 
             $('a[href="#tab_plugin_slicer"]').tab('show');
