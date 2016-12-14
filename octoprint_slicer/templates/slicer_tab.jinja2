@@ -170,6 +170,20 @@
                             <select data-bind="options: $data.optionsForKey('platform_adhesion'), value: $data['profile.platform_adhesion'], valueAllowUnset: false"></select>
                           </div>
                       </div>
+                      <div title="Filament Diameter" class="input-append">
+                          <label class="control-label">Filament</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.filament_diameter']" type="number" tabindex="-1" min="0" max="100" step="0.01"></input>
+                              <span class="add-on">mm</span>
+                          </div>
+                      </div>
+                      <div title="Filament Flow" class="input-append">
+                          <label class="control-label">Flow</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.filament_flow']" type="number" tabindex="-1" min="0" max="100" step="0.1"></input>
+                              <span class="add-on">%</span>
+                          </div>
+                      </div>
                       <div title="Enable cooling fan" class="input-append">
                           <label class="control-label">Cooling fan</label>
                           <div class="controls checkbox">
