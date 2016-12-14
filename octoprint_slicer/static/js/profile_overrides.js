@@ -100,7 +100,8 @@ $(function() {
     function AdvancedOverridesViewModel(parameters) {
         OverridesViewModel.call(this, parameters,
                             ["start_gcode",
-                             "end_gcode"],
+                             "end_gcode",
+                             "filament_diameter"],
                             { "platform_adhesion" : ko.observableArray(["none", "brim", "raft"])},
                             ["retraction_enable",
                              "travel_speed",
@@ -108,7 +109,8 @@ $(function() {
                              "inner_shell_speed",
                              "infill_speed",
                              "fan_enabled",
-                             "bottom_layer_speed"
+                             "bottom_layer_speed",
+                             "filament_flow"
                              ]);
     }
 
