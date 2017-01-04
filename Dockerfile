@@ -25,4 +25,7 @@ RUN python setup.py install
 ADD . /app
 RUN cd /app && python setup.py develop
 WORKDIR /app/data
+
+EXPOSE 5000
+
 CMD ["octoprint",  "--iknowwhatimdoing", "--basedir", "/app/data", "--debug"]
