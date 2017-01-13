@@ -60,21 +60,28 @@
           <form class="form-horizontal">
               <div class="row">
                   <div class="span3">
-                      <div title="Printing temperature" class="input-append">
-                          <label class="control-label">Printing temperature</label>
+                      <div title="Print temperature" class="input-append" data-bind="visible: !_.isUndefined($data['profile.print_temperature']())">
+                          <label class="control-label">Print temperature</label>
                           <div class="controls">
                               <input data-bind="numericValue: $data['profile.print_temperature']" type="number" tabindex="-1" min="150" max="315" step="1"></input>
                               <span class="add-on">°C</span>
                           </div>
                       </div>
-                      <div title="Heatbed temperature" class="input-append">
-                          <label class="control-label">Heatbed temperature</label>
+                      <div title="Print Bed temperature" class="input-append" data-bind="visible: !_.isUndefined($data['profile.print_bed_temperature']())">
+                          <label class="control-label">Print bed temperature</label>
                           <div class="controls">
                               <input data-bind="numericValue: $data['profile.print_bed_temperature']" type="number" tabindex="-1" min="0" max="110" step="1"></input>
                               <span class="add-on">°C</span>
                           </div>
                       </div>
-                      <div title="Height of each layer" class="input-append">
+                      <div title="Bed temperature" class="input-append" data-bind="visible: !_.isUndefined($data['profile.bed_temperature']())">
+                          <label class="control-label">Bed temperature</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.bed_temperature']" type="number" tabindex="-1" min="0" max="110" step="1"></input>
+                              <span class="add-on">°C</span>
+                          </div>
+                      </div>
+                      <div title="Height of each layer" class="input-append" data-bind="visible: !_.isUndefined($data['profile.layer_height']())">
                           <label class="control-label">Layer height</label>
                           <div class="controls">
                               <input data-bind="numericValue: $data['profile.layer_height']" type="number" tabindex="-1" min="0.01" max="0.35" step="0.01"></input>

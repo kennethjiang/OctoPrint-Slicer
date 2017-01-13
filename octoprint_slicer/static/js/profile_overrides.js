@@ -38,11 +38,25 @@ $(function() {
         self.optionsForKey = function(key) {
             return ENUM_KEYS[key];
         };
+	var endings = {};
+	self.stripEndings = function(m, k) {
+	    if (_.isString(m[k]) && m[k].endsWith("%")) {
+		endings[k] = "%";
+		return m[k].slice(0,-1);
+	    } else {
+		return m[k];
+	    }
+	}
 
         self.updateOverridesFromProfile = function(profile) {
-            _.forEach(ITEM_KEYS, function(k) { self["profile." + k]( profile[k] ); });
+            _.forEach(ITEM_KEYS, function(k) { self["profile." + k]( self.stripEndings(profile,k) ); });
             _.forEach(ENUM_KEYS, function(v, k) { self["profile." + k]( profile[k] ); });
-            _.forEach(ARRAY_KEYS, function(k) { self["profile." + k]( profile[k][0] ); });
+            _.forEach(ARRAY_KEYS, function(k) {
+		if (_.isArray(profile[k])) {
+		    self["profile." + k](profile[k][0]);
+		} else {
+		    self["profile." + k](profile[k]);
+		}});
         };
 
         self.updateOverrides = function(newValue) {
@@ -74,6 +88,10 @@ $(function() {
                          "toJS",
                          "optionsForKey"]
             });
+            _.forEach(ITEM_KEYS, function(k) {
+		if(k in endings) {
+		    result[k] += endings;
+		}});
 
             for (var key in result) {
                 if (_.contains(ARRAY_KEYS, key.replace("profile.", ""))) {
@@ -89,6 +107,7 @@ $(function() {
                             ["print_temperature"],
                             { "support" : ko.observableArray(["none", "buildplate", "everywhere"])},
                             ["layer_height",
+                            "bed_temperature",
                             "print_bed_temperature",
                             "fill_density",
                             "wall_thickness",
