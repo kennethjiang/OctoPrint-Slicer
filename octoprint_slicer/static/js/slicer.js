@@ -451,7 +451,7 @@ $(function() {
             var form = new FormData();
 	    var extensionPosition = self.slicingViewModel.file().lastIndexOf(".")
 	    var newFileName = self.slicingViewModel.file().substring(0, extensionPosition) +
-		"." + (+ new Date()) +
+		".tmp." + (+ new Date()) +
 		self.slicingViewModel.file().substring(extensionPosition);
             form.append("file", self.blobFromModel(self.model), newFileName);
             $.ajax({
