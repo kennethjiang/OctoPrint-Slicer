@@ -437,7 +437,11 @@ $(function() {
 
         self.slice = function() {
             var form = new FormData();
-            form.append("file", self.blobFromModel(self.model), self.slicingViewModel.file());
+	    var extensionPosition = self.slicingViewModel.file().lastIndexOf(".")
+	    var newFileName = self.slicingViewModel.file().substring(0, extensionPosition) +
+		"." + (+ new Date()) +
+		self.slicingViewModel.file().substring(extensionPosition);
+            form.append("file", self.blobFromModel(self.model), newFileName);
             $.ajax({
                 url: API_BASEURL + "files/local",
                 type: "POST",
@@ -478,11 +482,18 @@ $(function() {
                     }
 
                     $.ajax({
-                        url: API_BASEURL + "files/" + slicingVM.target + "/" + slicingVM.file(),
+                        url: API_BASEURL + "files/" + slicingVM.target + "/" + newFileName,
                         type: "POST",
                         dataType: "json",
                         contentType: "application/json; charset=UTF-8",
-                        data: JSON.stringify(data)
+                        data: JSON.stringify(data),
+			complete: function(data) {
+			    // Delete the temporary stl file no matter what.
+			    $.ajax({
+				url: API_BASEURL + "files/" + slicingVM.target + "/" + newFileName,
+				type: "DELETE"
+			    });
+			}
                     });
                 }
             });
