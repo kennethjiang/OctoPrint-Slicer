@@ -435,6 +435,18 @@ $(function() {
             model.position.z -= model.position.z + boundaryBox.min.z - bedLowMinZ;
         }
 
+	self.tempFiles = {};
+	self.removeTempFilesAfterSlicing = function (event) {
+	    if (event.data.type == "SlicingDone" &&
+		event.data.payload.stl in self.tempFiles) {
+		OctoPrint.files.delete(event.data.payload.stl_location,
+				 event.data.payload.stl);
+		delete self.tempFiles[event.data.payload.stl];
+	    }
+	}
+
+	OctoPrint.socket.onMessage("event", self.removeTempFilesAfterSlicing);
+
         self.slice = function() {
             var form = new FormData();
 	    var extensionPosition = self.slicingViewModel.file().lastIndexOf(".")
@@ -480,20 +492,13 @@ $(function() {
                     } else if (slicingVM.afterSlicing() == "select") {
                         data["select"] = true;
                     }
-
+		    self.tempFiles[newFileName] = 1;
                     $.ajax({
                         url: API_BASEURL + "files/" + slicingVM.target + "/" + newFileName,
                         type: "POST",
                         dataType: "json",
                         contentType: "application/json; charset=UTF-8",
-                        data: JSON.stringify(data),
-			complete: function(data) {
-			    // Delete the temporary stl file no matter what.
-			    $.ajax({
-				url: API_BASEURL + "files/" + slicingVM.target + "/" + newFileName,
-				type: "DELETE"
-			    });
-			}
+                        data: JSON.stringify(data)
                     });
                 }
             });
