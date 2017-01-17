@@ -109,12 +109,12 @@ $(function() {
                             ["layer_height",
 			     "temperature",
                              "bed_temperature",
-                            "print_bed_temperature",
-                            "fill_density",
-                            "wall_thickness",
-                            "print_speed",
-                            "solid_layer_thickness",
-                            "support"]);
+                             "print_bed_temperature",
+                             "fill_density",
+                             "wall_thickness",
+                             "print_speed",
+                             "solid_layer_thickness",
+                             "support"]);
     }
 
     function AdvancedOverridesViewModel(parameters) {
@@ -129,8 +129,10 @@ $(function() {
                              "inner_shell_speed",
                              "infill_speed",
                              "fan_enabled",
+			     "cooling",
                              "bottom_layer_speed",
-                             "filament_flow"
+                             "filament_flow",
+			     "extrusion_multiplier"
                              ]);
     }
 

@@ -185,23 +185,35 @@
                           </div>
                       </div>
                       <div title="Filament Diameter" class="input-append">
-                          <label class="control-label">Filament</label>
+                          <label class="control-label">Filament Diameter</label>
                           <div class="controls">
                               <input data-bind="numericValue: $data['profile.filament_diameter']" type="number" tabindex="-1" min="0" max="100" step="0.01"></input>
                               <span class="add-on">mm</span>
                           </div>
                       </div>
-                      <div title="Filament Flow" class="input-append">
-                          <label class="control-label">Flow</label>
+                      <div title="Filament Flow" class="input-append" data-bind="visible: !_.isUndefined($data['profile.filament_flow']())">
+                          <label class="control-label">Filament Flow</label>
                           <div class="controls">
-                              <input data-bind="numericValue: $data['profile.filament_flow']" type="number" tabindex="-1" min="0" max="100" step="0.1"></input>
+                              <input data-bind="numericValue: $data['profile.filament_flow']" type="number" tabindex="-1" min="0" max="200" step="0.1"></input>
                               <span class="add-on">%</span>
                           </div>
                       </div>
-                      <div title="Enable cooling fan" class="input-append">
-                          <label class="control-label">Cooling fan</label>
+                      <div title="Extrusion Multiplier" class="input-append" data-bind="visible: !_.isUndefined($data['profile.extrusion_multiplier']())">
+                          <label class="control-label">Extrusion Multiplier</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.extrusion_multiplier']" type="number" tabindex="-1" min="0" max="2" step="0.001"></input>
+                          </div>
+                      </div>
+                      <div title="Fan Enabled" class="input-append" data-bind="visible: !_.isUndefined($data['profile.fan_enabled']())">
+                          <label class="control-label">Fan Enabled</label>
                           <div class="controls checkbox">
                               <input type="checkbox" data-bind="checked: $data['profile.fan_enabled']"></input>
+                          </div>
+                      </div>
+                      <div title="Cooling" class="input-append" data-bind="visible: !_.isUndefined($data['profile.cooling']())">
+                          <label class="control-label">Cooling</label>
+                          <div class="controls checkbox">
+                              <input type="checkbox" data-bind="checked: $data['profile.cooling']"></input>
                           </div>
                       </div>
                       <div title="Enable filament retraction" class="input-append">
