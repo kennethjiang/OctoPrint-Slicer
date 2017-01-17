@@ -185,7 +185,7 @@
                           </div>
                       </div>
                       <div title="Filament Diameter" class="input-append">
-                          <label class="control-label">Filament Diameter</label>
+                          <label class="control-label">Filament</label>
                           <div class="controls">
                               <input data-bind="numericValue: $data['profile.filament_diameter']" type="number" tabindex="-1" min="0" max="100" step="0.01"></input>
                               <span class="add-on">mm</span>
@@ -199,7 +199,7 @@
                           </div>
                       </div>
                       <div title="Extrusion Multiplier" class="input-append" data-bind="visible: !_.isUndefined($data['profile.extrusion_multiplier']())">
-                          <label class="control-label">Extrusion Multiplier</label>
+                          <label class="control-label">Flow Multiplier</label>
                           <div class="controls">
                               <input data-bind="numericValue: $data['profile.extrusion_multiplier']" type="number" tabindex="-1" min="0" max="2" step="0.001"></input>
                           </div>
