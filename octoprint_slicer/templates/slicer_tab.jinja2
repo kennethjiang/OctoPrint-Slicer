@@ -132,15 +132,15 @@
                           </div>
                       </div>
                       <div title="Generate support material" class="input-append" data-bind="visible: !_.isUndefined($data['profile.support_material']())">
-                          <label class="control-label">Generate Supports</label>
+                          <label class="control-label">Supports</label>
                           <div class="controls checkbox">
                               <input type="checkbox" data-bind="checked: $data['profile.support_material']"></input>
                           </div>
                       </div>
-                      <div title="Generate support material" class="input-append" data-bind="visible: !_.isUndefined($data['profile.support_material']())">
-                          <label class="control-label">Generate Supports</label>
+                      <div title="Detect Bridging Perimeters (recommended when using supports)" class="input-append" data-bind="visible: !_.isUndefined($data['profile.overhangs']())">
+                          <label class="control-label">Detect overhangs</label>
                           <div class="controls checkbox">
-                              <input type="checkbox" data-bind="checked: $data['profile.support_material']"></input>
+                              <input type="checkbox" data-bind="checked: $data['profile.overhangs']"></input>
                           </div>
                       </div>
                   </div>
