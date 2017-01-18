@@ -114,7 +114,9 @@ $(function() {
                              "wall_thickness",
                              "print_speed",
                              "solid_layer_thickness",
-                             "support"]);
+                             "support",
+                             "support_material",
+                             "overhangs"]);
     }
 
     function AdvancedOverridesViewModel(parameters) {
