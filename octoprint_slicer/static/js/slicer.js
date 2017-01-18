@@ -189,6 +189,7 @@ $(function() {
             self.transformControls.addEventListener("mouseDown", self.startTransform);
             self.transformControls.addEventListener("mouseUp", self.endTransform);
             self.transformControls.addEventListener("change", self.updateTransformInputs);
+            self.transformControls.addEventListener("objectChange", function (e) {self.stl_modified = true});
             self.scene.add(self.transformControls);
             self.updatePrinterBed();
 
@@ -259,6 +260,7 @@ $(function() {
                 self.transformControls.setMode("rotate");
                 self.updateTransformInputs();
                 self.render();
+                self.stl_modified = false;
             } );
         };
 
@@ -277,6 +279,7 @@ $(function() {
                 self.lockScale = input[0].checked;
             }
             else if(input[0].type == "number" && !isNaN(parseFloat(input.val()))) {
+                self.stl_modified = true;
                 input.val(parseFloat(input.val()).toFixed(3));
                 var model = self.transformControls.object;
 
