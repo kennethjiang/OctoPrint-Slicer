@@ -38,21 +38,30 @@ $(function() {
         self.optionsForKey = function(key) {
             return ENUM_KEYS[key];
         };
-	var endings = {};
-	self.stripEndings = function(m, k) {
-	    if (_.isString(m[k]) && m[k].endsWith("%")) {
-		endings[k] = "%";
-		return m[k].slice(0,-1);
-	    } else {
-		return m[k];
-	    }
-	}
 
         self.updateOverridesFromProfile = function(profile) {
+	    // Some options are numeric but might have a percent sign after them.
+	    // Remove the percent and save it to replace later.
+	    self.endings = {};
+	    self.stripEndings = function(m, k) {
+		if (_.isString(m[k]) && m[k].endsWith("%")) {
+		    self.endings[k] = "%";
+		    return m[k].slice(0,-1);
+		} else {
+		    return m[k];
+		}
+	    }
+
+	    // Some options are arrays in cura but not Slic3r.  Keep track of which.
+	    self.isArray = [];
+
             _.forEach(ITEM_KEYS, function(k) { self["profile." + k]( self.stripEndings(profile,k) ); });
             _.forEach(ENUM_KEYS, function(v, k) { self["profile." + k]( profile[k] ); });
             _.forEach(ARRAY_KEYS, function(k) {
+		// Some config options are arrays in cura but not in Slic3r.
+		// Detect which ones are arrays and only convert those.
 		if (_.isArray(profile[k])) {
+		    self.isArray.push(k);  // Remember this for later.
 		    self["profile." + k](profile[k][0]);
 		} else {
 		    self["profile." + k](profile[k]);
@@ -86,15 +95,20 @@ $(function() {
                          "updateOverridesFromProfile",
                          "updateOverrides",
                          "toJS",
-                         "optionsForKey"]
+                         "optionsForKey",
+			 "stripEndings",
+			 "isArray",
+			 "endings"]
             });
             _.forEach(ITEM_KEYS, function(k) {
-		if(k in endings) {
-		    result[k] += endings;
+		if(k in self.endings) {
+		    result[k] += self.endings[k];
 		}});
 
             for (var key in result) {
-                if (_.contains(ARRAY_KEYS, key.replace("profile.", ""))) {
+		var baseKey = key.replace("profile.", "");
+		// Convert it back to an array if it was an array originally.
+                if (_.contains(ARRAY_KEYS, baseKey) && _.contains(self.isArray, baseKey)) {
                     result[key] = [result[key]];
                 }
             }
@@ -121,18 +135,18 @@ $(function() {
     function AdvancedOverridesViewModel(parameters) {
         OverridesViewModel.call(this, parameters,
                             ["start_gcode",
-                             "end_gcode",
-                             "filament_diameter"],
+			     "end_gcode",
+			     "filament_diameter"],
                             { "platform_adhesion" : ko.observableArray(["none", "brim", "raft"])},
                             ["retraction_enable",
-                             "travel_speed",
-                             "outer_shell_speed",
-                             "inner_shell_speed",
-                             "infill_speed",
-                             "fan_enabled",
+			     "travel_speed",
+			     "outer_shell_speed",
+			     "inner_shell_speed",
+			     "infill_speed",
+			     "fan_enabled",
 			     "cooling",
-                             "bottom_layer_speed",
-                             "filament_flow",
+			     "bottom_layer_speed",
+			     "filament_flow",
 			     "extrusion_multiplier"
                              ]);
     }
