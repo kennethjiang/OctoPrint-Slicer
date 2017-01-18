@@ -440,10 +440,10 @@ $(function() {
 
 	self.tempFiles = {};
 	self.removeTempFilesAfterSlicing = function (event) {
-	    if (event.data.type == "SlicingDone" &&
+	    if ($.inArray(event.data.type, ["SlicingDone", "SlicingFailed"]) >= 0 &&
 		event.data.payload.stl in self.tempFiles) {
 		OctoPrint.files.delete(event.data.payload.stl_location,
-				 event.data.payload.stl);
+				       event.data.payload.stl);
 		delete self.tempFiles[event.data.payload.stl];
 	    }
 	}
