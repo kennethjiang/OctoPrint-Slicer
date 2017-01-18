@@ -11,4 +11,4 @@ A picture is worth 1000 words:
 Install via the bundled [Plugin Manager](https://github.com/foosel/OctoPrint/wiki/Plugin:-Plugin-Manager)
 or manually using this URL:
 
-    https://github.com/kennethjiang/OctoPrint-Slicer/archive/master.zip
+    https://github.com/eyal0/OctoPrint-Slicer/archive/master.zip
