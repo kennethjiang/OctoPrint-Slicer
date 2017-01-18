@@ -128,7 +128,7 @@
                       <div title="Support for overhangs" class="input-append" data-bind="visible: !_.isUndefined($data['profile.support']())">
                           <label class="control-label">Support</label>
                           <div class="controls">
-                              <select data-bind="options: $data.optionsForKey('support'), value: $data['profile.support'], valueAllowUnset: false"></select>
+                              <select data-bind="options: $data.optionsForKey('support'), value: $data['profile.support'], valueAllowUnset: true"></select>
                           </div>
                       </div>
                       <div title="Generate support material" class="input-append" data-bind="visible: !_.isUndefined($data['profile.support_material']())">
