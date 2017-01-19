@@ -25,6 +25,7 @@ $(function() {
         self.slicingViewModel = parameters[0];
         self.basicOverridesViewModel = parameters[1];
         self.advancedOverridesViewModel = parameters[2];
+        self.printerStateViewModel = parameters[3];
 
         self.lockScale = true;
 
@@ -482,9 +483,15 @@ $(function() {
                         type: "POST",
                         dataType: "json",
                         contentType: "application/json; charset=UTF-8",
-                        data: JSON.stringify(data)
+                        data: JSON.stringify(data),
+			error: function(jqXHR, textStatus) {
+			    new PNotify(title: "Slicing failed", text: textStatus, type: "error", hide: false);
+			}
                     });
-                }
+                },
+		error: function(jqXHR, textStatus) {
+		    new PNotify(title: "Slicing failed", text: textStatus, type: "error", hide: false);
+		}
             });
         };
 
@@ -499,6 +506,42 @@ $(function() {
             self.renderer.render( self.scene, self.camera );
         };
 
+	self.slicerProperties = ko.observable();
+	self.updateSlicerProperties = function(newSlicersArray) {
+	    if (_.isArray(newSlicersArray) &&
+		newSlicersArray.length > 0) {
+		OctoPrint
+		    .get(OctoPrint.getBlueprintUrl("slicer") +
+			 "slicer/properties")
+		    .then(function (result) {
+			self.slicerProperties(result);
+		    });
+	    } else {
+		self.slicerProperties({});
+	    }
+	}
+	self.slicingViewModel.slicers.subscribe(self.updateSlicerProperties);
+
+	self.sameDevice = ko.computed(function() {
+	    if (self.slicerProperties() && self.slicingViewModel.slicer() &&
+		self.slicingViewModel.slicer() in self.slicerProperties() &&
+		!self.slicerProperties()[self.slicingViewModel.slicer()].same_device) {
+		return false;
+	    } else {
+		return true;
+	    }
+	});
+
+	self.isPrinting = ko.computed(function () {
+	    return self.printerStateViewModel.isPrinting() ||
+		self.printerStateViewModel.isPaused();
+	});
+
+	self.canSliceNow = ko.computed(function () {
+	    return self.slicingViewModel.enableSliceButton() &&
+		(!self.isPrinting() || !self.sameDevice());
+	});
+
         self.init();
         self.render();
     }
@@ -508,7 +551,7 @@ $(function() {
         SlicerViewModel,
 
         // e.g. loginStateViewModel, settingsViewModel, ...
-        [ "slicingViewModel", "basicOverridesViewModel", "advancedOverridesViewModel" ],
+        [ "slicingViewModel", "basicOverridesViewModel", "advancedOverridesViewModel", "printerStateViewModel" ],
 
         // e.g. #settings_plugin_slicer, #tab_plugin_slicer, ...
         [ "#slicer" ]

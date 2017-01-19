@@ -114,7 +114,6 @@ $(function() {
                              ]);
     }
 
-
     // view model class, parameters for constructor, container to bind to
     OCTOPRINT_VIEWMODELS.push([
         BasicOverridesViewModel,
