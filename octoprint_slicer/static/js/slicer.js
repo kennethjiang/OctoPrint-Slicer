@@ -487,10 +487,10 @@ $(function() {
                 type: "POST",
                 dataType: "json",
                 contentType: "application/json; charset=UTF-8",
-                        data: JSON.stringify(data),
-			error: function(jqXHR, textStatus) {
-			    new PNotify(title: "Slicing failed", text: textStatus, type: "error", hide: false);
-			}
+		data: JSON.stringify(data),
+		error: function(jqXHR, textStatus) {
+		    new PNotify({title: "Slicing failed", text: textStatus, type: "error", hide: false});
+		}
             });
 
 	}
@@ -517,7 +517,7 @@ $(function() {
 			self.sendSliceCommand(newFilename);
                     },
 		    error: function(jqXHR, textStatus) {
-		        new PNotify(title: "Slicing failed", text: textStatus, type: "error", hide: false);
+		        new PNotify({title: "Slicing failed", text: textStatus, type: "error", hide: false});
                     }
 		});
 	    }
