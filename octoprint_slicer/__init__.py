@@ -129,7 +129,7 @@ class SlicerPlugin(octoprint.plugin.SettingsPlugin,
 	@octoprint.plugin.BlueprintPlugin.route("/slicer/properties", methods=["GET"])
 	def slicerInfo(self):
                 return flask.jsonify(
-                        {slicer: self._slicing_manager.get_slicer(slicer).get_slicer_properties()
+                        {slicer: self._slicing_manager.get_slicer(slicer, require_configured=False).get_slicer_properties()
                          for slicer in self._slicing_manager.registered_slicers})
 
 	# Upload event
@@ -396,4 +396,3 @@ def __plugin_load__():
 	__plugin_hooks__ = {
 		"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information
 	}
-
