@@ -476,15 +476,15 @@ $(function() {
             })) {
                 destinationFilename = destinationFilename + "." + destinationExtensions[0];
             }
-
+	    var centerX = group
             var data = {
                 command: "slice",
                 slicer: slicingVM.slicer(),
                 profile: slicingVM.profile(),
                 printerProfile: slicingVM.printerProfile(),
                 destination: destinationFilename,
-                position: { "x": self.ORIGIN_OFFSET_X_MM+self.stlFiles[0].model.position.x,
-                            "y": self.ORIGIN_OFFSET_Y_MM+self.stlFiles[0].model.position.y }
+                position: { "x": self.ORIGIN_OFFSET_X_MM,
+                            "y": self.ORIGIN_OFFSET_Y_MM }
             };
             _.extend(data, self.basicOverridesViewModel.toJS());
             _.extend(data, self.advancedOverridesViewModel.toJS());
@@ -517,6 +517,7 @@ $(function() {
 		    self.slicingViewModel.file().substring(extensionPosition);
 		var group = new THREE.Group();
 		_.forEach(self.stlFiles, function (stlFile) {
+		    var modelCopy = stlFile.model.clone(true); // recursive clone
 		    group.copy(stlFile.model, true);
 		});
 		form.append("file", self.blobFromModel(group), newFilename);
