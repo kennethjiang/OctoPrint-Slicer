@@ -484,8 +484,8 @@ $(function() {
                 profile: slicingVM.profile(),
                 printerProfile: slicingVM.printerProfile(),
                 destination: destinationFilename,
-                position: { "x": self.ORIGIN_OFFSET_X_MM+self.model.position.x,
-                            "y": self.ORIGIN_OFFSET_Y_MM+self.model.position.y }
+                position: { "x": self.ORIGIN_OFFSET_X_MM+self.stlFiles[0].model.position.x,
+                            "y": self.ORIGIN_OFFSET_Y_MM+self.stlFiles[0].model.position.y }
             };
             _.extend(data, self.basicOverridesViewModel.toJS());
             _.extend(data, self.advancedOverridesViewModel.toJS());
@@ -514,10 +514,17 @@ $(function() {
 	    } else {
 		var form = new FormData();
 		var extensionPosition = self.slicingViewModel.file().lastIndexOf(".")
-		var newFilename = self.slicingViewModel.file().substring(0, extensionPosition) +
+		var newFilename = self.computeDestinationFilename(
+		    _.map(self.stlFiles, function(m) {
+			return m.file;
+		    })) +
 		    ".tmp." + (+ new Date()) +
 		    self.slicingViewModel.file().substring(extensionPosition);
-		form.append("file", self.blobFromModel(self.model), newFilename);
+		var scene = new THREE.Scene();
+		_.forEach(self.stlFiles, function (stlFile) {
+		    scene.add(stlFile.model);
+		});
+		form.append("file", self.blobFromModel(scene), newFilename);
 		$.ajax({
                     url: API_BASEURL + "files/local",
                     type: "POST",
