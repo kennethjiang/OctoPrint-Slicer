@@ -162,6 +162,26 @@
                               <span class="add-on">mm/s</span>
                           </div>
                       </div>
+                      <div title="Enable filament retraction" class="input-append">
+                          <label class="control-label">Retraction</label>
+                          <div class="controls checkbox">
+                              <input type="checkbox" data-bind="checked: $data['profile.retraction_enable']"></input>
+                          </div>
+                      </div>
+                      <div title="Filament retraction speed" class="input-append">
+                          <label class="control-label">Retraction speed</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.retraction_speed']" type="number" tabindex="-1" min="0" max="300" step="1"></input>
+                              <span class="add-on">mm/s</span>
+                          </div>
+                      </div>
+                      <div title="Filament retraction distance" class="input-append">
+                          <label class="control-label">Retraction distance</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.retraction_amount']" type="number" tabindex="-1" min="0" max="30" step="0.1"></input>
+                              <span class="add-on">mm</span>
+                          </div>
+                      </div>
                   </div>
                   <div class="span3">
                       <div title="Platform adhesion type" class="input-append">
@@ -188,12 +208,6 @@
                           <label class="control-label">Cooling fan</label>
                           <div class="controls checkbox">
                               <input type="checkbox" data-bind="checked: $data['profile.fan_enabled']"></input>
-                          </div>
-                      </div>
-                      <div title="Enable filament retraction" class="input-append">
-                          <label class="control-label">Retraction</label>
-                          <div class="controls checkbox">
-                              <input type="checkbox" data-bind="checked: $data['profile.retraction_enable']"></input>
                           </div>
                       </div>
                   </div>
