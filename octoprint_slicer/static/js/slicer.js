@@ -8,6 +8,7 @@ $(function() {
     function SlicerViewModel(parameters) {
         var self = this;
         self.canvas = document.getElementById( 'slicer-canvas' );
+	self.stlFiles = [];
 
         //check if webGL is present. If not disable Slicer plugin
         try {
@@ -29,21 +30,38 @@ $(function() {
 
         self.lockScale = true;
 
+	// Returns the destination filename based on which models are loaded.
+	// The destination filename is without the final .gco on it because
+	// that will depend on the slicer.
+	self.computeDestinationFilename = function(inputFilenames) {
+	    // TODO: For now, just use the first model's name.
+	    var destinationFilename = inputFilenames[0].substr(0, inputFilenames[0].lastIndexOf("."));
+	    if (destinationFilename.lastIndexOf("/") != 0) {
+                destinationFilename = destinationFilename.substr(destinationFilename.lastIndexOf("/") + 1);
+	    }
+	    return destinationFilename;
+	}
+
         // Override slicingViewModel.show to surpress default slicing behavior
         self.slicingViewModel.show = function(target, file, force) {
-            var filename = file.substr(0, file.lastIndexOf("."));
-            if (filename.lastIndexOf("/") != 0) {
-                filename = filename.substr(filename.lastIndexOf("/") + 1);
-            }
-
-            self.slicingViewModel.requestData();
-            self.slicingViewModel.target = target;
-            self.slicingViewModel.file(file);
-            self.slicingViewModel.destinationFilename(filename);
-            self.slicingViewModel.printerProfile(self.slicingViewModel.printerProfiles.currentProfile());
-
+	    self.stlFiles.push({target: target, file: file, force: force});
+	    if (self.stlFiles.length == 1) {
+		// This is the first model.
+		self.slicingViewModel.requestData();
+		self.slicingViewModel.target = target;
+		self.slicingViewModel.file(file); // TODO: Do we need to fix this?
+		self.slicingViewModel.printerProfile(self.slicingViewModel.printerProfiles.currentProfile());
+		self.stlModified = false;
+	    } else {
+	    	self.stlModified = true;
+	    }
+	    self.slicingViewModel.destinationFilename(
+		self.computeDestinationFilename(
+		    _.map(self.stlFiles, function(m) {
+			return m.file;
+		    })));
             $('a[href="#tab_plugin_slicer"]').tab('show');
-            self.loadSTL(target, file, force);
+            self.loadSTL(target, file, force, self.stlFiles[self.stlFiles.length-1]);
         };
 
         // Print bed size
@@ -233,14 +251,9 @@ $(function() {
 
         };
 
-        self.loadSTL = function(target, file) {
-            if (self.model) {
-                self.scene.remove(self.model);
-                self.transformControls.detach();
-            }
-
+        self.loadSTL = function(target, file, force, stlFile) {
             var loader = new THREE.STLLoader();
-            loader.load(BASEURL + "downloads/files/" + target + "/" + file, function ( geometry ) {
+            return loader.load(BASEURL + "downloads/files/" + target + "/" + file, function ( geometry ) {
                 var diffuseColor = new THREE.Color();
                 diffuseColor.setHSL( effectController.hue, effectController.saturation, effectController.lightness );
                 var specularColor = new THREE.Color();
@@ -252,16 +265,16 @@ $(function() {
                 // center model's origin
                 var stlModel = new THREE.Mesh( geometry, material );
                 var center = new THREE.Box3().setFromObject(stlModel).center()
-                self.model = new THREE.Object3D();
-                self.model.add(stlModel);
+                var model = new THREE.Object3D();
+                model.add(stlModel);
                 stlModel.position.copy(center.negate());
 
-                self.scene.add( self.model );
-                self.transformControls.attach(self.model);
+                self.scene.add(model);
+                self.transformControls.attach(model);
                 self.transformControls.setMode("rotate");
                 self.updateTransformInputs();
                 self.render();
-                self.stlModified = false;
+		stlFile['model'] = model;
             } );
         };
 
