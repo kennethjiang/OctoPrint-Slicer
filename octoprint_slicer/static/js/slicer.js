@@ -515,11 +515,11 @@ $(function() {
 		    })) +
 		    ".tmp." + (+ new Date()) +
 		    self.slicingViewModel.file().substring(extensionPosition);
-		var scene = new THREE.Scene();
+		var group = new THREE.Group();
 		_.forEach(self.stlFiles, function (stlFile) {
-		    scene.add(stlFile.model);
+		    group.copy(stlFile.model, true);
 		});
-		form.append("file", self.blobFromModel(scene), newFilename);
+		form.append("file", self.blobFromModel(group), newFilename);
 		$.ajax({
                     url: API_BASEURL + "files/local",
                     type: "POST",
