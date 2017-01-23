@@ -464,7 +464,7 @@ $(function() {
 
 	OctoPrint.socket.onMessage("event", self.removeTempFilesAfterSlicing);
 
-	self.sendSliceCommand = function(filename) {
+	self.sendSliceCommand = function(filename, group) {
 	    var slicingVM = self.slicingViewModel;
 
             var destinationFilename = slicingVM._sanitize(slicingVM.destinationFilename());
@@ -477,15 +477,15 @@ $(function() {
             })) {
                 destinationFilename = destinationFilename + "." + destinationExtensions[0];
             }
-	    var centerX = group
+	    var groupCenter = new THREE.Box3().setFromObject(group).center();
             var data = {
                 command: "slice",
                 slicer: slicingVM.slicer(),
                 profile: slicingVM.profile(),
                 printerProfile: slicingVM.printerProfile(),
                 destination: destinationFilename,
-                position: { "x": self.ORIGIN_OFFSET_X_MM,
-                            "y": self.ORIGIN_OFFSET_Y_MM }
+                position: { "x": self.ORIGIN_OFFSET_X_MM + groupCenter.x,
+                            "y": self.ORIGIN_OFFSET_Y_MM + groupCenter.y}
             };
             _.extend(data, self.basicOverridesViewModel.toJS());
             _.extend(data, self.advancedOverridesViewModel.toJS());
@@ -535,7 +535,7 @@ $(function() {
                     // On success
                     success: function(data) {
 			self.tempFiles[newFilename] = 1;
-			self.sendSliceCommand(newFilename);
+			self.sendSliceCommand(newFilename, group);
                     },
 		    error: function(jqXHR, textStatus) {
 		        new PNotify({title: "Slicing failed", text: textStatus, type: "error", hide: false});
