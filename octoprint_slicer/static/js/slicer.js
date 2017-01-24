@@ -110,7 +110,7 @@ $(function() {
         var CANVAS_WIDTH = 588,
             CANVAS_HEIGHT = 588;
 
-        var effectController = {
+        self.effectController = {
             metalness: 0.5,
 	    roughness: 0.5,
 	    modelInactiveColor: new THREE.Color("#60715b"),
@@ -126,12 +126,12 @@ $(function() {
             self.scene = new THREE.Scene();
 
             // Lights
-            var ambientLight = new THREE.AmbientLight( effectController.ambientLightColor );  // 0.2
+            var ambientLight = new THREE.AmbientLight( self.effectController.ambientLightColor );  // 0.2
             self.scene.add( ambientLight );
-            var directionalLight = new THREE.DirectionalLight(effectController.directionalLightColor, 1.0);
+            var directionalLight = new THREE.DirectionalLight(self.effectController.directionalLightColor, 1.0);
             directionalLight.position.set( 100, 100, 500 );
             self.scene.add( directionalLight );
-            var directionalLight2= new THREE.DirectionalLight(effectController.directionalLightColor, 1.0);
+            var directionalLight2= new THREE.DirectionalLight(self.effectController.directionalLightColor, 1.0);
             directionalLight2.position.set( 100, 100, -500);
             self.scene.add( directionalLight2);
 
@@ -242,17 +242,76 @@ $(function() {
                 }
             });
 
+	    self.canvas.addEventListener("click", function(e) {
+		var rect = self.canvas.getBoundingClientRect();
+		var x = (e.clientX - rect.left) / rect.width;
+		var y = (e.clientY - rect.top) / rect.height;
+
+		var pointerVector = new THREE.Vector2();
+		pointerVector.set((x*2) - 1, -(y*2) + 1);
+		var ray = new THREE.Raycaster();
+		ray.setFromCamera(pointerVector, self.camera);
+
+		// Clicking should cycle through the stlFiles if there are multiple under the cursor.
+		var foundActiveStlFile = false;
+		var nextPointedStlFile = undefined;
+		var firstPointedStlFile = undefined;
+		for (var i = 0; i < self.stlFiles.length; i++) {
+		    var stlFile = self.stlFiles[i];
+		    var intersections = ray.intersectObjects( [stlFile.model], true );
+		    if (!intersections[0]) {
+			continue;
+		    }
+		    if (!firstPointedStlFile) {
+			firstPointedStlFile = stlFile;
+		    }
+		    if (foundActiveStlFile && !nextPointedStlFile) {
+			nextPointedStlFile = stlFile;
+		    }
+		    if (self.isStlFileActive(stlFile)) {
+			foundActiveStlFile = true;
+		    }
+		}
+		if (nextPointedStlFile) {
+		    self.setStlFileActive(nextPointedStlFile);
+		} else if (firstPointedStlFile) {
+		    self.setStlFileActive(firstPointedStlFile);
+		}
+	    });
         };
+
+	self.isStlFileActive = function(stlFile) {
+	    return stlFile.model.children[0].material.color.equals(self.effectController.modelActiveColor);
+	}
+
+	self.setStlFileActive = function(stlFile) {
+	    var newActiveStl = false;
+	    _.forEach(self.stlFiles, function (otherStlFile) {
+		if (otherStlFile == stlFile) {
+		    if (!self.isStlFileActive(otherStlFile)) {
+			otherStlFile.model.children[0].material.color.copy(self.effectController.modelActiveColor);
+			newActiveStl = true;
+		    }
+		} else {
+		    otherStlFile.model.children[0].material.color.copy(self.effectController.modelInactiveColor);
+		}
+	    });
+	    if (newActiveStl) {
+		self.transformControls.attach(stlFile.model);
+		//self.transformControls.setMode("rotate");
+		self.updateTransformInputs();
+	    }
+	}
 
         self.loadSTL = function(target, file, force, stlFile) {
             var loader = new THREE.STLLoader();
             return loader.load(BASEURL + "downloads/files/" + target + "/" + file, function ( geometry ) {
                 var material = new THREE.MeshStandardMaterial({
-		    color: effectController.modelActiveColor,
+		    color: self.effectController.modelInactiveColor,  // We'll mark it active below.
 		    shading: THREE.SmoothShading,
 		    side: THREE.DoubleSide,
-		    metalness: effectController.metalness,
-		    roughness: effectController.roughness });
+		    metalness: self.effectController.metalness,
+		    roughness: self.effectController.roughness });
 
                 // center model's origin
                 var stlModel = new THREE.Mesh( geometry, material );
@@ -261,16 +320,8 @@ $(function() {
                 model.add(stlModel);
                 stlModel.position.copy(center.negate());
 		stlFile['model'] = model;
-		_.forEach(self.stlFiles, function (otherStlFile) {
-		    if (otherStlFile != stlFile) {
-			otherStlFile.model.children[0].material.color.copy(effectController.modelInactiveColor);
-		    }
-		});
-
+		self.setStlFileActive(stlFile);
                 self.scene.add(model);
-                self.transformControls.attach(model);
-                self.transformControls.setMode("rotate");
-                self.updateTransformInputs();
                 self.render();
             });
         };
