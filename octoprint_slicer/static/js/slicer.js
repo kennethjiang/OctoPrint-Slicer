@@ -111,17 +111,12 @@ $(function() {
             CANVAS_HEIGHT = 588;
 
         var effectController = {
-                    shininess: 40.0,
-                    ka: 0.17,
-                    kd: 0.625,
-                    ks: 0.55,
-                    hue:        0.121,
-                    saturation: 0.73,
-                    lightness:  0.66,
-                    lhue:        0.04,
-                    lsaturation: 0.01,  // non-zero so that fractions will be shown
-                    llightness:  1.0,
-                };
+            metalness: 0.5,
+	    roughness: 0.5,
+	    modelSelectedColor: new THREE.Color("#34bf0d"),
+	    ambientLightColor: new THREE.Color("#2b2b2b"),
+	    directionalLightColor: new THREE.Color("#ffffff"),
+        };
 
         self.init = function() {
             self.camera = new THREE.PerspectiveCamera( 45, 1.0, 0.1, 5000 );
@@ -130,15 +125,12 @@ $(function() {
             self.scene = new THREE.Scene();
 
             // Lights
-            var ambientLight = new THREE.AmbientLight( 0x333333 );  // 0.2
-            ambientLight.color.setHSL( effectController.hue, effectController.saturation, effectController.lightness * effectController.ka );
+            var ambientLight = new THREE.AmbientLight( effectController.ambientLightColor );  // 0.2
             self.scene.add( ambientLight );
-            var directionalLight = new THREE.DirectionalLight( 0xffffff, 1.0);
-            directionalLight.color.setHSL( effectController.lhue, effectController.lsaturation, effectController.llightness );
+            var directionalLight = new THREE.DirectionalLight(effectController.directionalLightColor, 1.0);
             directionalLight.position.set( 100, 100, 500 );
             self.scene.add( directionalLight );
-            var directionalLight2= new THREE.DirectionalLight( 0xffffff, 1.0);
-            directionalLight2.color.setHSL( effectController.lhue, effectController.lsaturation, effectController.llightness );
+            var directionalLight2= new THREE.DirectionalLight(effectController.directionalLightColor, 1.0);
             directionalLight2.position.set( 100, 100, -500);
             self.scene.add( directionalLight2);
 
@@ -223,8 +215,8 @@ $(function() {
                 self.toggleValueInputs($("#slicer-viewport .rotate.values div"));
             });
             $("#slicer-viewport button.scale").click(function(event) {
-				// Set selection mode to scale
-				self.transformControls.setMode("scale");
+		// Set selection mode to scale
+		self.transformControls.setMode("scale");
                 self.toggleValueInputs($("#slicer-viewport .scale.values div"));
             });
             $("#slicer-viewport .values input").change(function() {
@@ -254,13 +246,12 @@ $(function() {
         self.loadSTL = function(target, file, force, stlFile) {
             var loader = new THREE.STLLoader();
             return loader.load(BASEURL + "downloads/files/" + target + "/" + file, function ( geometry ) {
-                var diffuseColor = new THREE.Color();
-                diffuseColor.setHSL( effectController.hue, effectController.saturation, effectController.lightness );
-                var specularColor = new THREE.Color();
-                specularColor.copy( diffuseColor );
-                diffuseColor.multiplyScalar( effectController.kd );
-                specularColor.multiplyScalar( effectController.ks );
-                var material = new THREE.MeshPhongMaterial({ color: diffuseColor, specular: specularColor, shading: THREE.SmoothShading, side: THREE.DoubleSide, shininess: effectController.shininess });
+                var material = new THREE.MeshStandardMaterial({
+		    color: effectController.modelSelectedColor,
+		    shading: THREE.SmoothShading,
+		    side: THREE.DoubleSide,
+		    metalness: effectController.metalness,
+		    roughness: effectController.roughness });
 
                 // center model's origin
                 var stlModel = new THREE.Mesh( geometry, material );
