@@ -112,7 +112,8 @@ $(function() {
         var effectController = {
             metalness: 0.5,
 	    roughness: 0.5,
-	    modelSelectedColor: new THREE.Color("#34bf0d"),
+	    modelInactiveColor: new THREE.Color("#60715b"),
+	    modelActiveColor: new THREE.Color("#34bf0d"),
 	    ambientLightColor: new THREE.Color("#2b2b2b"),
 	    directionalLightColor: new THREE.Color("#ffffff"),
         };
@@ -246,7 +247,7 @@ $(function() {
             var loader = new THREE.STLLoader();
             return loader.load(BASEURL + "downloads/files/" + target + "/" + file, function ( geometry ) {
                 var material = new THREE.MeshStandardMaterial({
-		    color: effectController.modelSelectedColor,
+		    color: effectController.modelActiveColor,
 		    shading: THREE.SmoothShading,
 		    side: THREE.DoubleSide,
 		    metalness: effectController.metalness,
@@ -258,14 +259,19 @@ $(function() {
                 var model = new THREE.Object3D();
                 model.add(stlModel);
                 stlModel.position.copy(center.negate());
+		stlFile['model'] = model;
+		_.forEach(self.stlFiles, function (otherStlFile) {
+		    if (otherStlFile != stlFile) {
+			otherStlFile.model.children[0].material.color.copy(effectController.modelInactiveColor);
+		    }
+		});
 
                 self.scene.add(model);
                 self.transformControls.attach(model);
                 self.transformControls.setMode("rotate");
                 self.updateTransformInputs();
                 self.render();
-		stlFile['model'] = model;
-            } );
+            });
         };
 
         self.toggleValueInputs = function(parentDiv) {
