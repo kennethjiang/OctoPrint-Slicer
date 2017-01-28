@@ -439,7 +439,7 @@ var RectanglePacker = {
       rotatedRectangles.push(forms);
     }
     // Because the traverse is a side effect, memoizing essentially
-    // means that we don't run the original function at all.
+    // means that we don't run the original traverse at all.
     var memoizedPacker = RectanglePacker.memoize(
       RectanglePacker.packWithoutRotation,
       function (rectangles) {
@@ -451,15 +451,19 @@ var RectanglePacker = {
     return RectanglePacker.combinations(
       rotatedRectangles,
       function (combination) {
-        return memoizedPacker(
-          RectanglePacker.sortRectangles(combination.slice()),
-          function (x) {
-            // Put the rotations into the placements and call
-            // traverseFn.
-            for (var i=0; i < x.placements.length; i++) {
-              x.placements[i].rotation = combination[i].rotation;
-            }
-            return traverseFn(x);
+        RectanglePacker.permute(
+          combination,
+          function (permutation) {
+            return memoizedPacker(
+              permutation,
+              function (x) {
+                // Put the rotations into the placements and call
+                // traverseFn.
+                for (var i=0; i < x.placements.length; i++) {
+                  x.placements[i].rotation = combination[i].rotation;
+                }
+                return traverseFn(x);
+              })
           });
       });
   }
