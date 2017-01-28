@@ -164,6 +164,9 @@ $(function() {
                     <button class="remove disabled" title="Remove"><img src="'
                 + PLUGIN_BASEURL
                 + 'slicer/static/img/remove.png"></button>\
+                    <button class="arrange" title="Arrange"><img src="'
+                + PLUGIN_BASEURL
+                + 'slicer/static/img/arrange.png"></button>\
                 </div>\
                 <div class="values translate">\
                     <div>\
@@ -224,6 +227,23 @@ $(function() {
 		// Set selection mode to scale
 		self.transformControls.setMode("scale");
                 self.toggleValueInputs($("#slicer-viewport .scale.values div"));
+            });
+            $("#slicer-viewport button.arrange").click(function(event) {
+	      // Set selection mode to scale
+              var rectangles = [
+                {name:0, width: 7, height: 10},
+                {name:1, width: 7, height: 10},
+                {name:2, width: 7, height: 10},
+                {name:3, width: 7, height: 10}
+              ];
+              RectanglePacker.packWithRotation(rectangles, function (x) {
+                console.log(x)
+                console.log(x.rectangleGrid.gridToString(
+                  x.width,x.height,1,"  ",
+                  function (r) {
+                    return r.name;
+                  }));
+              });
             });
             $("#slicer-viewport button.remove").click(function(event) {
 		// Remove the currently selected object.
