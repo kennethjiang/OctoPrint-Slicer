@@ -218,25 +218,28 @@ var RectanglePacker = {
   // order provided.  Rectangles should have height and width and
   // unique name.  Each rectangle is inserted at minimum x possible.
   // If there are multiple spots that are at minimum x, choose the one
-  // with minimum y.  Returns the new RectangleGrid.  We also keep
-  // track of the minimum height change that might make
-  // a difference in the packing.  That's based on the height of the
+  // with minimum y.  Returns the new RectangleGrid.  The maxWidth is
+  // an exclusive condition so if packing reaches it, packing will
+  // fail.
+  //
+  // We also keep track of the minimum height change that might make a
+  // difference in the packing.  That's based on the height of the
   // overlap of each attempt to place with the lower boundary.  The
-  // rectangles are inserted in the order that they are provided.
-  // To make this algorithm optimal, all possible sortings would
-  // need to be tried.
+  // rectangles are inserted in the order that they are provided.  To
+  // make this algorithm optimal, all possible sortings would need to
+  // be tried.
   //
   // Returns an object with rectangleGrid, placements,
   // minDeltaHeight, width, and height.  The rectangleGrid is the
   // grid created and useful for printing or debugging.  placements
   // is a map from name to the input rectangle, x, and y.
   // minDeltaHeight is the minimum height to add to the boundary to
-  // make a difference in this run
+  // make a difference in this run.
   packRectangles: function(rectangles,
-                           boundaryHeight = -1,
-                           boundaryWidth = -1) {
+                           maxHeight = -1,
+                           maxWidth = -1
+                          ) {
     var EMPTY = {name: "."};  // name must not be a number, will conflict
-    var BOUNDARY = {name: "_"};  // name must not be a number, will conflict
 
     var rectangleGrid = new RectanglePacker.RectangleGrid(EMPTY);
     if (rectangles.length == 0) {
@@ -244,16 +247,10 @@ var RectanglePacker = {
               "placements": {},
               "minDeltaHeight": 0};
     }
-    if (boundaryHeight >= 0) {
-      rectangleGrid.setRectangle(0, boundaryHeight, -1, -1, BOUNDARY);
-    }
-    if (boundaryWidth >= 0) {
-      rectangleGrid.setRectangle(boundaryWidth, 0, -1, -1, BOUNDARY);
-    }
 
     // Minimum height needed to have made a difference in any of the
     // rectangles.
-    var minDeltaHeight = null;
+    var minDeltaHeight = undefined;
     var totalWidth = 0;
     var totalHeight = 0
     var placements = {};
@@ -263,39 +260,35 @@ var RectanglePacker = {
       var height = rectangle.height;
       var placementSuccess =
           rectangleGrid.traverse(function (x, y) {
+            if (maxWidth >= 0 && x + width >= maxWidth) {
+              // Give up because all attempts will only be at this x
+              // or greater.
+              return false;
+            }
+            // If positive, crosses the boundary.
             var valuesUnderRectangle = rectangleGrid.getRectangle(
               x, y, width, height, function (r) { return r.name; });
             var allEmpty = Object.keys(valuesUnderRectangle).length == 1 &&
                 valuesUnderRectangle.hasOwnProperty(EMPTY.name);
             if (allEmpty) {
-              rectangleGrid.setRectangle(x, y, width, height, rectangle);
-              placements[rectangle.name] = {"x": x, "y": y};
-              totalWidth = Math.max(totalWidth, x + width);
-              totalHeight = Math.max(totalHeight, y + height);
-              return true;  // End the traverse with success.
-            } else {
-              // Would we have placed this rectangle if it weren't for
-              // the boundary?  That means we only overlapped
-              // BOUNDARY and possibly also EMPTY, but nothing else.
-              var noRectanglesOverlapped =
-                  Object.keys(valuesUnderRectangle).length <= 2 &&
-                  valuesUnderRectangle.hasOwnProperty(BOUNDARY.name) &&
-                  (Object.keys(valuesUnderRectangle).length == 1 ||
-                   valuesUnderRectangle.hasOwnProperty(EMPTY.name));
-              if (noRectanglesOverlapped) {
-                // What increase in height would we have needed to make
-                // this placement?
-                var deltaHeight = y + height - boundaryHeight;
-                if (minDeltaHeight === null || deltaHeight < minDeltaHeight) {
-                  minDeltaHeight = deltaHeight;
-                }
+              var deltaHeight = y + height - maxHeight;
+              if (maxHeight < 0 || deltaHeight <= 0) {
+                // Can place.
+                rectangleGrid.setRectangle(x, y, width, height, rectangle);
+                placements[rectangle.name] = {"x": x, "y": y};
+                totalWidth = Math.max(totalWidth, x + width);
+                totalHeight = Math.max(totalHeight, y + height);
+                return true;  // End the traverse with success.
+              }
+              // Could have placed if the maxHeight were bigger.
+              if (minDeltaHeight === undefined || deltaHeight < minDeltaHeight) {
+                minDeltaHeight = deltaHeight;
               }
             }
           });
       if (!placementSuccess) {
-        // Didn't succeed in one of the placements, don't keep
-        // trying.  Caller can read placements to see how many
-        // worked.
+        // Didn't succeed in any of the placements, don't keep trying.
+        // Caller can read placements to see how many worked.
         break;
       }
     }
@@ -303,7 +296,8 @@ var RectanglePacker = {
             "placements": placements,
             "minDeltaHeight": minDeltaHeight,
             "width": totalWidth,
-            "height": totalHeight
+            "height": totalHeight,
+            "placementsCount": i
            };
   },
 
@@ -336,21 +330,23 @@ var RectanglePacker = {
     return p();
   },
 
+  // Provide a function to memoize fn.  Optionally provide a function
+  // that will convert arguments to fn to strings.  Returns a function
+  // that can be run and will have answers memoized.
   memoize: function(fn,
                     toStringFn = function() {
-                      return Array.prototype.slice.call(arguments).join(",")
+                      return JSON.stringify(
+                        Array.prototype.slice.call(arguments));
                     }) {
     var results = {};
 
     return function() {
-      console.log("fn is " + fn);
-      console.log("results is " + results);
-      var input_string = toStringFn.apply(null, arguments);
-      if (results.hasOwnProperty(input_string)) {
-        return results[input_string];
+      var inputString = toStringFn.apply(null, arguments);
+      if (results.hasOwnProperty(inputString)) {
+        return results[inputString];
       } else {
-        results[input_string] = fn.apply(null, arguments);
-        return results[input_string];
+        results[inputString] = fn.apply(null, arguments);
+        return results[inputString];
       }
     };
   },
@@ -377,13 +373,97 @@ var RectanglePacker = {
     return c();
   },
 
+  // Packs rectangles without rotating them.  Attempts all interesting
+  // sizes of output rectangle given the input rectangle.  Runs
+  // traverseFn on the result of each packing.  If traverseFn returns
+  // anything other than undefined, stop and return that.  The
+  // rectangles are inserted in the order that they are provided.
+  // Sorting them from tallest to shortest yields good results.
+  packWithoutRotation: function(rectangles, traverseFn) {
+    var tallest = 0;
+    var widest = 0;
+    for (var i = 0; i < rectangles.length; i++) {
+      var tallest = Math.max(tallest, rectangles[i].height);
+      var widest = Math.max(widest, rectangles[i].width);
+    }
+
+    var currentHeight = tallest;
+    var currentWidth = -1;
+    do {
+      var packResult =
+          RectanglePacker.packRectangles(rectangles, currentHeight, currentWidth);
+      var traverseResult = traverseFn(packResult);
+      if (traverseResult !== undefined) {
+        return traverseResult;
+      }
+      currentHeight = currentHeight + packResult.minDeltaHeight;
+      if (packResult.placementsCount == rectangles.length) {
+        // If we succeeded, set a new target width.
+        currentWidth = packResult.width;
+      }
+    } while (currentWidth >= widest && packResult.minDeltaHeight > 0);
+  },
+
+  // Sorts by height, then by width, biggest first.
+  sortRectangles: function(rectangles) {
+    return rectangles.sort(function (a,b) {
+      if (a.height != b.height) {
+        return b.height-a.height;
+      }
+      return b.width-a.width;
+    });
+  },
+
   /* Packs rectangles as above but tries all combinations of rotating
    * or not rotating elements by 90 degrees, which might improve
    * packing. The result is the same as pack above but with an extra
    * member, rotation, alongside x and y in the placements.  */
   packWithRotation: function(rectangles, traverseFn) {
-    // We could use an integer instead of the rotations array.
-    var rotations = [];
+    var rotatedRectangles = [];
+    for (var i = 0; i < rectangles.length; i++) {
+      rectangles[i].rotations = 0;
+      var forms = [rectangles[i]];
+      if (rectangles[i].width != rectangles[i].height) {
+        var rotatedRectangle = rectangles[i].constructor();
+        for (var attr in rectangles[i]) {
+          if (rectangles[i].hasOwnProperty(attr)) {
+            rotatedRectangle[attr] = rectangles[i][attr];
+          }
+        }
+        var temp = rotatedRectangle.width
+        rotatedRectangle.width = rotatedRectangle.height;
+        rotatedRectangle.height = temp;
+        rotatedRectangle.rotation = 90;
+        forms.push(rotatedRectangle);
+      }
+      rotatedRectangles.push(forms);
+    }
+    // Because the traverse is a side effect, memoizing essentially
+    // means that we don't run the original function at all.
+    var memoizedPacker = RectanglePacker.memoize(
+      RectanglePacker.packWithoutRotation,
+      function (rectangles) {
+        // Convert rectangles to a string that indicates uniqueness.
+        return rectangles.map(function (r) {
+          return r.width + "x" + r.height;
+        }).join(",");
+      });
+    return RectanglePacker.combinations(
+      rotatedRectangles,
+      function (combination) {
+        return memoizedPacker(
+          RectanglePacker.sortRectangles(combination.slice()),
+          function (x) {
+            // Put the rotations into the placements and call
+            // traverseFn.
+            for (var i=0; i < x.placements.length; i++) {
+              x.placements[i].rotation = combination[i].rotation;
+            }
+            return traverseFn(x);
+          });
+      });
+  }
+  /*var rotations = [];
     for (var i = 0; i < rectangles.length; i++) {
       rotations.push(0);
     }
@@ -444,7 +524,7 @@ var RectanglePacker = {
         }
       }
     } while(i < rectangles.length);
-  }
+  }*/
 };
 
 // browserify support

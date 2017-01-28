@@ -236,19 +236,12 @@ $(function() {
                 {name:2, width: 7, height: 10},
                 {name:3, width: 7, height: 10}
               ];
-              var a = RectanglePacker.memoize(function(x) {alert(x);});
-              a(1);
-              a(2);
-              a(1);
-              a(1,2);
-              /*RectanglePacker.packWithRotation(rectangles, function (x) {
-                console.log(x)
-                console.log(x.rectangleGrid.gridToString(
-                  x.width,x.height,1,"  ",
-                  function (r) {
-                    return r.name;
-                  }));
-              });*/
+              console.log(RectanglePacker.packWithRotation(
+                rectangles, function(x) {
+                  if (x.placementsCount == rectangles.length) {
+                    console.log(x.rectangleGrid.gridToString(x.width, x.height, 1, "  ", function(y) { return y.name; }));
+                  }
+                }));
             });
             $("#slicer-viewport button.remove").click(function(event) {
 		// Remove the currently selected object.
