@@ -176,20 +176,24 @@ var RectanglePacker = {
       return contents[xIndex][yIndex];
     }
 
-    // Visit every top-left corner of the cells in rectangleGrid.
-    // The corners are visited from the top left to the bottom right,
+    // Visit every top-left corner of the cells in rectangleGrid.  The
+    // corners are visited from the top left to the bottom right,
     // visiting a column from top to bottom before moving to the
     // column to the right.  fn should be a function of up to 3
     // variables, x and y and value, the coordinates of the top-left
-    // corner of the cell and the value there.  If fn returns true,
-    // end the traverse.
+    // corner of the cell and the value there.  If fn returns
+    // something other than undefined end the traverse.  The return
+    // value is the return value from the input function.  If the
+    // traverse ends without a defined result, the return value is
+    // also undefined.
     self.traverse = function(fn) {
       for (var xIndex = 0; xIndex < verticalCuts.length; xIndex++) {
         for (var yIndex = 0; yIndex < horizontalCuts.length; yIndex++) {
-          if (fn(verticalCuts[xIndex],
-                 horizontalCuts[yIndex],
-                 contents[xIndex][yIndex])) {
-            return;
+          var result = fn(verticalCuts[xIndex],
+                          horizontalCuts[yIndex],
+                          contents[xIndex][yIndex]);
+          if (result !== undefined) {
+            return result;
           }
         }
       }
@@ -199,142 +203,178 @@ var RectanglePacker = {
     self.reverseTraverse = function(fn) {
       for (var xIndex = verticalCuts.length-1; xIndex >= 0; xIndex--) {
         for (var yIndex = horizontalCuts.length-1; yIndex >= 0; yIndex--) {
-          if (fn(verticalCuts[xIndex],
-                 horizontalCuts[yIndex],
-                 contents[xIndex][yIndex])) {
-            return;
+          var result = fn(verticalCuts[xIndex],
+                          horizontalCuts[yIndex],
+                          contents[xIndex][yIndex]);
+          if (result != undefined) {
+            return result;
           }
         }
       }
     }
   },
 
-  /* Pack rectangles.  The input is an array of rectangles.  The
-   * rectangles are inserted in the order that they are provided.
-   * Each rectangle is an object with height and width and name.
-   * traverseFn is a function that gets an object: { rectangleGrid,
-   * width, height, placements, minDeltaHeight } It can keep track of
-   * the best placement so far by comparing to the previous best and
-   * optionally print the rectangleGrid.  If traverseFn returns true,
-   * the traverse ends.*/
-  pack: function(rectangles, traverseFn) {
+  // Inserts all rectangles into an RectangleGrid of given size in the
+  // order provided.  Rectangles should have height and width and
+  // unique name.  Each rectangle is inserted at minimum x possible.
+  // If there are multiple spots that are at minimum x, choose the one
+  // with minimum y.  Returns the new RectangleGrid.  We also keep
+  // track of the minimum height change that might make
+  // a difference in the packing.  That's based on the height of the
+  // overlap of each attempt to place with the lower boundary.  The
+  // rectangles are inserted in the order that they are provided.
+  // To make this algorithm optimal, all possible sortings would
+  // need to be tried.
+  //
+  // Returns an object with rectangleGrid, placements,
+  // minDeltaHeight, width, and height.  The rectangleGrid is the
+  // grid created and useful for printing or debugging.  placements
+  // is a map from name to the input rectangle, x, and y.
+  // minDeltaHeight is the minimum height to add to the boundary to
+  // make a difference in this run
+  packRectangles: function(rectangles,
+                           boundaryHeight = -1,
+                           boundaryWidth = -1) {
     var EMPTY = {name: "."};  // name must not be a number, will conflict
     var BOUNDARY = {name: "_"};  // name must not be a number, will conflict
 
-    // Inserts all rectangles into an RectangleGrid of given height
-    // from biggest to smallest.  Each rectangle is inserted at
-    // minimum x possible without crossing the height.  If there are
-    // multiple spots that are at minimum x, choose the one with
-    // minimum y.  Returns the new RectangleGrid.  We also keep track
-    // of the minimum height change that might make a difference in
-    // the packing.  That's based on the height of the overlap of each
-    // attempt to place with the lower boundary.  The rectangles are
-    // inserted in the order that they are provided.  To make this
-    // algorithm optimal, all possible sortings would need to be
-    // tried.
-    //
-    // Returns an object with rectangleGrid, placements,
-    // minDeltaHeight, width, and height.  The rectangleGrid is the
-    // grid created and useful for printing or debugging.  placements
-    // is a map from name to the input rectangle, x, and y.
-    // minDeltaHeight is the minimum height to add to the boundary to
-    // make a difference in this run
-    var insertAllRectangles = function(rectangles, boundaryHeight) {
-      var rectangleGrid = new RectanglePacker.RectangleGrid(EMPTY);
-      if (rectangles.length == 0) {
-        return {"rectangleGrid": rectangleGrid,
-                "placements": {},
-                "minDeltaHeight": 0};
-      }
+    var rectangleGrid = new RectanglePacker.RectangleGrid(EMPTY);
+    if (rectangles.length == 0) {
+      return {"rectangleGrid": rectangleGrid,
+              "placements": {},
+              "minDeltaHeight": 0};
+    }
+    if (boundaryHeight >= 0) {
       rectangleGrid.setRectangle(0, boundaryHeight, -1, -1, BOUNDARY);
-      var minDeltaHeight = null;
-      var placements = {};
-      for (var i = 0; i < rectangles.length; i++) {
-        var rectangle = rectangles[i];
-        var width = rectangle.width;
-        var height = rectangle.height;
-        rectangleGrid.traverse(function (x, y) {
-          var valuesUnderRectangle = rectangleGrid.getRectangle(
-            x, y, width, height, function (r) { return r.name; });
-          var allEmpty = Object.keys(valuesUnderRectangle).length == 1 &&
-              valuesUnderRectangle.hasOwnProperty(EMPTY.name);
-          if (allEmpty) {
-            rectangleGrid.setRectangle(x, y, width, height, rectangle);
-            placements[rectangle.name] = {"x": x, "y": y};
-            return true;  // End the traverse.
-          } else {
-            // Would we have placed this rectangle if it weren't for
-            // the boundary?  That means we only overlapped
-            // BOUNDARY and possibly also EMPTY, but nothing else.
-            var noRectanglesOverlapped =
-                Object.keys(valuesUnderRectangle).length <= 2 &&
-                valuesUnderRectangle.hasOwnProperty(BOUNDARY.name) &&
-                (Object.keys(valuesUnderRectangle).length == 1 ||
-                 valuesUnderRectangle.hasOwnProperty(EMPTY.name));
-            if (noRectanglesOverlapped) {
-              // What increase in height would we have needed to make
-              // this placement?
-              var deltaHeight = y + height - boundaryHeight;
-              if (minDeltaHeight === null || deltaHeight < minDeltaHeight) {
-                minDeltaHeight = deltaHeight;
+    }
+    if (boundaryWidth >= 0) {
+      rectangleGrid.setRectangle(boundaryWidth, 0, -1, -1, BOUNDARY);
+    }
+
+    // Minimum height needed to have made a difference in any of the
+    // rectangles.
+    var minDeltaHeight = null;
+    var totalWidth = 0;
+    var totalHeight = 0
+    var placements = {};
+    for (var i = 0; i < rectangles.length; i++) {
+      var rectangle = rectangles[i];
+      var width = rectangle.width;
+      var height = rectangle.height;
+      var placementSuccess =
+          rectangleGrid.traverse(function (x, y) {
+            var valuesUnderRectangle = rectangleGrid.getRectangle(
+              x, y, width, height, function (r) { return r.name; });
+            var allEmpty = Object.keys(valuesUnderRectangle).length == 1 &&
+                valuesUnderRectangle.hasOwnProperty(EMPTY.name);
+            if (allEmpty) {
+              rectangleGrid.setRectangle(x, y, width, height, rectangle);
+              placements[rectangle.name] = {"x": x, "y": y};
+              totalWidth = Math.max(totalWidth, x + width);
+              totalHeight = Math.max(totalHeight, y + height);
+              return true;  // End the traverse with success.
+            } else {
+              // Would we have placed this rectangle if it weren't for
+              // the boundary?  That means we only overlapped
+              // BOUNDARY and possibly also EMPTY, but nothing else.
+              var noRectanglesOverlapped =
+                  Object.keys(valuesUnderRectangle).length <= 2 &&
+                  valuesUnderRectangle.hasOwnProperty(BOUNDARY.name) &&
+                  (Object.keys(valuesUnderRectangle).length == 1 ||
+                   valuesUnderRectangle.hasOwnProperty(EMPTY.name));
+              if (noRectanglesOverlapped) {
+                // What increase in height would we have needed to make
+                // this placement?
+                var deltaHeight = y + height - boundaryHeight;
+                if (minDeltaHeight === null || deltaHeight < minDeltaHeight) {
+                  minDeltaHeight = deltaHeight;
+                }
               }
             }
-          }
-        });
+          });
+      if (!placementSuccess) {
+        // Didn't succeed in one of the placements, don't keep
+        // trying.  Caller can read placements to see how many
+        // worked.
+        break;
       }
-      return {"rectangleGrid": rectangleGrid,
-              "placements": placements,
-              "minDeltaHeight": minDeltaHeight};
     }
+    return {"rectangleGrid": rectangleGrid,
+            "placements": placements,
+            "minDeltaHeight": minDeltaHeight,
+            "width": totalWidth,
+            "height": totalHeight
+           };
+  },
 
-    // Find the leftmost column in the provided rectangleGrid that
-    // doesn't have any rectangles in it.  This is the leftmost
-    // boundary.  Because we always try to insert as far left as
-    // possible, the rightmost column is the only empty one.
-    var findLeftmostEmptyColumn = function(rectangleGrid) {
-      var result;
-      rectangleGrid.reverseTraverse(function (x, y ,value) {
-        result = x;
-        return true; // End the reverse traverse.
-      });
-      return result;
-    }
+  // Runs traverse on each ordering of the inputs.  traverseFn must
+  // not modify the inputs.  If any of traverseFn return something
+  // other than undefiend, stop the traversal.
+  permute: function(inputs, traverseFn) {
+    var inputsCopy = inputs.slice(0);
+    var swap = function(a,b) {
+      var temp = inputsCopy[a];
+      inputsCopy[a] = inputsCopy[b];
+      inputsCopy[b] = temp;
+    };
 
-    var maxRectangleHeight = 0;
-    var maxRectangleWidth = 0;
-    for (var i = 0; i < rectangles.length; i++) {
-      maxRectangleHeight = Math.max(maxRectangleHeight, rectangles[i].height);
-      maxRectangleWidth = Math.max(maxRectangleWidth, rectangles[i].width);
-    }
-    var currentWidth = null;  // Still need to find it.
-    var currentHeight = maxRectangleHeight;
-    do {
-      var insertResult = insertAllRectangles(rectangles, currentHeight);
-      var rectangleGrid = insertResult.rectangleGrid;
-      var placements = insertResult.placements;
-      var minDeltaHeight = insertResult.minDeltaHeight;
-
-      var leftmostEmptyColumn = findLeftmostEmptyColumn(rectangleGrid);
-      insertResult.height = currentHeight;
-      insertResult.width = leftmostEmptyColumn;
-
-      /* Uncomment this to view the rectangle grid:
-         rectangleGrid.setRectangle(leftmostEmptyColumn, 0, -1, -1, BOUNDARY);
-         console.log(rectangleGrid.gridToString(
-           leftmostEmptyColumn, currentHeight, " ",
-           function(x) { return x.name; }));
-         console.log("size is " + leftmostEmptyColumn + "," + currentHeight);
-      */
-
-      // We are trying to get a new width that is less than
-      // currentWidth.  If there is no currentWidth, that is the start
-      // condition so just assume that we succeeded in all placements.
-      currentWidth = leftmostEmptyColumn;
-      if (traverseFn(insertResult)) {
-        return;  // Quit if traverse returns true.
+    var p = function(index = 0) {
+      if (index >= inputsCopy.length) {
+        return traverseFn(inputsCopy);
       }
-      currentHeight += minDeltaHeight;
-    } while (currentWidth > maxRectangleWidth);
+      p(index+1);
+      for (var i=index+1; i < inputsCopy.length; i++) {
+        swap(index, i);
+        var result = p(index+1);
+        if (result !== undefined) {
+          return result;
+        }
+        swap(index, i);
+      }
+    };
+
+    return p();
+  },
+
+  memoize: function(fn,
+                    toStringFn = function() {
+                      return Array.prototype.slice.call(arguments).join(",")
+                    }) {
+    var results = {};
+
+    return function() {
+      console.log("fn is " + fn);
+      console.log("results is " + results);
+      var input_string = toStringFn.apply(null, arguments);
+      if (results.hasOwnProperty(input_string)) {
+        return results[input_string];
+      } else {
+        results[input_string] = fn.apply(null, arguments);
+        return results[input_string];
+      }
+    };
+  },
+
+  // Given a list of lists, runs traverseFn on a list of elements, one
+  // picked from each list in the input list.  traverseFn must not
+  // modify its input.
+  combinations: function(inputs, traverseFn) {
+    var combination = [];
+    var c = function(index = 0) {
+      if (index >= inputs.length) {
+        return traverseFn(combination);
+      }
+      for (var i=0; i < inputs[index].length; i++) {
+        combination.push(inputs[index][i]);
+        var result = c(index+1);
+        if (result !== undefined) {
+          return result;
+        }
+        combination.pop(inputs);
+      }
+    }
+
+    return c();
   },
 
   /* Packs rectangles as above but tries all combinations of rotating
