@@ -379,7 +379,13 @@ var RectanglePacker = {
   // anything other than undefined, stop and return that.  The
   // rectangles are inserted in the order that they are provided.
   // Sorting them from tallest to shortest yields good results.
-  packWithoutRotation: function(rectangles, traverseFn) {
+  //
+  // skipFn takes as input the current width and height and returns
+  // them possibly modified.
+  packWithoutRotation: function(
+    rectangles, traverseFn,
+    skipFn = function(w,h) {
+      return {"width": w, "height": h};}) {
     var tallest = 0;
     var widest = 0;
     for (var i = 0; i < rectangles.length; i++) {
@@ -390,6 +396,9 @@ var RectanglePacker = {
     var currentHeight = tallest;
     var currentWidth = -1;
     do {
+      var newWH = skipFn(currentWidth, currentHeight);
+      currentHeight = newWH.height;
+      currentWidth = newWH.width;
       var packResult =
           RectanglePacker.packRectangles(rectangles, currentHeight, currentWidth);
       var traverseResult = traverseFn(packResult);
@@ -418,7 +427,7 @@ var RectanglePacker = {
    * or not rotating elements by 90 degrees, which might improve
    * packing. The result is the same as pack above but with an extra
    * member, rotation, alongside x and y in the placements.  */
-  packWithRotation: function(rectangles, traverseFn) {
+  packWithRotation: function(rectangles, traverseFn, skipFn) {
     var rotatedRectangles = [];
     for (var i = 0; i < rectangles.length; i++) {
       rectangles[i].rotation = 0;
@@ -466,7 +475,8 @@ var RectanglePacker = {
                   }
                 }
                 return traverseFn(x);
-              })
+              },
+              skipFn);
           });
       });
   }

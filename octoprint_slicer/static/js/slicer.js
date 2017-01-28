@@ -230,25 +230,43 @@ $(function() {
             });
             $("#slicer-viewport button.arrange").click(function(event) {
 	      // Set selection mode to scale
-              var rectangles = [
+              /*var rectangles = [
                 {name:0, width: 7, height: 10},
                 {name:1, width: 7, height: 10},
                 {name:2, width: 7, height: 10},
                 {name:3, width: 7, height: 10}
-              ];
-              /*var rectangles = [];
-              for (var i=1; i < 6; i++) {
+                ];*/
+              var rectangles = [];
+              for (var i=1; i < 7; i++) {
                 rectangles.push({"name": i, "width":i, "height":i});
-              }*/
+              }
               var tries = 0;
-              console.log(RectanglePacker.packWithRotation(
+              var bestHW = {}
+              RectanglePacker.packWithRotation(
                 rectangles, function(x) {
                   tries++;
                   if (x.placementsCount == rectangles.length) {
+                    if (!bestHW.hasOwnProperty(x.height) ||
+                        bestHW[x.height] > x.width) {
+                      bestHW[x.height] = x.width;
+                    }
+                    // Success.  But is it best?
                     console.log(x.rectangleGrid.gridToString(x.width, x.height, 1, "  ", function(y) { return y.name; }));
                     console.log(x.placements);
                   }
-                }));
+                },
+                function (w,h) {
+                  var newWidth = w;
+                  for (bestHeight in bestHW) {
+                    if (bestHeight <= h &&
+                        bestHW[bestHeight] < newWidth) {
+                      newWidth = bestHW[bestHeight];
+                    }
+                  }
+                  // skipFn
+                  return {"height": h,
+                          "width": newWidth};
+                });
               console.log(tries);
             });
             $("#slicer-viewport button.remove").click(function(event) {
