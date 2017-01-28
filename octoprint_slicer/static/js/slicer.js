@@ -236,12 +236,20 @@ $(function() {
                 {name:2, width: 7, height: 10},
                 {name:3, width: 7, height: 10}
               ];
+              /*var rectangles = [];
+              for (var i=1; i < 6; i++) {
+                rectangles.push({"name": i, "width":i, "height":i});
+              }*/
+              var tries = 0;
               console.log(RectanglePacker.packWithRotation(
                 rectangles, function(x) {
+                  tries++;
                   if (x.placementsCount == rectangles.length) {
                     console.log(x.rectangleGrid.gridToString(x.width, x.height, 1, "  ", function(y) { return y.name; }));
+                    console.log(x.placements);
                   }
                 }));
+              console.log(tries);
             });
             $("#slicer-viewport button.remove").click(function(event) {
 		// Remove the currently selected object.

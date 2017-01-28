@@ -421,7 +421,7 @@ var RectanglePacker = {
   packWithRotation: function(rectangles, traverseFn) {
     var rotatedRectangles = [];
     for (var i = 0; i < rectangles.length; i++) {
-      rectangles[i].rotations = 0;
+      rectangles[i].rotation = 0;
       var forms = [rectangles[i]];
       if (rectangles[i].width != rectangles[i].height) {
         var rotatedRectangle = rectangles[i].constructor();
@@ -459,8 +459,11 @@ var RectanglePacker = {
               function (x) {
                 // Put the rotations into the placements and call
                 // traverseFn.
-                for (var i=0; i < x.placements.length; i++) {
-                  x.placements[i].rotation = combination[i].rotation;
+                for (var i=0; i < permutation.length; i++) {
+                  if (x.placements.hasOwnProperty(permutation[i].name)) {
+                    x.placements[permutation[i].name].rotation =
+                      permutation[i].rotation;
+                  }
                 }
                 return traverseFn(x);
               })
