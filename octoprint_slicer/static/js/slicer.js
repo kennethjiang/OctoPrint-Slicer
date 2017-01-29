@@ -229,14 +229,40 @@ $(function() {
                 self.toggleValueInputs($("#slicer-viewport .scale.values div"));
             });
             $("#slicer-viewport button.arrange").click(function(event) {
+              var rectangles = [];
+              for (var i = 0; i < self.stlFiles.length; i++ ) {
+                var model = self.stlFiles[i].model;
+                var smallestRectangle = {"name": i};
+                for (var rotation = 0; rotation < THREE.Math.degToRad(90); rotation += THREE.Math.degToRad(15)) {
+                  var modelClone = model.clone(true);
+                  modelClone.rotation.z += rotation;
+                  var modelBox = new THREE.Box3().setFromObject(modelClone);
+                  var width = modelBox.max.x - modelBox.min.x;
+                  var height = modelBox.max.y - modelBox.min.y;
+                  if (!smallestRectangle.hasOwnProperty("rotation") ||
+                      width * height < smallestRectangle.width * smallestRectangle.height) {
+                    // If the width and height are similar enough, round up the smaller and make it a square.
+                    if (width/height < 1.05 && width/height > 1 / 1.05) {
+                      smallestRectangle["width"] = Math.max(width, height);
+                      smallestRectangle["height"] = Math.max(width, height);
+                    } else {
+                      smallestRectangle["width"] = width;
+                      smallestRectangle["height"] = height;
+                    }
+                    smallestRectangle["prerotation"] = rotation;
+                  }
+                }
+                rectangles.push(smallestRectangle);
+              }
+
+
 	      // Set selection mode to scale
-              var rectangles = [
-                {name:0, width: 7, height: 10},
+/*                {name:0, width: 7, height: 10},
                 {name:1, width: 7, height: 10},
                 {name:2, width: 7, height: 10},
                 {name:3, width: 7, height: 10},
                 {name:4, width: 3, height: 3}
-                ];
+                ];*/
               /*var rectangles = [];
               for (var i=1; i < 8; i++) {
                 rectangles.push({"name": i, "width":i, "height":i});
@@ -271,7 +297,19 @@ $(function() {
                 });
               console.log(performance.now() - start);
               console.log(tries);
-              console.log(best.rectangleGrid.gridToString(best.width, best.height, 1, "  ", function(y) { return y.name; }));
+              //console.log(best.rectangleGrid.gridToString(best.width, best.height, 1, "  ", function(y) { return y.name; }));
+              console.log(best.placements);
+              // Now apply the best to the existing models.
+              for (var i = 0; i < self.stlFiles.length; i++ ) {
+                var model = self.stlFiles[i].model;
+                model.rotation.z += rectangles[i].prerotation + THREE.Math.degToRad(best.placements[i].rotation);
+                // i is also the name so this works.
+                var modelBox = new THREE.Box3().setFromObject(modelClone);
+                model.position.x = best.placements[i].x - best.width/2 + rectangles[i]["width"]/2;
+                model.position.y = best.placements[i].y - best.height/2 + rectangles[i]["height"]/2;
+              }
+              self.updateTransformInputs();
+              self.render();
             });
             $("#slicer-viewport button.remove").click(function(event) {
 		// Remove the currently selected object.
