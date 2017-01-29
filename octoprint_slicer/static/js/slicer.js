@@ -308,22 +308,9 @@ $(function() {
                 // the back left corner is 0,0.  x cross y is reversed
                 // from the platform.
                 var width = modelBox.max.x - modelBox.min.x;
-                var left = best.placements[i].x;
-                var right = best.placements[i].x + width;
-                left -= best.width/2;
-                right -= best.width/2;
-                var wanted_x = (left+right)/2;
-                var current_x = modelBox.center().x;
-
                 var height = modelBox.max.y - modelBox.min.y;
-                var top = best.placements[i].y;
-                var bottom = best.placements[i].y + height;
-                top = -top + best.height/2;
-                bottom = -bottom + best.height/2;
-                var wanted_y = (top+bottom)/2;
-                var current_y = modelBox.center().y;
-                model.position.x = model.position.x - current_x + wanted_x;
-                model.position.y = model.position.y - current_y + wanted_y;
+                model.position.x += (best.placements[i].x - best.width/2 + best.placements[i].x + width - best.width/2)/2 - modelBox.center().x;
+                model.position.y += (-best.placements[i].y + best.height/2 - best.placements[i].y - height + best.height/2)/2 - modelBox.center().y;
               }
               self.updateTransformInputs();
               self.render();
