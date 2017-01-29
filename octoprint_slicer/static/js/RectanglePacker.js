@@ -367,7 +367,7 @@ var RectanglePacker = {
         if (result !== undefined) {
           return result;
         }
-        combination.pop(inputs);
+        combination.pop();
       }
     }
 
@@ -462,7 +462,7 @@ var RectanglePacker = {
       rotatedRectangles,
       function (combination) {
         RectanglePacker.permute(
-          RectanglePacker.sortRectangles(combination.splice(0)),
+          RectanglePacker.sortRectangles(combination.slice()),
           function (permutation) {
             return memoizedPacker(
               permutation,

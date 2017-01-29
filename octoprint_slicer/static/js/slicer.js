@@ -230,19 +230,20 @@ $(function() {
             });
             $("#slicer-viewport button.arrange").click(function(event) {
 	      // Set selection mode to scale
-              var rectangles = [
+              /*var rectangles = [
                 {name:0, width: 7, height: 10},
                 {name:1, width: 7, height: 10},
                 {name:2, width: 7, height: 10},
                 {name:3, width: 7, height: 10}
-                //{name:4, width: 3, height: 3}
-                ];
-              /*var rectangles = [];
+                {name:4, width: 3, height: 3}
+                ];*/
+              var rectangles = [];
               for (var i=1; i < 8; i++) {
                 rectangles.push({"name": i, "width":i, "height":i});
-              }*/
+              }
               var tries = 0;
               var bestHW = {}
+              var start = performance.now();
               RectanglePacker.packWithRotation(
                 rectangles, function(x) {
                   tries++;
@@ -252,8 +253,8 @@ $(function() {
                       bestHW[x.height] = x.width;
                     }
                     // Success.  But is it best?
-                    console.log(x.rectangleGrid.gridToString(x.width, x.height, 1, "  ", function(y) { return y.name; }));
-                    console.log(x.placements);
+                    //console.log(x.rectangleGrid.gridToString(x.width, x.height, 1, "  ", function(y) { return y.name; }));
+                    //console.log(x.placements);
                   }
                 },
                 function (w,h) {
@@ -270,6 +271,7 @@ $(function() {
                 });
               console.log(tries);
               console.log(bestHW);
+              console.log(performance.now() - start);
             });
             $("#slicer-viewport button.remove").click(function(event) {
 		// Remove the currently selected object.
