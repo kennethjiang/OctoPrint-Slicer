@@ -129,6 +129,40 @@ var RectanglePacker = {
       return values;
     }
 
+    // Check if all values in the area provided are equal to the input
+    // value.  This is like the getRectangle but more efficient if the
+    // search is for just one element.
+    self.isRectangle = function(x, y, width, height, value) {
+      if (width == 0 || height == 0) {
+        return {};
+      }
+
+      var xStart = binarySearch(verticalCuts, x);
+      if (xStart < 0) {
+        xStart = -xStart-2;
+      }
+      var xEnd = binarySearch(verticalCuts, x + width);
+      if (xEnd < 0) {
+        xEnd = -xEnd-1;
+      }
+      var yStart = binarySearch(horizontalCuts, y);
+      if (yStart < 0) {
+        yStart = -yStart-2;
+      }
+      var yEnd = binarySearch(horizontalCuts, y + height);
+      if (yEnd < 0) {
+        yEnd = -yEnd-1;
+      }
+      for (var xIndex = xStart; xIndex < xEnd; xIndex++) {
+        for (var yIndex = yStart; yIndex < yEnd; yIndex++) {
+          if (contents[xIndex][yIndex] != value) {
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+
     // Displays the grid just at points where there was a cut.
     self.cutsToString = function(padding) {
       var result = padding;
@@ -266,10 +300,8 @@ var RectanglePacker = {
               return false;
             }
             // If positive, crosses the boundary.
-            var valuesUnderRectangle = rectangleGrid.getRectangle(
-              x, y, width, height, function (r) { return r.name; });
-            var allEmpty = Object.keys(valuesUnderRectangle).length == 1 &&
-                valuesUnderRectangle.hasOwnProperty(EMPTY.name);
+            var allEmpty = rectangleGrid.isRectangle(
+                x, y, width, height, EMPTY);
             if (allEmpty) {
               var deltaHeight = y + height - maxHeight;
               if (maxHeight < 0 || deltaHeight <= 0) {
