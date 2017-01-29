@@ -523,18 +523,6 @@ var RectanglePacker = {
                 bestHW[packResult.height] > packResult.width) {
               bestHW[packResult.height] = packResult.width;
             }
-
-            /*
-            if (!bestHW.hasOwnProperty(packResult.height) ||
-                bestHW[packResult.height] > packResult.width) {
-              bestHW[packResult.height] = packResult.width;
-              // Update all the larger rectangles.
-              for (var h in bestHW) {
-                if (h > packResult.height && bestHW[h] > packResult.width) {
-                  bestHW[h] = packResult.width;
-                }
-              }
-            }*/
             var traverseResult = traverseFn(packResult);
             if (traverseResult !== undefined) {
               return traverseResult;
@@ -552,22 +540,6 @@ var RectanglePacker = {
           // skipFn
           return {"height": h,
                   "width": newWidth};
-
-          /*var newWidth = w;
-          if (bestHW.hasOwnProperty(h)) {
-            newWidth = bestHW[h];
-          } else {
-            for (bestHeight in bestHW) {
-              if (bestHeight <= h &&
-                  bestHW[bestHeight] < newWidth) {
-                newWidth = bestHW[bestHeight];
-              }
-            }
-            bestHW[h] = newWidth;
-          }
-          // skipFn
-          return {"height": h,
-                  "width": newWidth};*/
         });
   }
 
