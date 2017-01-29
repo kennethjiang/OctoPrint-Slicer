@@ -345,6 +345,7 @@ var RectanglePacker = {
       if (results.hasOwnProperty(inputString)) {
         return results[inputString];
       } else {
+        //console.log("packing: " + inputString);
         results[inputString] = fn.apply(null, arguments);
         return results[inputString];
       }
@@ -461,7 +462,7 @@ var RectanglePacker = {
       rotatedRectangles,
       function (combination) {
         RectanglePacker.permute(
-          combination,
+          RectanglePacker.sortRectangles(combination.splice(0)),
           function (permutation) {
             return memoizedPacker(
               permutation,
