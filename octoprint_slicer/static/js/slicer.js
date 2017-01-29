@@ -306,11 +306,9 @@ $(function() {
                 var modelBox = new THREE.Box3().setFromObject(model);
                 // i is also the name.  The RectanglePacker assumes
                 // the back left corner is 0,0.  x cross y is reversed
-                // from the platform.
-                var width = modelBox.max.x - modelBox.min.x;
-                var height = modelBox.max.y - modelBox.min.y;
-                model.position.x += best.placements[i].x + (-best.width + modelBox.max.x - modelBox.min.x)/2 - (modelBox.max.x + modelBox.min.x)/2;
-                model.position.y += -best.placements[i].y + (best.height - modelBox.max.y + modelBox.min.y)/2 - (modelBox.max.y + modelBox.min.y)/2;
+                // from the platform so y needs different handling from x.
+                model.position.x += best.placements[i].x - modelBox.min.x - best.width/2;
+                model.position.y += -best.placements[i].y - modelBox.max.y + best.height/2;
               }
               self.updateTransformInputs();
               self.render();
