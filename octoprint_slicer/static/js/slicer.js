@@ -309,8 +309,8 @@ $(function() {
                 // from the platform.
                 var width = modelBox.max.x - modelBox.min.x;
                 var height = modelBox.max.y - modelBox.min.y;
-                model.position.x += (best.placements[i].x - best.width/2 + best.placements[i].x + width - best.width/2)/2 - modelBox.center().x;
-                model.position.y += (-best.placements[i].y + best.height/2 - best.placements[i].y - height + best.height/2)/2 - modelBox.center().y;
+                model.position.x += (best.placements[i].x - best.width/2 + best.placements[i].x + (modelBox.max.x - modelBox.min.x) - best.width/2)/2 - (modelBox.max.x + modelBox.min.x)/2;
+                model.position.y += (-best.placements[i].y + best.height/2 - best.placements[i].y - (modelBox.max.y - modelBox.min.y) + best.height/2)/2 - (modelBox.max.y + modelBox.min.y)/2;
               }
               self.updateTransformInputs();
               self.render();
