@@ -512,69 +512,65 @@ var RectanglePacker = {
               skipFn);
           });
       });
-  }
-  /*var rotations = [];
-    for (var i = 0; i < rectangles.length; i++) {
-      rotations.push(0);
-    }
-    var permutations = {}
-    var bestInsertResult = null;
-    do {
-      // Is this a new pemutation?
-      var rotatedRectangles = []
-      for (var j = 0; j < rectangles.length; j++) {
-        var newRectangle = {
-          name: rectangles[j].name,
-        };
-        if(rotations[j] == 0) {
-          newRectangle['height'] = rectangles[j].height;
-          newRectangle['width'] = rectangles[j].width;
-        } else {  // Swap.
-          newRectangle['height'] = rectangles[j].width;
-          newRectangle['width'] = rectangles[j].height;
-        }
-        rotatedRectangles.push(newRectangle);
-      }
-      // Input to pack should be sorted tallest to shortest.
-      rotatedRectangles.sort(function (a,b) {
-        if (a.height != b.height) {
-          return b.height - a.height;
-        } else {
-          return b.width - a.width;
-        }
-      });
-      // Make a string representing the widths and heights of
-      // rectangles.  If the string is not unique then it will
-      // produce an already seen placement so no need to process
-      // it.
-      var permutationString = rotatedRectangles.map(function (r) {
-        return r.height + "x" + r.width;
-      }).join(",");
-      if (!permutations.hasOwnProperty(permutationString)) {
-        // This is a unique list of shapes.
-        permutations[permutationString] = true;
-        RectanglePacker.pack(
-          rotatedRectangles,
-          function (i) {
-            // Attach the rotations to the placements.
-            for (var j = 0; j < rotations.length; j++) {
-              i.placements[rectangles[j].name].rotation =
-                rotations[j] ? 90 : 0;
+  },
+
+  pack: function(rectangles, traverseFn) {
+    var bestHW = {}
+    return RectanglePacker.packWithRotation(
+        rectangles, function(packResult) {
+          if (packResult.placementsCount == rectangles.length) {
+            if (!bestHW.hasOwnProperty(packResult.height) ||
+                bestHW[packResult.height] > packResult.width) {
+              bestHW[packResult.height] = packResult.width;
             }
-            traverseFn(i);
-          });
-      }
-      // Increment to next permutation.
-      for (var i = 0; i < rectangles.length; i++) {
-        if (rotations[i] >= 1) {
-          rotations[i] = 0;
-        } else {
-          rotations[i]++;
-          break;
-        }
-      }
-    } while(i < rectangles.length);
-  }*/
+
+            /*
+            if (!bestHW.hasOwnProperty(packResult.height) ||
+                bestHW[packResult.height] > packResult.width) {
+              bestHW[packResult.height] = packResult.width;
+              // Update all the larger rectangles.
+              for (var h in bestHW) {
+                if (h > packResult.height && bestHW[h] > packResult.width) {
+                  bestHW[h] = packResult.width;
+                }
+              }
+            }*/
+            var traverseResult = traverseFn(packResult);
+            if (traverseResult !== undefined) {
+              return traverseResult;
+            }
+          }
+        },
+        function (w,h) {
+          var newWidth = w;
+          for (bestHeight in bestHW) {
+            if (bestHeight <= h &&
+                bestHW[bestHeight] < newWidth) {
+              newWidth = bestHW[bestHeight];
+            }
+          }
+          // skipFn
+          return {"height": h,
+                  "width": newWidth};
+
+          /*var newWidth = w;
+          if (bestHW.hasOwnProperty(h)) {
+            newWidth = bestHW[h];
+          } else {
+            for (bestHeight in bestHW) {
+              if (bestHeight <= h &&
+                  bestHW[bestHeight] < newWidth) {
+                newWidth = bestHW[bestHeight];
+              }
+            }
+            bestHW[h] = newWidth;
+          }
+          // skipFn
+          return {"height": h,
+                  "width": newWidth};*/
+        });
+  }
+
 };
 
 // browserify support

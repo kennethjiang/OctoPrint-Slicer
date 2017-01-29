@@ -234,7 +234,7 @@ $(function() {
                 {name:0, width: 7, height: 10},
                 {name:1, width: 7, height: 10},
                 {name:2, width: 7, height: 10},
-                {name:3, width: 7, height: 10}
+                {name:3, width: 7, height: 10},
                 {name:4, width: 3, height: 3}
                 ];*/
               var rectangles = [];
@@ -242,36 +242,16 @@ $(function() {
                 rectangles.push({"name": i, "width":i, "height":i});
               }
               var tries = 0;
-              var bestHW = {}
               var start = performance.now();
-              RectanglePacker.packWithRotation(
-                rectangles, function(x) {
-                  tries++;
-                  if (x.placementsCount == rectangles.length) {
-                    if (!bestHW.hasOwnProperty(x.height) ||
-                        bestHW[x.height] > x.width) {
-                      bestHW[x.height] = x.width;
-                    }
-                    // Success.  But is it best?
-                    //console.log(x.rectangleGrid.gridToString(x.width, x.height, 1, "  ", function(y) { return y.name; }));
-                    //console.log(x.placements);
-                  }
-                },
-                function (w,h) {
-                  var newWidth = w;
-                  for (bestHeight in bestHW) {
-                    if (bestHeight <= h &&
-                        bestHW[bestHeight] < newWidth) {
-                      newWidth = bestHW[bestHeight];
-                    }
-                  }
-                  // skipFn
-                  return {"height": h,
-                          "width": newWidth};
+              RectanglePacker.pack(
+                  rectangles, function(x) {
+                    tries++;
+                  // Success.  But is it best?
+                  //console.log(x.rectangleGrid.gridToString(x.width, x.height, 1, "  ", function(y) { return y.name; }));
+                    console.log(x.placements);
                 });
-              console.log(tries);
-              console.log(bestHW);
               console.log(performance.now() - start);
+              console.log(tries);
             });
             $("#slicer-viewport button.remove").click(function(event) {
 		// Remove the currently selected object.
