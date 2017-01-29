@@ -239,7 +239,7 @@ $(function() {
                   var modelBox = new THREE.Box3().setFromObject(modelClone);
                   var width = modelBox.max.x - modelBox.min.x;
                   var height = modelBox.max.y - modelBox.min.y;
-                  if (!smallestRectangle.hasOwnProperty("rotation") ||
+                  if (!smallestRectangle.hasOwnProperty("prerotation") ||
                       width * height < smallestRectangle.width * smallestRectangle.height) {
                     // If the width and height are similar enough, round up the smaller and make it a square.
                     if (width/height < 1.05 && width/height > 1 / 1.05) {
@@ -303,10 +303,27 @@ $(function() {
               for (var i = 0; i < self.stlFiles.length; i++ ) {
                 var model = self.stlFiles[i].model;
                 model.rotation.z += rectangles[i].prerotation + THREE.Math.degToRad(best.placements[i].rotation);
-                // i is also the name so this works.
-                var modelBox = new THREE.Box3().setFromObject(modelClone);
-                model.position.x = best.placements[i].x - best.width/2 + rectangles[i]["width"]/2;
-                model.position.y = best.placements[i].y - best.height/2 + rectangles[i]["height"]/2;
+                var modelBox = new THREE.Box3().setFromObject(model);
+                // i is also the name.  The RectanglePacker assumes
+                // the back left corner is 0,0.  x cross y is reversed
+                // from the platform.
+                var width = modelBox.max.x - modelBox.min.x;
+                var left = best.placements[i].x;
+                var right = best.placements[i].x + width;
+                left -= best.width/2;
+                right -= best.width/2;
+                var wanted_x = (left+right)/2;
+                var current_x = modelBox.center().x;
+
+                var height = modelBox.max.y - modelBox.min.y;
+                var top = best.placements[i].y;
+                var bottom = best.placements[i].y + height;
+                top = -top + best.height/2;
+                bottom = -bottom + best.height/2;
+                var wanted_y = (top+bottom)/2;
+                var current_y = modelBox.center().y;
+                model.position.x = model.position.x - current_x + wanted_x;
+                model.position.y = model.position.y - current_y + wanted_y;
               }
               self.updateTransformInputs();
               self.render();
