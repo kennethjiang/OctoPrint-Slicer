@@ -230,28 +230,48 @@ $(function() {
             });
             $("#slicer-viewport button.arrange").click(function(event) {
 	      // Set selection mode to scale
-              /*var rectangles = [
+              var rectangles = [
                 {name:0, width: 7, height: 10},
                 {name:1, width: 7, height: 10},
                 {name:2, width: 7, height: 10},
                 {name:3, width: 7, height: 10},
                 {name:4, width: 3, height: 3}
-                ];*/
-              var rectangles = [];
+                ];
+              /*var rectangles = [];
               for (var i=1; i < 8; i++) {
                 rectangles.push({"name": i, "width":i, "height":i});
-              }
+                }*/
+              var best;
               var tries = 0;
               var start = performance.now();
               RectanglePacker.pack(
                   rectangles, function(x) {
                     tries++;
-                  // Success.  But is it best?
-                  //console.log(x.rectangleGrid.gridToString(x.width, x.height, 1, "  ", function(y) { return y.name; }));
-                    console.log(x.placements);
+                    // Success.  But is it best?
+                    if (!best) {
+                      best = x;
+                    } else if (Math.max(x.width, x.height) < Math.max(best.width, best.height)) {
+                      best = x;
+                    } else {
+                      // Count rotations.
+                      var bestRotationCount = 0;
+                      for (var i in best.placements) {
+                        bestRotationCount += best.placements[i].rotations ? 1 : 0;
+                      }
+                      var rotationCount = 0;
+                      for (var i in x.placements) {
+                        rotationCount += x.placements[i].rotations ? 1 : 0;
+                      }
+                      if (rotationCount < bestRotationCount) {
+                        best = x;
+                      }
+                    }
+                    //console.log(x.rectangleGrid.gridToString(x.width, x.height, 1, "  ", function(y) { return y.name; }));
+                    //console.log(x.placements);
                 });
               console.log(performance.now() - start);
               console.log(tries);
+              console.log(best.rectangleGrid.gridToString(best.width, best.height, 1, "  ", function(y) { return y.name; }));
             });
             $("#slicer-viewport button.remove").click(function(event) {
 		// Remove the currently selected object.
