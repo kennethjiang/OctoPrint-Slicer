@@ -4,6 +4,8 @@
  * Author: Kenneth Jiang
  * License: AGPLv3
  */
+
+'use strict';
 $(function() {
     function SlicerViewModel(parameters) {
         var self = this;
