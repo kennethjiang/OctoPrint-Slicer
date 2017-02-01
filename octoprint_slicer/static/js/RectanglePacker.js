@@ -544,6 +544,10 @@ var RectanglePacker = {
                 return traverseFn(x);
               },
               skipFn);
+          },
+          0,
+          function (a,b) { // compareFn
+            return (a.height == b.height && a.width == b.width) ? 0 : 1;
           });
       });
   },
