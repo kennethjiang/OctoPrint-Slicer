@@ -336,7 +336,7 @@ var RectanglePacker = {
   // Runs traverse on each ordering of the inputs.  traverseFn must
   // not modify the inputs.  If any of traverseFn return something
   // other than undefiend, stop the traversal.
-  permute: function(inputs, traverseFn) {
+  permute: function(inputs, traverseFn, start = 0) {
     var inputsCopy = inputs.slice(0);
     var swap = function(a,b) {
       var temp = inputsCopy[a];
@@ -344,18 +344,35 @@ var RectanglePacker = {
       inputsCopy[b] = temp;
     };
 
+    var factorial = function (x) {
+      var result = 1;
+      while (x > 1) {
+        result *= x;
+        x--;
+      }
+      return result;
+    }
     var p = function(index = 0) {
       if (index >= inputsCopy.length) {
         return traverseFn(inputsCopy);
       }
-      p(index+1);
+      var toDo = factorial(inputsCopy.length - (index+1));
+      if (start < toDo) {
+        p(index+1);
+      } else {
+        start -= toDo;
+      }
       for (var i=index+1; i < inputsCopy.length; i++) {
-        swap(index, i);
-        var result = p(index+1);
-        if (result !== undefined) {
-          return result;
+        if (start < toDo) {
+          swap(index, i);
+          var result = p(index+1, start);
+          if (result !== undefined) {
+            return result;
+          }
+          swap(index, i);
+        } else {
+          start -= toDo;
         }
-        swap(index, i);
       }
     };
 
@@ -549,3 +566,4 @@ var RectanglePacker = {
 if ( typeof module === 'object' ) {
   module.exports = RectanglePacker;
 }
+RectanglePacker.permute([1,2,3], function(x) {console.log(x);},1);
