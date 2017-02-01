@@ -417,24 +417,36 @@ var RectanglePacker = {
 
   // Given a list of lists, runs traverseFn on a list of elements, one
   // picked from each list in the input list.  traverseFn must not
-  // modify its input.
-  combinations: function(inputs, traverseFn) {
+  // modify its input.  start is the position at which to start.  the
+  // result value is an object hasand a result and also a position for
+  // continuing the combination.
+  combinations: function(inputs, traverseFn, start = 0) {
     var combination = [];
+    var position = 0;
     var c = function(index = 0) {
       if (index >= inputs.length) {
+        position++;
         return traverseFn(combination);
       }
+      var toDo = 1;
+      for (var i=index+1; i < inputs.length; i++) {
+        toDo *= inputs[i].length;
+      }
       for (var i=0; i < inputs[index].length; i++) {
-        combination.push(inputs[index][i]);
-        var result = c(index+1);
-        if (result !== undefined) {
-          return result;
+        if (position + toDo > start) {
+          combination.push(inputs[index][i]);
+          var result = c(index+1);
+          if (result !== undefined) {
+            return result;
+          }
+          combination.pop();
+        } else {
+          position += toDo;
         }
-        combination.pop();
       }
     }
 
-    return c();
+    return {result: c(), position: position};
   },
 
   // Packs rectangles without rotating them.  Attempts all interesting
@@ -587,4 +599,5 @@ var RectanglePacker = {
 if ( typeof module === 'object' ) {
   module.exports = RectanglePacker;
 }
-console.log(RectanglePacker.permute([1,1,2], function(x) {console.log(x);},5,function(a,b) {return a-b;}));
+//console.log(RectanglePacker.combinations([[1,2],[3,4],[5,6]], function(x) {console.log(x); return true;},3));
+
