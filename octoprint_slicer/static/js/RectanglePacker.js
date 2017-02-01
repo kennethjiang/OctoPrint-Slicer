@@ -335,9 +335,19 @@ var RectanglePacker = {
 
   // Runs traverse on each ordering of the inputs.  traverseFn must
   // not modify the inputs.  If any of traverseFn return something
-  // other than undefiend, stop the traversal.
-  permute: function(inputs, traverseFn, start = 0) {
+  // other than undefiend, stop the traversal.  If compareFn is
+  // defined, it is used to compare inputs to remove duplicate
+  // permutations.  compareFn should return 0 if elements are the
+  // same, like the compare that sort uses.
+  //
+  // Returns an object with the result and with a continuation number.
+  // That number is the number of permutations that have already run.
+  // It includes the count of duplicates even though those duplicates
+  // didn't occur so that compareFn can be changed when rerunning
+  // permute.
+  permute: function(inputs, traverseFn, start = 0, compareFn) {
     var inputsCopy = inputs.slice(0);
+    var position = 0;
     var swap = function(a,b) {
       var temp = inputsCopy[a];
       inputsCopy[a] = inputsCopy[b];
@@ -354,29 +364,34 @@ var RectanglePacker = {
     }
     var p = function(index = 0) {
       if (index >= inputsCopy.length) {
+        position++;
         return traverseFn(inputsCopy);
       }
       var toDo = factorial(inputsCopy.length - (index+1));
-      if (start < toDo) {
+      if (position + toDo > start) {
         p(index+1);
       } else {
-        start -= toDo;
+        position += toDo; // Skip these.
       }
       for (var i=index+1; i < inputsCopy.length; i++) {
-        if (start < toDo) {
-          swap(index, i);
-          var result = p(index+1, start);
-          if (result !== undefined) {
-            return result;
+        if (position + toDo > start) {
+          if (!compareFn || compareFn(inputsCopy[index], inputsCopy[i]) != 0) {
+            swap(index, i);
+            var result = p(index+1, start);
+            if (result !== undefined) {
+              return result;
+            }
+            swap(index, i);
+          } else {
+            position += toDo; // Still need to count them.
           }
-          swap(index, i);
         } else {
-          start -= toDo;
+          position += toDo;
         }
       }
     };
 
-    return p();
+    return {result: p(), position: position};
   },
 
   // Provide a function to memoize fn.  Optionally provide a function
@@ -394,8 +409,10 @@ var RectanglePacker = {
       if (results.hasOwnProperty(inputString)) {
         return results[inputString];
       } else {
-        //console.log("packing: " + inputString);
+        console.log("packing: " + inputString);
+        var start = performance.now();
         results[inputString] = fn.apply(null, arguments);
+        console.log("done packing: " + (performance.now()-start));
         return results[inputString];
       }
     };
@@ -566,3 +583,4 @@ var RectanglePacker = {
 if ( typeof module === 'object' ) {
   module.exports = RectanglePacker;
 }
+console.log(RectanglePacker.permute([1,1,2], function(x) {console.log(x);},5,function(a,b) {return a-b;}));
