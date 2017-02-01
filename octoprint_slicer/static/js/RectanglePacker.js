@@ -566,4 +566,3 @@ var RectanglePacker = {
 if ( typeof module === 'object' ) {
   module.exports = RectanglePacker;
 }
-RectanglePacker.permute([1,2,3], function(x) {console.log(x);},1);
