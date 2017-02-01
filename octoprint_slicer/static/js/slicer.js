@@ -269,17 +269,6 @@ $(function() {
                 }
               }
 
-	      // Set selection mode to scale
-/*                {name:0, width: 7, height: 10},
-                {name:1, width: 7, height: 10},
-                {name:2, width: 7, height: 10},
-                {name:3, width: 7, height: 10},
-                {name:4, width: 3, height: 3}
-                ];*/
-              /*var rectangles = [];
-              for (var i=1; i < 8; i++) {
-                rectangles.push({"name": i, "width":i, "height":i});
-                }*/
               var best;
               var tries = 0;
               var start = performance.now();
