@@ -230,6 +230,7 @@ $(function() {
             });
             $("#slicer-viewport button.arrange").click(function(event) {
               var rectangles = [];
+              var dimensions = []; // A list of all the dimensions that we've encountered.
               for (var i = 0; i < self.stlFiles.length; i++ ) {
                 var model = self.stlFiles[i].model;
                 var smallestRectangle = {"name": i};
@@ -241,20 +242,32 @@ $(function() {
                   var height = modelBox.max.y - modelBox.min.y;
                   if (!smallestRectangle.hasOwnProperty("prerotation") ||
                       width * height < smallestRectangle.width * smallestRectangle.height) {
-                    // If the width and height are similar enough, round up the smaller and make it a square.
-                    if (width/height < 1.05 && width/height > 1 / 1.05) {
-                      smallestRectangle["width"] = Math.max(width, height);
-                      smallestRectangle["height"] = Math.max(width, height);
-                    } else {
-                      smallestRectangle["width"] = width;
-                      smallestRectangle["height"] = height;
-                    }
+                    smallestRectangle["width"] = width;
+                    smallestRectangle["height"] = height;
                     smallestRectangle["prerotation"] = rotation;
                   }
                 }
+                dimensions.push(smallestRectangle.height);
+                dimensions.push(smallestRectangle.width);
                 rectangles.push(smallestRectangle);
               }
-
+              if (dimensions.length > 0) {
+                // See if we can round up any dimensions.
+                dimensions.sort(function (a,b) { return b-a; }); // Sort largest to smallest.
+                var dimensionsMap = {};
+                var current = dimensions[0];
+                dimensionsMap[current] = current;
+                for (var i = 1; i < dimensions.length; i++) {
+                  if (dimensions[i]/current < 0.99) {
+                    current = dimensions[i];
+                  }
+                  dimensionsMap[dimensions[i]] = current;
+                }
+                for (var i=0; i < rectangles.length; i++) {
+                  rectangles[i].width = dimensionsMap[rectangles[i].width];
+                  rectangles[i].height = dimensionsMap[rectangles[i].height];
+                }
+              }
 
 	      // Set selection mode to scale
 /*                {name:0, width: 7, height: 10},
