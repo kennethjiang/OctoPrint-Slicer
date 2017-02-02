@@ -151,7 +151,7 @@ $(function() {
             self.renderer.gammaOutput = true;
 
             $("#slicer-viewport").empty().append('<div class="model">\
-                    <button class="translate" title="Move"><img src="'
+                    <button class="translate disabled" title="Move"><img src="'
                 + PLUGIN_BASEURL
                 + 'slicer/static/img/translate.png"></button>\
                     <button class="rotate disabled" title="Rotate"><img src="'
@@ -160,6 +160,9 @@ $(function() {
                     <button class="scale disabled" title="Scale"><img src="'
                 + PLUGIN_BASEURL
                 + 'slicer/static/img/scale.png"></button>\
+                    <button class="remove disabled" title="Remove"><img src="'
+                + PLUGIN_BASEURL
+                + 'slicer/static/img/remove.png"></button>\
                 </div>\
                 <div class="values translate">\
                     <div>\
@@ -221,11 +224,23 @@ $(function() {
 		self.transformControls.setMode("scale");
                 self.toggleValueInputs($("#slicer-viewport .scale.values div"));
             });
+            $("#slicer-viewport button.remove").click(function(event) {
+		// Remove the currently selected object.
+                self.removeSTL();
+            });
             $("#slicer-viewport .values input").change(function() {
                 self.applyChange($(this));
             });
 
             ko.applyBindings(self.slicingViewModel, $('#slicing-settings')[0]);
+
+            window.addEventListener( 'keypress', function ( event ) {
+                switch ( event.key ) {
+                    case "Delete":
+                        self.removeSTL();
+                        break;
+                }
+            });
 
             window.addEventListener( 'keydown', function ( event ) {
                 switch ( event.keyCode ) {
@@ -283,9 +298,10 @@ $(function() {
 
 	self.isStlFileActive = function(stlFile) {
 	    return stlFile.model.children[0].material.color.equals(self.effectController.modelActiveColor);
-	}
+	};
 
 	self.setStlFileActive = function(stlFile) {
+            // Sets one file active and inactivates all the others.
 	    var newActiveStl = false;
 	    _.forEach(self.stlFiles, function (otherStlFile) {
 		if (otherStlFile == stlFile) {
@@ -302,7 +318,40 @@ $(function() {
 		//self.transformControls.setMode("rotate");
 		self.updateTransformInputs();
 	    }
-	}
+            if (!stlFile) {
+                $("#slicer-viewport .values div").removeClass("show")
+                $("#slicer-viewport button").addClass("disabled");
+            } else {
+                $("#slicer-viewport button").removeClass("disabled");
+            }
+            self.render();
+	};
+
+        self.removeSTL = function() {
+            // Remove all active STL files.
+            var firstRemoved;
+            for (var i = 0; i < self.stlFiles.length; i++) {
+                var stlFile = self.stlFiles[i];
+                if (self.isStlFileActive(stlFile)) {
+                    self.scene.remove(stlFile.model);
+                    firstRemoved = i;
+                }
+                if (self.transformControls.object == stlFile.model) {
+                    self.transformControls.detach();
+                }
+            };
+            _.remove(self.stlFiles, function (stlFile) {
+                return self.isStlFileActive(stlFile);
+            });
+            if (firstRemoved < self.stlFiles.length) {
+                self.setStlFileActive(self.stlFiles[firstRemoved]);
+            } else if (0 < self.stlFiles.length) {
+                self.setStlFileActive(self.stlFiles[0]);
+            } else {
+                self.setStlFileActive();
+            }
+            self.render();
+        };
 
         self.loadSTL = function(target, file, force, stlFile) {
             var loader = new THREE.STLLoader();
@@ -330,7 +379,7 @@ $(function() {
         self.toggleValueInputs = function(parentDiv) {
             if ( parentDiv.hasClass("show") ) {
                 parentDiv.removeClass("show").children('p').removeClass("show");
-            } else {
+            } else if (self.transformControls.object) {
                 $("#slicer-viewport .values div").removeClass("show");
                 parentDiv.addClass("show").children('p').addClass("show");
             }
@@ -376,16 +425,18 @@ $(function() {
 
         self.updateTransformInputs = function () {
             var model = self.transformControls.object;
-            $("#slicer-viewport .translate.values input[name=\"x\"]").val(model.position.x.toFixed(3)).attr("min", '');
-            $("#slicer-viewport .translate.values input[name=\"y\"]").val(model.position.y.toFixed(3)).attr("min", '');
-            $("#slicer-viewport .rotate.values input[name=\"x\"]").val((model.rotation.x * 180 / Math.PI).toFixed(3)).attr("min", '');
-            $("#slicer-viewport .rotate.values input[name=\"y\"]").val((model.rotation.y * 180 / Math.PI).toFixed(3)).attr("min", '');
-            $("#slicer-viewport .rotate.values input[name=\"z\"]").val((model.rotation.z * 180 / Math.PI).toFixed(3)).attr("min", '');
-            $("#slicer-viewport .scale.values input[name=\"x\"]").val(model.scale.x.toFixed(3)).attr("min", '');
-            $("#slicer-viewport .scale.values input[name=\"y\"]").val(model.scale.y.toFixed(3)).attr("min", '');
-            $("#slicer-viewport .scale.values input[name=\"z\"]").val(model.scale.z.toFixed(3)).attr("min", '');
-            $("#slicer-viewport .scale.values input[type=\"checkbox\"]").checked = self.lockScale;
-            self.fixZPosition(model);
+            if (model) {
+                $("#slicer-viewport .translate.values input[name=\"x\"]").val(model.position.x.toFixed(3)).attr("min", '');
+                $("#slicer-viewport .translate.values input[name=\"y\"]").val(model.position.y.toFixed(3)).attr("min", '');
+                $("#slicer-viewport .rotate.values input[name=\"x\"]").val((model.rotation.x * 180 / Math.PI).toFixed(3)).attr("min", '');
+                $("#slicer-viewport .rotate.values input[name=\"y\"]").val((model.rotation.y * 180 / Math.PI).toFixed(3)).attr("min", '');
+                $("#slicer-viewport .rotate.values input[name=\"z\"]").val((model.rotation.z * 180 / Math.PI).toFixed(3)).attr("min", '');
+                $("#slicer-viewport .scale.values input[name=\"x\"]").val(model.scale.x.toFixed(3)).attr("min", '');
+                $("#slicer-viewport .scale.values input[name=\"y\"]").val(model.scale.y.toFixed(3)).attr("min", '');
+                $("#slicer-viewport .scale.values input[name=\"z\"]").val(model.scale.z.toFixed(3)).attr("min", '');
+                $("#slicer-viewport .scale.values input[type=\"checkbox\"]").checked = self.lockScale;
+                self.fixZPosition(model);
+            }
             self.render();
         };
 
