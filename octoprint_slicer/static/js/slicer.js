@@ -302,9 +302,9 @@ $(function() {
                           }
                         }
                       }
-                      if (newBest || performance.now() > packStartTime+100) {
+                      if (performance.now() > packStartTime+5000) {
                         //console.log("doevents");
-                        return true; // do events
+                        return false; // do events
                       }
                     },
                     position);
@@ -315,7 +315,7 @@ $(function() {
                     newBest = false;
                     callback(best);
                   }
-                  if (continuation.result !== undefined) {
+                  if (continuation.result.result == true) {
                     // We have more to do.
                     setTimeout(findBestPacking, 0);
                   };
