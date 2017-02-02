@@ -25,6 +25,7 @@ $(function() {
         self.slicingViewModel = parameters[0];
         self.basicOverridesViewModel = parameters[1];
         self.advancedOverridesViewModel = parameters[2];
+        self.printerStateViewModel = parameters[3];
 
         self.lockScale = true;
 
@@ -486,9 +487,12 @@ $(function() {
                 type: "POST",
                 dataType: "json",
                 contentType: "application/json; charset=UTF-8",
-                data: JSON.stringify(data)
+		data: JSON.stringify(data),
+		error: function(jqXHR, textStatus) {
+		    new PNotify({title: "Slicing failed", text: textStatus, type: "error", hide: false});
+		}
             });
-	}
+        };
 
         self.slice = function() {
 	    if (!self.stlModified) {
@@ -510,7 +514,10 @@ $(function() {
                     success: function(data) {
 			self.tempFiles[newFilename] = 1;
 			self.sendSliceCommand(newFilename);
-                    }
+                    },
+                    error: function(jqXHR, textStatus) {
+	                new PNotify({title: "Slicing failed", text: textStatus, type: "error", hide: false});
+	            }
 		});
 	    }
         };
@@ -518,13 +525,24 @@ $(function() {
         self.blobFromModel = function( model ) {
     	    var exporter = new THREE.STLBinaryExporter();
     	    return new Blob([exporter.parse(model)], {type: "text/plain"});
-        }
+        };
 
         self.render = function() {
             self.orbitControls.update();
             self.transformControls.update();
             self.renderer.render( self.scene, self.camera );
         };
+
+	self.isPrinting = ko.computed(function () {
+	    return self.printerStateViewModel.isPrinting() ||
+		self.printerStateViewModel.isPaused();
+	});
+
+	self.canSliceNow = ko.computed(function () {
+            // TODO: We should be checking for same_device here, too.
+	    return self.slicingViewModel.enableSliceButton() &&
+		!self.isPrinting();
+	});
 
         self.init();
         self.render();
@@ -535,7 +553,7 @@ $(function() {
         SlicerViewModel,
 
         // e.g. loginStateViewModel, settingsViewModel, ...
-        [ "slicingViewModel", "basicOverridesViewModel", "advancedOverridesViewModel" ],
+        [ "slicingViewModel", "basicOverridesViewModel", "advancedOverridesViewModel", "printerStateViewModel" ],
 
         // e.g. #settings_plugin_slicer, #tab_plugin_slicer, ...
         [ "#slicer" ]
