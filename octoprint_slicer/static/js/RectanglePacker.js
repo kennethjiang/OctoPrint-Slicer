@@ -353,7 +353,6 @@ var RectanglePacker = {
       inputsCopy[a] = inputsCopy[b];
       inputsCopy[b] = temp;
     };
-
     var factorial = function (x) {
       var result = 1;
       while (x > 1) {
@@ -361,7 +360,7 @@ var RectanglePacker = {
         x--;
       }
       return result;
-    }
+    };
     var p = function(index = 0) {
       if (index >= inputsCopy.length) {
         position++;
@@ -369,7 +368,10 @@ var RectanglePacker = {
       }
       var toDo = factorial(inputsCopy.length - (index+1));
       if (position + toDo > start) {
-        p(index+1);
+        var result = p(index+1);
+        if (result !== undefined) {
+          return result;
+        }
       } else {
         position += toDo; // Skip these.
       }
@@ -471,6 +473,7 @@ var RectanglePacker = {
 
     var currentHeight = tallest;
     var currentWidth = -1;
+    var result;
     do {
       var newWH = skipFn(currentWidth, currentHeight);
       currentHeight = newWH.height;
@@ -478,15 +481,17 @@ var RectanglePacker = {
       var packResult =
           RectanglePacker.packRectangles(rectangles, currentHeight, currentWidth);
       var traverseResult = traverseFn(packResult);
-      if (traverseResult !== undefined) {
-        return traverseResult;
-      }
+      result = traverseResult;
+      // Don't return just yet, only store the result.  We hope that
+      // the caller will keep sending results and we'll output the
+      // last one.
       currentHeight = currentHeight + packResult.minDeltaHeight;
       if (packResult.placementsCount == rectangles.length) {
         // If we succeeded, set a new target width.
         currentWidth = packResult.width;
       }
     } while (currentWidth >= widest && packResult.minDeltaHeight > 0);
+    return result;
   },
 
   // Sorts by height, then by width, biggest first.
@@ -499,12 +504,8 @@ var RectanglePacker = {
     });
   },
 
-  /* Packs rectangles as above but tries all combinations of rotating
-   * or not rotating elements by 90 degrees, which might improve
-   * packing. The result is the same as pack above but with an extra
-   * member, rotation, alongside x and y in the placements.  All
-   * attempts are memoized to save time on runs. */
-  packWithRotation: function(rectangles, traverseFn, skipFn) {
+  // Convert a list of rectangles to a list of lists where is rectangle is possibly listed also as rotated by 90 degrees.
+  rotateRectangles: function(rectangles) {
     var rotatedRectangles = [];
     for (var i = 0; i < rectangles.length; i++) {
       rectangles[i].rotation = 0;
@@ -526,6 +527,15 @@ var RectanglePacker = {
       }
       rotatedRectangles.push(forms);
     }
+    return rotatedRectangles;
+  },
+
+  /* Packs rectangles as above but tries all combinations of rotating
+   * or not rotating elements by 90 degrees, which might improve
+   * packing. The result is the same as pack above but with an extra
+   * member, rotation, alongside x and y in the placements.  */
+  packWithRotation: function(rectangles, traverseFn, start = 0, skipFn) {
+    var rotatedRectangles = RectanglePacker.rotateRectangles(rectangles);
     // Because the traverse is a side effect, memoizing essentially
     // means that we don't run the original traverse at all.
     var memoizedPacker = RectanglePacker.memoize(
@@ -536,10 +546,19 @@ var RectanglePacker = {
           return r.width + "x" + r.height;
         }).join(",");
       });
-    return RectanglePacker.combinations(
+    var factorial = function (x) {
+      var result = 1;
+      while (x > 1) {
+        result *= x;
+        x--;
+      }
+      return result;
+    };
+    var position = 0;
+    var continuation = RectanglePacker.combinations(
       rotatedRectangles,
       function (combination) {
-        RectanglePacker.permute(
+        var continuation = RectanglePacker.permute(
           RectanglePacker.sortRectangles(combination.slice()),
           function (permutation) {
             return memoizedPacker(
@@ -557,40 +576,45 @@ var RectanglePacker = {
               },
               skipFn);
           },
-          0,
+          start - position,
           function (a,b) { // compareFn
             return (a.height == b.height && a.width == b.width) ? 0 : 1;
           });
-      });
+        position += continuation.position;
+        if (continuation.result !== undefined) {
+          return continuation;
+        }
+      },
+      0);
+    return {result: continuation.result, position: position};
   },
 
-  pack: function(rectangles, traverseFn) {
+  pack: function(rectangles, traverseFn, start = 0) {
     var bestHW = {}
     return RectanglePacker.packWithRotation(
-        rectangles, function(packResult) {
-          if (packResult.placementsCount == rectangles.length) {
-            if (!bestHW.hasOwnProperty(packResult.height) ||
-                bestHW[packResult.height] > packResult.width) {
-              bestHW[packResult.height] = packResult.width;
-            }
-            var traverseResult = traverseFn(packResult);
-            if (traverseResult !== undefined) {
-              return traverseResult;
-            }
+      rectangles, function(packResult) {
+        if (!bestHW.hasOwnProperty(packResult.height) ||
+            bestHW[packResult.height] > packResult.width) {
+          bestHW[packResult.height] = packResult.width;
+        }
+        var traverseResult = traverseFn(packResult);
+        if (traverseResult !== undefined) {
+          return traverseResult;
+        }
+      },
+      start,
+      function (w,h) {
+        var newWidth = w;
+        for (bestHeight in bestHW) {
+          if (bestHeight <= h &&
+              bestHW[bestHeight] < newWidth) {
+            newWidth = bestHW[bestHeight];
           }
-        },
-        function (w,h) {
-          var newWidth = w;
-          for (bestHeight in bestHW) {
-            if (bestHeight <= h &&
-                bestHW[bestHeight] < newWidth) {
-              newWidth = bestHW[bestHeight];
-            }
-          }
-          // skipFn
-          return {"height": h,
-                  "width": newWidth};
-        });
+        }
+        // skipFn
+        return {"height": h,
+                "width": newWidth};
+      });
   }
 
 };
@@ -599,5 +623,4 @@ var RectanglePacker = {
 if ( typeof module === 'object' ) {
   module.exports = RectanglePacker;
 }
-//console.log(RectanglePacker.combinations([[1,2],[3,4],[5,6]], function(x) {console.log(x); return true;},3));
-
+console.log(RectanglePacker.combinations([[1,2],[3,4],[5,6]], function(x) {console.log(x);},120));
