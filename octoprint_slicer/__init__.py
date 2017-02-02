@@ -45,12 +45,12 @@ import logging.handlers
 class SlicerPlugin(octoprint.plugin.SettingsPlugin,
                    octoprint.plugin.AssetPlugin,
                    octoprint.plugin.TemplatePlugin,
-		   octoprint.plugin.BlueprintPlugin):
+				   octoprint.plugin.BlueprintPlugin):
 
 	##~~ SettingsPlugin mixin
 
 	def get_settings_defaults(self):
-                return dict(
+		return dict(
 			# put your plugin's default settings here
 		)
 
@@ -123,14 +123,6 @@ class SlicerPlugin(octoprint.plugin.SettingsPlugin,
 
 			# Clear slicer changes
 			self.slicerChanges = None
-
-	# Get info about the slicers, such as,
-        # are they running on the same device as OctoPrint.
-	@octoprint.plugin.BlueprintPlugin.route("/slicer/properties", methods=["GET"])
-	def slicerInfo(self):
-                return flask.jsonify(
-                        {slicer: self._slicing_manager.get_slicer(slicer, require_configured=False).get_slicer_properties()
-                         for slicer in self._slicing_manager.registered_slicers})
 
 	# Upload event
 	@octoprint.plugin.BlueprintPlugin.route("/upload", methods=["POST"])
