@@ -286,6 +286,10 @@ $(function() {
                         } else if (Math.max(x.width, x.height) < Math.max(best.width, best.height)) {
                           best = x;
                           newBest = true;
+                        } else if (Math.max(x.width, x.height) == Math.max(best.width, best.height) &&
+                                   x.width*x.height < best.width*best.height) {
+                          best = x;
+                          newBest = true;
                         } else {
                           // Count rotations.
                           var bestRotationCount = 0;
@@ -301,6 +305,9 @@ $(function() {
                             newBest = true;
                           }
                         }
+                      }
+                      if (newBest) {
+                        return true;
                       }
                       if (performance.now() > packStartTime+5000) {
                         //console.log("doevents");
