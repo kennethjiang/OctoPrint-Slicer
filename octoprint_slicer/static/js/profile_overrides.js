@@ -110,7 +110,9 @@ $(function() {
                              "infill_speed",
                              "fan_enabled",
                              "bottom_layer_speed",
-                             "filament_flow"
+                             "filament_flow",
+                             "retraction_speed",
+                             "retraction_amount",
                              ]);
     }
 
