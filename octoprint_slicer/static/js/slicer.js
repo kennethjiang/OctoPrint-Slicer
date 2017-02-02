@@ -189,6 +189,7 @@ $(function() {
             self.transformControls.addEventListener("mouseDown", self.startTransform);
             self.transformControls.addEventListener("mouseUp", self.endTransform);
             self.transformControls.addEventListener("change", self.updateTransformInputs);
+            self.transformControls.addEventListener("objectChange", function (e) {self.stlModified = true});
             self.scene.add(self.transformControls);
             self.updatePrinterBed();
 
@@ -259,6 +260,7 @@ $(function() {
                 self.transformControls.setMode("rotate");
                 self.updateTransformInputs();
                 self.render();
+                self.stlModified = false;
             } );
         };
 
@@ -277,6 +279,7 @@ $(function() {
                 self.lockScale = input[0].checked;
             }
             else if(input[0].type == "number" && !isNaN(parseFloat(input.val()))) {
+                self.stlModified = true;
                 input.val(parseFloat(input.val()).toFixed(3));
                 var model = self.transformControls.object;
 
@@ -435,57 +438,81 @@ $(function() {
             model.position.z -= model.position.z + boundaryBox.min.z - bedLowMinZ;
         }
 
-        self.slice = function() {
-            var form = new FormData();
-            form.append("file", self.blobFromModel(self.model), self.slicingViewModel.file());
-            $.ajax({
-                url: API_BASEURL + "files/local",
-                type: "POST",
-                data: form,
-                processData: false,
-                contentType: false,
-                // On success
-                success: function(data) {
-                    var slicingVM = self.slicingViewModel;
+	self.tempFiles = {};
+	self.removeTempFilesAfterSlicing = function (event) {
+	    if ($.inArray(event.data.type, ["SlicingDone", "SlicingFailed"]) >= 0 &&
+		event.data.payload.stl in self.tempFiles) {
+		OctoPrint.files.delete(event.data.payload.stl_location,
+				       event.data.payload.stl);
+		delete self.tempFiles[event.data.payload.stl];
+	    }
+	}
 
-                    var destinationFilename = slicingVM._sanitize(slicingVM.destinationFilename());
+	OctoPrint.socket.onMessage("event", self.removeTempFilesAfterSlicing);
 
-                    var destinationExtensions = slicingVM.data[slicingVM.slicer()] && slicingVM.data[slicingVM.slicer()].extensions && slicingVM.data[slicingVM.slicer()].extensions.destination
-                                                ? slicingVM.data[slicingVM.slicer()].extensions.destination
-                                                : ["???"];
-                    if (!_.any(destinationExtensions, function(extension) {
-                            return _.endsWith(destinationFilename.toLowerCase(), "." + extension.toLowerCase());
-                        })) {
-                        destinationFilename = destinationFilename + "." + destinationExtensions[0];
-                    }
+	self.sendSliceCommand = function(filename) {
+	    var slicingVM = self.slicingViewModel;
 
-                    var data = {
-                        command: "slice",
-                        slicer: slicingVM.slicer(),
-                        profile: slicingVM.profile(),
-                        printerProfile: slicingVM.printerProfile(),
-                        destination: destinationFilename,
-                        position: { "x": self.ORIGIN_OFFSET_X_MM+self.model.position.x,
+            var destinationFilename = slicingVM._sanitize(slicingVM.destinationFilename());
+
+            var destinationExtensions = slicingVM.data[slicingVM.slicer()] && slicingVM.data[slicingVM.slicer()].extensions && slicingVM.data[slicingVM.slicer()].extensions.destination
+                ? slicingVM.data[slicingVM.slicer()].extensions.destination
+                : ["???"];
+            if (!_.any(destinationExtensions, function(extension) {
+                return _.endsWith(destinationFilename.toLowerCase(), "." + extension.toLowerCase());
+            })) {
+                destinationFilename = destinationFilename + "." + destinationExtensions[0];
+            }
+
+            var data = {
+                command: "slice",
+                slicer: slicingVM.slicer(),
+                profile: slicingVM.profile(),
+                printerProfile: slicingVM.printerProfile(),
+                destination: destinationFilename,
+                position: { "x": self.ORIGIN_OFFSET_X_MM+self.model.position.x,
                             "y": self.ORIGIN_OFFSET_Y_MM+self.model.position.y }
-                    };
-                    _.extend(data, self.basicOverridesViewModel.toJS());
-                    _.extend(data, self.advancedOverridesViewModel.toJS());
+            };
+            _.extend(data, self.basicOverridesViewModel.toJS());
+            _.extend(data, self.advancedOverridesViewModel.toJS());
 
-                    if (slicingVM.afterSlicing() == "print") {
-                        data["print"] = true;
-                    } else if (slicingVM.afterSlicing() == "select") {
-                        data["select"] = true;
-                    }
-
-                    $.ajax({
-                        url: API_BASEURL + "files/" + slicingVM.target + "/" + slicingVM.file(),
-                        type: "POST",
-                        dataType: "json",
-                        contentType: "application/json; charset=UTF-8",
-                        data: JSON.stringify(data)
-                    });
-                }
+            if (slicingVM.afterSlicing() == "print") {
+                data["print"] = true;
+            } else if (slicingVM.afterSlicing() == "select") {
+                data["select"] = true;
+            }
+            $.ajax({
+                url: API_BASEURL + "files/" + slicingVM.target + "/" + filename,
+                type: "POST",
+                dataType: "json",
+                contentType: "application/json; charset=UTF-8",
+                data: JSON.stringify(data)
             });
+	}
+
+        self.slice = function() {
+	    if (!self.stlModified) {
+		self.sendSliceCommand(self.slicingViewModel.file());
+	    } else {
+		var form = new FormData();
+		var extensionPosition = self.slicingViewModel.file().lastIndexOf(".")
+		var newFilename = self.slicingViewModel.file().substring(0, extensionPosition) +
+		    ".tmp." + (+ new Date()) +
+		    self.slicingViewModel.file().substring(extensionPosition);
+		form.append("file", self.blobFromModel(self.model), newFilename);
+		$.ajax({
+                    url: API_BASEURL + "files/local",
+                    type: "POST",
+                    data: form,
+                    processData: false,
+                    contentType: false,
+                    // On success
+                    success: function(data) {
+			self.tempFiles[newFilename] = 1;
+			self.sendSliceCommand(newFilename);
+                    }
+		});
+	    }
         };
 
         self.blobFromModel = function( model ) {
