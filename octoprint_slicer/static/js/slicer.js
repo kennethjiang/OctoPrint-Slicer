@@ -272,6 +272,7 @@ $(function() {
               var findBestPacking = (function (rectangles, callback) {
                 var position = 0;
                 var best;
+                var newBest = false;
                 return function() {
                   var packStartTime = performance.now();
                   var continuation = RectanglePacker.pack(
@@ -281,8 +282,10 @@ $(function() {
                         // Success, but is it best?
                         if (!best) {
                           best = x;
+                          newBest = true;
                         } else if (Math.max(x.width, x.height) < Math.max(best.width, best.height)) {
                           best = x;
+                          newBest = true;
                         } else {
                           // Count rotations.
                           var bestRotationCount = 0;
@@ -295,6 +298,7 @@ $(function() {
                           }
                           if (rotationCount < bestRotationCount) {
                             best = x;
+                            newBest = true;
                           }
                         }
                       }
@@ -306,7 +310,10 @@ $(function() {
                     position);
                   position = continuation.position;
                   console.log("position is " + position);
-                  callback(best);
+                  if (newBest) {
+                    newBest = false;
+                    callback(best);
+                  }
                   if (continuation.result !== undefined) {
                     // We have more to do.
                     setTimeout(findBestPacking, 0);
