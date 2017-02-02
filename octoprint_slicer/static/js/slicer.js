@@ -487,15 +487,12 @@ $(function() {
                 type: "POST",
                 dataType: "json",
                 contentType: "application/json; charset=UTF-8",
-			data: JSON.stringify(data),
-			error: function(jqXHR, textStatus) {
-			    new PNotify({title: "Slicing failed", text: textStatus, type: "error", hide: false});
-			}
-            });
-                },
+		data: JSON.stringify(data),
 		error: function(jqXHR, textStatus) {
-		        new PNotify({title: "Slicing failed", text: textStatus, type: "error", hide: false});
-	}
+		    new PNotify({title: "Slicing failed", text: textStatus, type: "error", hide: false});
+		}
+            });
+        };
 
         self.slice = function() {
 	    if (!self.stlModified) {
@@ -517,7 +514,10 @@ $(function() {
                     success: function(data) {
 			self.tempFiles[newFilename] = 1;
 			self.sendSliceCommand(newFilename);
-                    }
+                    },
+                    error: function(jqXHR, textStatus) {
+	                new PNotify({title: "Slicing failed", text: textStatus, type: "error", hide: false});
+	            }
 		});
 	    }
         };
@@ -525,7 +525,7 @@ $(function() {
         self.blobFromModel = function( model ) {
     	    var exporter = new THREE.STLBinaryExporter();
     	    return new Blob([exporter.parse(model)], {type: "text/plain"});
-        }
+        };
 
         self.render = function() {
             self.orbitControls.update();
@@ -533,40 +533,15 @@ $(function() {
             self.renderer.render( self.scene, self.camera );
         };
 
-	self.slicerProperties = ko.observable();
-	self.updateSlicerProperties = function(newSlicersArray) {
-	    if (_.isArray(newSlicersArray) &&
-		newSlicersArray.length > 0) {
-		OctoPrint
-		    .get(OctoPrint.getBlueprintUrl("slicer") +
-			 "slicer/properties")
-		    .then(function (result) {
-			self.slicerProperties(result);
-		    });
-	    } else {
-		self.slicerProperties({});
-	    }
-	}
-	self.slicingViewModel.slicers.subscribe(self.updateSlicerProperties);
-
-	self.sameDevice = ko.computed(function() {
-	    if (self.slicerProperties() && self.slicingViewModel.slicer() &&
-		self.slicingViewModel.slicer() in self.slicerProperties() &&
-		!self.slicerProperties()[self.slicingViewModel.slicer()].same_device) {
-		return false;
-	    } else {
-		return true;
-	    }
-	});
-
 	self.isPrinting = ko.computed(function () {
 	    return self.printerStateViewModel.isPrinting() ||
 		self.printerStateViewModel.isPaused();
 	});
 
 	self.canSliceNow = ko.computed(function () {
+            // TODO: We should be checking for same_device here, too.
 	    return self.slicingViewModel.enableSliceButton() &&
-		(!self.isPrinting() || !self.sameDevice());
+		!self.isPrinting();
 	});
 
         self.init();
