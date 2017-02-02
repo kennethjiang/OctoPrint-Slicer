@@ -302,7 +302,7 @@ $(function() {
                           }
                         }
                       }
-                      if (performance.now() > packStartTime+100) {
+                      if (newBest || performance.now() > packStartTime+100) {
                         //console.log("doevents");
                         return true; // do events
                       }
@@ -311,6 +311,7 @@ $(function() {
                   position = continuation.position;
                   console.log("position is " + position);
                   if (newBest) {
+                    console.log("found new best at " + position);
                     newBest = false;
                     callback(best);
                   }

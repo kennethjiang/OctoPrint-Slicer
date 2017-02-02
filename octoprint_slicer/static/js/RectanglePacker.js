@@ -329,7 +329,8 @@ var RectanglePacker = {
             "minDeltaHeight": minDeltaHeight,
             "width": totalWidth,
             "height": totalHeight,
-            "placementsCount": i
+            "placementsCount": i,
+            "placementSuccess": i == rectangles.length
            };
   },
 
@@ -592,11 +593,13 @@ var RectanglePacker = {
   pack: function(rectangles, traverseFn, start = 0) {
     var bestHW = {}
     return RectanglePacker.packWithRotation(
-      rectangles, function(packResult) {
-        if (!bestHW.hasOwnProperty(packResult.height) ||
-            bestHW[packResult.height] > packResult.width) {
-          bestHW[packResult.height] = packResult.width;
-        }
+        rectangles, function(packResult) {
+          if (packResult.placementSuccess) {
+            if (!bestHW.hasOwnProperty(packResult.height) ||
+                bestHW[packResult.height] > packResult.width) {
+              bestHW[packResult.height] = packResult.width;
+            }
+          }
         var traverseResult = traverseFn(packResult);
         if (traverseResult !== undefined) {
           return traverseResult;
