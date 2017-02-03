@@ -409,10 +409,7 @@ var RectanglePacker = {
       if (results.hasOwnProperty(inputString)) {
         return results[inputString];
       } else {
-        console.log("packing: " + inputString);
-        var start = performance.now();
         results[inputString] = fn.apply(null, arguments);
-        console.log("done packing: " + (performance.now()-start));
         return results[inputString];
       }
     };
@@ -493,13 +490,15 @@ var RectanglePacker = {
   /* Packs rectangles as above but tries all combinations of rotating
    * or not rotating elements by 90 degrees, which might improve
    * packing. The result is the same as pack above but with an extra
-   * member, rotation, alongside x and y in the placements.  */
+   * member, rotation, alongside x and y in the placements.  All
+   * attempts are memoized to save time on runs. */
   packWithRotation: function(rectangles, traverseFn, skipFn) {
     var rotatedRectangles = [];
     for (var i = 0; i < rectangles.length; i++) {
       rectangles[i].rotation = 0;
       var forms = [rectangles[i]];
       if (rectangles[i].width != rectangles[i].height) {
+        // Make a copy of the rectangle.
         var rotatedRectangle = rectangles[i].constructor();
         for (var attr in rectangles[i]) {
           if (rectangles[i].hasOwnProperty(attr)) {
@@ -507,6 +506,7 @@ var RectanglePacker = {
           }
         }
         var temp = rotatedRectangle.width
+        // Rotate by 90 degrees.
         rotatedRectangle.width = rotatedRectangle.height;
         rotatedRectangle.height = temp;
         rotatedRectangle.rotation = 90;
