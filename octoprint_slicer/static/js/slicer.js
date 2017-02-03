@@ -228,11 +228,12 @@ $(function() {
 		self.transformControls.setMode("scale");
                 self.toggleValueInputs($("#slicer-viewport .scale.values div"));
             });
-            $("#slicer-viewport button.arrange").click(function(event) {
-            });
             $("#slicer-viewport button.remove").click(function(event) {
 		// Remove the currently selected object.
                 self.removeSTL();
+            });
+            $("#slicer-viewport button.arrange").click(function(event) {
+              self.arrange(10 /* mm margin */, 5000 /* milliseconds max */, true);
             });
             $("#slicer-viewport .values input").change(function() {
                 self.applyChange($(this));
@@ -326,62 +327,6 @@ $(function() {
 	};
 
       self.arrange = (function() {
-        var curentPosition = 0;
-        var rectangles;
-        var bestPackResult;
-
-        // Arrange the models on the platform.  Leave at least margin
-        // around each object.  Stops in timeout milliseconds or fewer.
-        // If the return value is true, it finished trying all
-        // possibilities.  If false, arrange can be run again to
-        // continue attempts to arrange.  If the startOver is set, will
-        // start all the possibilities again.
-        return function(margin, timeoutMilliseconds) {
-          if (haveRectanglesMoved()) {
-            // There has been movement on the platform that could affect placement so start over.
-            currentPosition = 0;
-            rectangles = getSmallestRectangles(margin);
-            bestPackResult = null;
-          }
-          var startTime = performance.now();
-          var newBest = false; // Assume that we don't find a better packing.
-          var continuation = RectanglePacker.pack(
-            rectangles,
-            function (newPackResult) {
-              if (isBetterPackResult(newPackResult, bestPackResult)) {
-                bestPackResult = newPackResult;
-                newBest = true;
-              }
-              if (performance.now() > startTime + timeoutMilliseconds) {
-                return false; // Any return result will cause an exit.
-              }
-            },
-            currentPosition);
-          if (newBest) {
-            applyPackResult(bestPackResult);
-          }
-          currentPosition = continuation.position;
-          return continuation.result;
-        };
-
-        var haveRectanglesMoved = function() {
-          // If the rectangles are as we started last time, we can
-          // continue the arranging.
-          if (!bestPackResult || rectangles.length != self.stlFiles.length) {
-            return true;
-          }
-          for (var i = 0; i < self.stlFiles.length; i++) {
-            var model = self.stlFiles[i].model;
-            if (model.rotation.z != (rectangles[i].prerotation +
-                                     THREE.Math.degToRad(bestPackResult.placements[i].rotation)) ||
-                model.width != rectangles.width ||
-                model.height != rectangles.height) {
-              return true;
-            }
-          }
-          return false;
-        }
-
         // Get the bounding rectangles for all models.  Try rotating
         // them a bit to make the bounding boxes smaller.  If any
         // lengths are very similar (within 1%), round up the smaller
@@ -442,16 +387,25 @@ $(function() {
           if (!a) {
             return false;  // No result is worst.
           }
-          if (!b ||  // Anything is better than nothing.
-              a.placementCount > b.placementCount ||  // Able to place more models is best.
-              Math.min(self.BEDSIZE_X_MM - a.width,
-                       self.BEDSIZE_Y_MM - a.height) >  // Better fits the platform.
-              Math.min(self.BEDSIZE_X_MM - b.width,
-                       self.BEDSIZE_Y_MM - b.height) ||
-              a.width * a.height < b.width * b.height) {  // Smaller total area.
-              return true;}
+          if (!a.placementSuccess) {
+            return false;  // Didn't place all models.
+          }
+          if (!b) {
+            return true;  // Anything is better than nothing
+          }
+          // How much empty space around the edges of the platform?
+          var a_margin = Math.min(self.BEDSIZE_X_MM - a.width,
+                                  self.BEDSIZE_Y_MM - a.height);
+          var b_margin = Math.min(self.BEDSIZE_X_MM - b.width,
+                                  self.BEDSIZE_Y_MM - b.height);
+          if (a_margin != b_margin) {
+            return a_margin > b_margin;
+          }
+          if (a.width * a.height < b.width * b.height) {
+              return true;  // Smaller total area.
+          }
           return false;
-        }
+        };
 
         var applyPackResult = function(packResult) {
           // Apply the pack result to the models.
@@ -459,17 +413,54 @@ $(function() {
           for (var i = 0; i < self.stlFiles.length; i++ ) {
             var model = self.stlFiles[i].model;
             model.rotation.z = rectangles[i].prerotation + THREE.Math.degToRad(packResult.placements[i].rotation);
-            var modelBox = new THREE.Box3().setFromObject(model);
             // i is the name in the placements and also the index in
             // the stlFiles.  The RectanglePacker assumes the back
             // left corner is 0,0 and y grows downward, which is
-            // opposite from the printer so y needs different handling
-            // than x below.
-            model.position.x += packResult.placements[i].x - modelBox.min.x - packResult.width/2;
-            model.position.y += -packResult.placements[i].y - modelBox.max.y + packResult.height/2;
+            // opposite from the printer so y needs to be negative.
+            var width =  packResult.placements[i].rotation == 0 ? rectangles[i].width  : rectangles[i].height;
+            var height = packResult.placements[i].rotation == 0 ? rectangles[i].height : rectangles[i].width ;
+            model.position.x =   packResult.placements[i].x + (width  - packResult.width) /2;
+            model.position.y = -(packResult.placements[i].y + (height - packResult.height)/2);
           }
           self.updateTransformInputs();
           self.render();
+        };
+
+        var curentPosition;
+        var rectangles;
+        var bestPackResult;
+
+        // Arrange the models on the platform.  Leave at least margin
+        // around each object.  Stops in timeout milliseconds or
+        // fewer.  If the return value is true, it finished trying all
+        // possibilities.  If false, arrange can be run again to
+        // continue attempts to arrange.  If the startOver is set,
+        // will start all the possibilities again.
+        return function(margin, timeoutMilliseconds, startOver) {
+          if (startOver) {
+            currentPosition = 0;
+            rectangles = getSmallestRectangles(margin);
+            bestPackResult = null;
+          }
+          var startTime = performance.now();
+          var newBest = false; // Assume that we don't find a better packing.
+          var continuation = RectanglePacker.pack(
+            rectangles,
+            function (newPackResult) {
+              if (isBetterPackResult(newPackResult, bestPackResult)) {
+                bestPackResult = newPackResult;
+                newBest = true;
+              }
+              if (performance.now() > startTime + timeoutMilliseconds) {
+                return false; // Any return result will cause an exit.
+              }
+            },
+            currentPosition);
+          if (newBest) {
+            applyPackResult(bestPackResult);
+          }
+          currentPosition = continuation.position;
+          return continuation.result;
         };
       })();
 
