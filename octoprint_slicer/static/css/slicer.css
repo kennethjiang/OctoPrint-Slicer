@@ -34,8 +34,8 @@
 
 #slicer-viewport > div.model {
     left: 0;
-    top: 14%;
-    transform: translateY(-50%);
+    top: 16px;
+    transform: translateY(0%);
     flex-direction: column;
 }
 
@@ -259,7 +259,7 @@
     position: relative;
 }
 
-#slicer-viewport > div > button[disabled], #slicer-viewport > div > button.disabled.delete, #slicer-viewport > div > button.disabled.clone, #slicer-viewport > div > button.disabled.reset, #slicer-viewport > div > button.disabled.merge, #slicer-viewport > div > button.cut.off {
+#slicer-viewport > div > button.disabled, #slicer-viewport > div > button.disabled.delete, #slicer-viewport > div > button.disabled.clone, #slicer-viewport > div > button.disabled.reset, #slicer-viewport > div > button.disabled.merge, #slicer-viewport > div > button.cut.off {
     opacity: 0.5;
     pointer-events: none;
 }
