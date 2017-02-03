@@ -229,121 +229,6 @@ $(function() {
                 self.toggleValueInputs($("#slicer-viewport .scale.values div"));
             });
             $("#slicer-viewport button.arrange").click(function(event) {
-              var rectangles = [];
-              var dimensions = []; // A list of all the dimensions that we've encountered.
-              for (var i = 0; i < self.stlFiles.length; i++ ) {
-                var model = self.stlFiles[i].model;
-                var smallestRectangle = {"name": i};
-                for (var rotation = 0; rotation < THREE.Math.degToRad(90); rotation += THREE.Math.degToRad(15)) {
-                  var modelClone = model.clone(true);
-                  modelClone.rotation.z += rotation;
-                  var modelBox = new THREE.Box3().setFromObject(modelClone);
-                  var width = modelBox.max.x - modelBox.min.x;
-                  var height = modelBox.max.y - modelBox.min.y;
-                  if (!smallestRectangle.hasOwnProperty("prerotation") ||
-                      width * height < smallestRectangle.width * smallestRectangle.height) {
-                    smallestRectangle["width"] = width;
-                    smallestRectangle["height"] = height;
-                    smallestRectangle["prerotation"] = rotation+model.rotation.z;
-                  }
-                }
-                dimensions.push(smallestRectangle.height);
-                dimensions.push(smallestRectangle.width);
-                rectangles.push(smallestRectangle);
-              }
-              if (dimensions.length > 0) {
-                // See if we can round up any dimensions.
-                dimensions.sort(function (a,b) { return b-a; }); // Sort largest to smallest.
-                var dimensionsMap = {};
-                var current = dimensions[0];
-                dimensionsMap[current] = current;
-                for (var i = 1; i < dimensions.length; i++) {
-                  if (dimensions[i]/current < 0.99) {
-                    current = dimensions[i];
-                  }
-                  dimensionsMap[dimensions[i]] = current;
-                }
-                for (var i=0; i < rectangles.length; i++) {
-                  rectangles[i].width = dimensionsMap[rectangles[i].width];
-                  rectangles[i].height = dimensionsMap[rectangles[i].height];
-                }
-              }
-
-              var findBestPacking = (function (rectangles, callback) {
-                var position = 0;
-                var best;
-                var newBest = false;
-                return function() {
-                  var packStartTime = performance.now();
-                  var continuation = RectanglePacker.pack(
-                    rectangles, function(x) {
-                      // Maybe success?
-                      if (x.placementsCount == rectangles.length) {
-                        // Success, but is it best?
-                        if (!best) {
-                          best = x;
-                          newBest = true;
-                        } else if (Math.max(x.width, x.height) < Math.max(best.width, best.height)) {
-                          best = x;
-                          newBest = true;
-                        } else if (Math.max(x.width, x.height) == Math.max(best.width, best.height) &&
-                                   x.width*x.height < best.width*best.height) {
-                          best = x;
-                          newBest = true;
-                        } else {
-                          // Count rotations.
-                          var bestRotationCount = 0;
-                          for (var i in best.placements) {
-                            bestRotationCount += best.placements[i].rotations ? 1 : 0;
-                          }
-                          var rotationCount = 0;
-                          for (var i in x.placements) {
-                            rotationCount += x.placements[i].rotations ? 1 : 0;
-                          }
-                          if (rotationCount < bestRotationCount) {
-                            best = x;
-                            newBest = true;
-                          }
-                        }
-                      }
-                      if (newBest) {
-                        return true;
-                      }
-                      if (performance.now() > packStartTime+5000) {
-                        //console.log("doevents");
-                        return false; // do events
-                      }
-                    },
-                    position);
-                  position = continuation.position;
-                  console.log("position is " + position);
-                  if (newBest) {
-                    console.log("found new best at " + position);
-                    newBest = false;
-                    callback(best);
-                  }
-                  if (continuation.result.result == true) {
-                    // We have more to do.
-                    setTimeout(findBestPacking, 0);
-                  };
-                };
-              })(rectangles, function (best) {
-                console.log(best.placements);
-                // Now apply the best to the existing models.
-                for (var i = 0; i < self.stlFiles.length; i++ ) {
-                  var model = self.stlFiles[i].model;
-                  model.rotation.z = rectangles[i].prerotation + THREE.Math.degToRad(best.placements[i].rotation);
-                  var modelBox = new THREE.Box3().setFromObject(model);
-                  // i is also the name.  The RectanglePacker assumes
-                  // the back left corner is 0,0.  x cross y is reversed
-                  // from the platform so y needs different handling from x.
-                  model.position.x += best.placements[i].x - modelBox.min.x - best.width/2;
-                  model.position.y += -best.placements[i].y - modelBox.max.y + best.height/2;
-                }
-                self.updateTransformInputs();
-                self.render();
-              });
-              findBestPacking();
             });
             $("#slicer-viewport button.remove").click(function(event) {
 		// Remove the currently selected object.
@@ -439,6 +324,154 @@ $(function() {
             }
             self.render();
 	};
+
+      self.arrange = (function() {
+        var curentPosition = 0;
+        var rectangles;
+        var bestPackResult;
+
+        // Arrange the models on the platform.  Leave at least margin
+        // around each object.  Stops in timeout milliseconds or fewer.
+        // If the return value is true, it finished trying all
+        // possibilities.  If false, arrange can be run again to
+        // continue attempts to arrange.  If the startOver is set, will
+        // start all the possibilities again.
+        return function(margin, timeoutMilliseconds) {
+          if (haveRectanglesMoved()) {
+            // There has been movement on the platform that could affect placement so start over.
+            currentPosition = 0;
+            rectangles = getSmallestRectangles(margin);
+            bestPackResult = null;
+          }
+          var startTime = performance.now();
+          var newBest = false; // Assume that we don't find a better packing.
+          var continuation = RectanglePacker.pack(
+            rectangles,
+            function (newPackResult) {
+              if (isBetterPackResult(newPackResult, bestPackResult)) {
+                bestPackResult = newPackResult;
+                newBest = true;
+              }
+              if (performance.now() > startTime + timeoutMilliseconds) {
+                return false; // Any return result will cause an exit.
+              }
+            },
+            currentPosition);
+          if (newBest) {
+            applyPackResult(bestPackResult);
+          }
+          currentPosition = continuation.position;
+          return continuation.result;
+        };
+
+        var haveRectanglesMoved = function() {
+          // If the rectangles are as we started last time, we can
+          // continue the arranging.
+          if (!bestPackResult || rectangles.length != self.stlFiles.length) {
+            return true;
+          }
+          for (var i = 0; i < self.stlFiles.length; i++) {
+            var model = self.stlFiles[i].model;
+            if (model.rotation.z != (rectangles[i].prerotation +
+                                     THREE.Math.degToRad(bestPackResult.placements[i].rotation)) ||
+                model.width != rectangles.width ||
+                model.height != rectangles.height) {
+              return true;
+            }
+          }
+          return false;
+        }
+
+        // Get the bounding rectangles for all models.  Try rotating
+        // them a bit to make the bounding boxes smaller.  If any
+        // lengths are very similar (within 1%), round up the smaller
+        // (to save computation time when trying all possibilities).
+        // All rectangles are increased in size by margin.
+        var getSmallestRectangles = function (margin) {
+          var rectangles = [];
+          var dimensions = []; // A list of all the widths and heights that we've encountered.
+          for (var i = 0; i < self.stlFiles.length; i++ ) {
+            var model = self.stlFiles[i].model;
+            var smallestRectangle = {"name": i};
+            // Try all rotations of the model from 0 to 90.  No need to
+            // try beyond because the packer can already rotate by 90
+            // degrees.
+            for (var rotation = 0; rotation < THREE.Math.degToRad(90); rotation += THREE.Math.degToRad(15)) {
+              var modelClone = model.clone(true);
+              modelClone.rotation.z += rotation;
+              var modelBox = new THREE.Box3().setFromObject(modelClone);
+              var width = modelBox.max.x - modelBox.min.x + margin;
+              var height = modelBox.max.y - modelBox.min.y + margin;
+              if (!smallestRectangle.hasOwnProperty("prerotation") ||
+                  width * height < smallestRectangle.width * smallestRectangle.height) {
+                smallestRectangle["width"] = width;
+                smallestRectangle["height"] = height;
+                smallestRectangle["prerotation"] = rotation+model.rotation.z;
+              }
+            }
+            dimensions.push(smallestRectangle.height);
+            dimensions.push(smallestRectangle.width);
+            rectangles.push(smallestRectangle);
+          }
+
+          // Round up dimensions if needed.  Having fewer unique
+          // lengths makes the computation faster.
+          if (dimensions.length > 0) {
+            // See if we can round up any dimensions.
+            dimensions.sort(function (a,b) { return b-a; }); // Sort largest to smallest.
+            var dimensionsMap = {};
+            var current = dimensions[0];
+            dimensionsMap[current] = current;
+            for (var i = 1; i < dimensions.length; i++) {
+              if (dimensions[i]/current < 0.99) {
+                current = dimensions[i];
+              }
+                  dimensionsMap[dimensions[i]] = current;
+            }
+            for (var i=0; i < rectangles.length; i++) {
+              rectangles[i].width = dimensionsMap[rectangles[i].width];
+              rectangles[i].height = dimensionsMap[rectangles[i].height];
+            }
+          }
+
+          return rectangles;
+        };
+
+        // Returns true if pack result a is strictly better than b.
+        var isBetterPackResult = function(a, b) {
+          if (!a) {
+            return false;  // No result is worst.
+          }
+          if (!b ||  // Anything is better than nothing.
+              a.placementCount > b.placementCount ||  // Able to place more models is best.
+              Math.min(self.BEDSIZE_X_MM - a.width,
+                       self.BEDSIZE_Y_MM - a.height) >  // Better fits the platform.
+              Math.min(self.BEDSIZE_X_MM - b.width,
+                       self.BEDSIZE_Y_MM - b.height) ||
+              a.width * a.height < b.width * b.height) {  // Smaller total area.
+              return true;}
+          return false;
+        }
+
+        var applyPackResult = function(packResult) {
+          // Apply the pack result to the models.
+          //console.log(packResult.placements);
+          for (var i = 0; i < self.stlFiles.length; i++ ) {
+            var model = self.stlFiles[i].model;
+            model.rotation.z = rectangles[i].prerotation + THREE.Math.degToRad(packResult.placements[i].rotation);
+            var modelBox = new THREE.Box3().setFromObject(model);
+            // i is the name in the placements and also the index in
+            // the stlFiles.  The RectanglePacker assumes the back
+            // left corner is 0,0 and y grows downward, which is
+            // opposite from the printer so y needs different handling
+            // than x below.
+            model.position.x += packResult.placements[i].x - modelBox.min.x - packResult.width/2;
+            model.position.y += -packResult.placements[i].y - modelBox.max.y + packResult.height/2;
+          }
+          self.updateTransformInputs();
+          self.render();
+        };
+      })();
 
         self.removeSTL = function() {
             // Remove all active STL files.

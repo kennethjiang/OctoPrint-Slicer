@@ -505,7 +505,8 @@ var RectanglePacker = {
     });
   },
 
-  // Convert a list of rectangles to a list of lists where is rectangle is possibly listed also as rotated by 90 degrees.
+  // Convert a list of rectangles to a list of lists where is
+  // rectangle is possibly listed also as rotated by 90 degrees.
   rotateRectangles: function(rectangles) {
     var rotatedRectangles = [];
     for (var i = 0; i < rectangles.length; i++) {
@@ -583,13 +584,32 @@ var RectanglePacker = {
           });
         position += continuation.position;
         if (continuation.result !== undefined) {
-          return continuation;
+          return continuation.result;
         }
       },
       0);
     return {result: continuation.result, position: position};
   },
 
+  // Pack rectangles into as small a space as possible.
+  //
+  // rectangles is a list of objects.  Each must have height, width,
+  // and a unique name which is a simple data type, like a string or
+  // number.  pack will call traverseFn with a packResult for every
+  // unique combination and permutation of packing.  The packResult
+  // includes a placement object which maps from rectangle name to x,y
+  // coordinates for the top-left corner of the rectangle and also a
+  // rotation parameter which will be in degrees and only 0 or 90.
+  // packResult also has a placementCount which is the number of
+  // successfully placed rectangles and placementSuccess, which
+  // indicates if placement of all rectangles was successful.
+  //
+  // If traverseFn returns anything other than undefined, that pack
+  // will end and return an object with result and position.  The
+  // result is the value that was returned.  The position is the start
+  // input that can be given to a subsequent calls to pack to resume
+  // trying rectangle packing from the previous spot.  If the result
+  // is undefined then all possible packings have been tried.
   pack: function(rectangles, traverseFn, start = 0) {
     var bestHW = {}
     return RectanglePacker.packWithRotation(
@@ -597,6 +617,7 @@ var RectanglePacker = {
           if (packResult.placementSuccess) {
             if (!bestHW.hasOwnProperty(packResult.height) ||
                 bestHW[packResult.height] > packResult.width) {
+              // Save the best width for each height.
               bestHW[packResult.height] = packResult.width;
             }
           }
@@ -606,7 +627,9 @@ var RectanglePacker = {
         }
       },
       start,
-      function (w,h) {
+      function (w,h) {  // skipFn
+        // Narrow the available width if it is worse than an already
+        // seen better width.
         var newWidth = w;
         for (bestHeight in bestHW) {
           if (bestHeight <= h &&
@@ -614,12 +637,10 @@ var RectanglePacker = {
             newWidth = bestHW[bestHeight];
           }
         }
-        // skipFn
         return {"height": h,
                 "width": newWidth};
       });
   }
-
 };
 
 // browserify support
