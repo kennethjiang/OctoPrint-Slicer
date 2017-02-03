@@ -235,14 +235,6 @@ $(function() {
 
             ko.applyBindings(self.slicingViewModel, $('#slicing-settings')[0]);
 
-            window.addEventListener( 'keypress', function ( event ) {
-                switch ( event.key ) {
-                    case "Delete":
-                        self.removeSTL();
-                        break;
-                }
-            });
-
             window.addEventListener( 'keydown', function ( event ) {
                 switch ( event.keyCode ) {
                     case 17: // Ctrl
