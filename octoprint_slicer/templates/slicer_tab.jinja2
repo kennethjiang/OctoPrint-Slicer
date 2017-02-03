@@ -237,5 +237,5 @@
   </div>
 </div>
 <div id="slicer">
-    <button class="btn btn-primary btn-block" data-bind="click: function() { if ($data.canSliceNow()) { $data.slice() } }, css: {disabled: !$data.canSliceNow()}">Slice it!</button>
+    <button class="btn btn-primary btn-block" data-bind="click: $data.slice, enable: $data.canSliceNow(), text: ($data.canSliceNow() ? 'Slice it!' : 'Slicing disabled - currently printing or no model loaded.')"></button>
 </div>
