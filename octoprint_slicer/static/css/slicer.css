@@ -11,6 +11,9 @@
     left: 100px;
 }
 
+#slicer {
+    margin: 12px 0px;
+}
 
 #slicer-viewport {
     margin-bottom: -5px;
