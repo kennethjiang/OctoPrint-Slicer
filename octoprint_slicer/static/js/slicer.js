@@ -475,10 +475,10 @@ $(function() {
         // around each object.  Stops in timeout milliseconds or
         // fewer.  If the return value is true, it finished trying all
         // possibilities.  If false, arrange can be run again to
-        // continue attempts to arrange.  If the startOver is set,
-        // will start all the possibilities again.
-        return function(margin, timeoutMilliseconds, startOver = false) {
-          if (startOver || needStartOver(previousModelPositions)) {
+        // continue attempts to arrange.  If the forceStartOver is
+        // set, will start all the possibilities again.
+        return function(margin, timeoutMilliseconds, forceStartOver = false) {
+          if (forceStartOver || needStartOver(previousModelPositions)) {
             currentPosition = 0;
             rectangles = getSmallestRectangles(margin);
             bestPackResult = null;
