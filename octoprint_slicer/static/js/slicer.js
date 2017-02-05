@@ -233,7 +233,7 @@ $(function() {
                 self.removeSTL();
             });
             $("#slicer-viewport button.arrange").click(function(event) {
-              self.arrange(10 /* mm margin */, 5000 /* milliseconds max */, true);
+              self.arrange(10 /* mm margin */, 5000 /* milliseconds max */);
             });
             $("#slicer-viewport .values input").change(function() {
                 self.applyChange($(this));
@@ -426,9 +426,50 @@ $(function() {
           self.render();
         };
 
+        var needStartOver = function(modelPositions) {
+          // If the previousLayout matches the current configuration,
+          // that means that we can continue packing from where we
+          // left off.  If not, it means that the user moved something
+          // and we should start over.
+          if (!modelPositions) {
+            return true;
+          }
+          if (self.stlFiles.length != previousModelPositions.length) {
+            return true;
+          }
+          for (var i = 0; i < self.stlFiles.length; i++) {
+            self.stlFiles[i].model.children[0].geometry.computeBoundingBox();
+            if (!self.stlFiles[i].model.position.equals(modelPositions[i].position) ||
+                !self.stlFiles[i].model.rotation.equals(modelPositions[i].rotation) ||
+                !self.stlFiles[i].model.scale.equals(modelPositions[i].scale) ||
+                !self.stlFiles[i].model.children[0].geometry.boundingBox.equals(modelPositions[i].boundingBox)) {
+              return true;
+            }
+          }
+          return false;
+        }
+
+        var getModelPositions = function() {
+          // Return all the new model layout after placement is done.
+          // This is compared when arranging starts to see if we can
+          // continue where we left off or if we must start over.
+          var modelPositions = [];
+          for (var i = 0; i < self.stlFiles.length; i++) {
+            self.stlFiles[i].model.children[0].geometry.computeBoundingBox();
+            modelPositions.push({
+              position: self.stlFiles[i].model.position.clone(),
+              rotation: self.stlFiles[i].model.rotation.clone(),
+              scale: self.stlFiles[i].model.scale.clone(),
+              boundingBox: self.stlFiles[i].model.children[0].geometry.boundingBox.clone()
+            });
+          }
+          return modelPositions;
+        }
+
         var curentPosition;
         var rectangles;
         var bestPackResult;
+        var previousModelPositions;
 
         // Arrange the models on the platform.  Leave at least margin
         // around each object.  Stops in timeout milliseconds or
@@ -436,8 +477,8 @@ $(function() {
         // possibilities.  If false, arrange can be run again to
         // continue attempts to arrange.  If the startOver is set,
         // will start all the possibilities again.
-        return function(margin, timeoutMilliseconds, startOver) {
-          if (startOver) {
+        return function(margin, timeoutMilliseconds, startOver = false) {
+          if (startOver || needStartOver(previousModelPositions)) {
             currentPosition = 0;
             rectangles = getSmallestRectangles(margin);
             bestPackResult = null;
@@ -460,6 +501,7 @@ $(function() {
             applyPackResult(bestPackResult);
           }
           currentPosition = continuation.position;
+          previousModelPositions = getModelPositions();
           return continuation.result;
         };
       })();
@@ -502,7 +544,7 @@ $(function() {
 
                 // center model's origin
                 var stlModel = new THREE.Mesh( geometry, material );
-                var center = new THREE.Box3().setFromObject(stlModel).center()
+                var center = new THREE.Box3().setFromObject(stlModel).center();
                 var model = new THREE.Object3D();
                 model.add(stlModel);
                 stlModel.position.copy(center.negate());
