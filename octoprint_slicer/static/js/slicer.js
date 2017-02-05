@@ -343,6 +343,7 @@ $(function() {
             // degrees.
             for (var rotation = 0; rotation < THREE.Math.degToRad(90); rotation += THREE.Math.degToRad(15)) {
               var modelClone = model.clone(true);
+              modelClone.rotation.reorder("ZYX");
               modelClone.rotation.z += rotation;
               var modelBox = new THREE.Box3().setFromObject(modelClone);
               var width = modelBox.max.x - modelBox.min.x + margin;
@@ -412,7 +413,10 @@ $(function() {
           //console.log(packResult.placements);
           for (var i = 0; i < self.stlFiles.length; i++ ) {
             var model = self.stlFiles[i].model;
+            var oldOrder = model.rotation.order;
+            model.rotation.reorder("ZYX");
             model.rotation.z = rectangles[i].prerotation + THREE.Math.degToRad(packResult.placements[i].rotation);
+            model.rotation.reorder(oldOrder);
             // i is the name in the placements and also the index in
             // the stlFiles.  The RectanglePacker assumes the back
             // left corner is 0,0 and y grows downward, which is
