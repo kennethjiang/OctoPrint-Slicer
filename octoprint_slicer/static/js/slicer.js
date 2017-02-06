@@ -327,13 +327,13 @@ $(function() {
 	};
       self.arrangeModels = new ArrangeModels();
       self.arrange = function(margin, timeoutMilliseconds, forceStartOver = false) {
-        var arrangeResult = self.arrangeModels.arrange(
-            self.stlFiles, self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM,
-            margin, timeoutMilliseconds, forceStartOver);
-        if (arrangeResult.modelsMoved) {
+        var renderFn = function () {
           self.updateTransformInputs();
           self.render();
         }
+        var arrangeResult = self.arrangeModels.arrange(
+            self.stlFiles, self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM,
+            margin, timeoutMilliseconds, renderFn, forceStartOver);
       };
 
         self.removeSTL = function() {
