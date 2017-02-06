@@ -146,8 +146,10 @@ $(function() {
 			     "fan_enabled",
 			     "cooling",
 			     "bottom_layer_speed",
-			     "filament_flow",
-			     "extrusion_multiplier"
+                             "filament_flow",
+                             "retraction_speed",
+                             "retraction_amount",
+			     "extrusion_multiplier",
                              ]);
     }
 
