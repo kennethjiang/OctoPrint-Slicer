@@ -164,6 +164,9 @@ $(function() {
                     <button class="remove disabled" title="Remove"><img src="'
                 + PLUGIN_BASEURL
                 + 'slicer/static/img/remove.png"></button>\
+                    <button class="arrange" title="Arrange"><img src="'
+                + PLUGIN_BASEURL
+                + 'slicer/static/img/arrange.png"></button>\
                 </div>\
                 <div class="values translate">\
                     <div>\
@@ -228,6 +231,9 @@ $(function() {
             $("#slicer-viewport button.remove").click(function(event) {
 		// Remove the currently selected object.
                 self.removeSTL();
+            });
+            $("#slicer-viewport button.arrange").click(function(event) {
+              self.arrange(10 /* mm margin */, 5000 /* milliseconds max */);
             });
             $("#slicer-viewport .values input").change(function() {
                 self.applyChange($(this));
@@ -319,6 +325,16 @@ $(function() {
             }
             self.render();
 	};
+      self.arrangeModels = new ArrangeModels();
+      self.arrange = function(margin, timeoutMilliseconds, forceStartOver = false) {
+        var renderFn = function () {
+          self.updateTransformInputs();
+          self.render();
+        }
+        var arrangeResult = self.arrangeModels.arrange(
+            self.stlFiles, self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM,
+            margin, timeoutMilliseconds, renderFn, forceStartOver);
+      };
 
         self.removeSTL = function() {
             // Remove all active STL files.
@@ -358,7 +374,7 @@ $(function() {
 
                 // center model's origin
                 var stlModel = new THREE.Mesh( geometry, material );
-                var center = new THREE.Box3().setFromObject(stlModel).center()
+                var center = new THREE.Box3().setFromObject(stlModel).center();
                 var model = new THREE.Object3D();
                 model.add(stlModel);
                 stlModel.position.copy(center.negate());
