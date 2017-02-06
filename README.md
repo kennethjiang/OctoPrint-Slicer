@@ -1,6 +1,6 @@
 # OctoPrint Slicer
 
-A full-blown GUI-based slicer. Rotate and scale model; set layer height and other critical parameters.
+A full-blown GUI-based slicer. Rotate and scale model; slice multiple STL files at a time; set layer height and other slicing settings
 
 A picture is worth 1000 words:
 
