@@ -647,4 +647,3 @@ var RectanglePacker = {
 if ( typeof module === 'object' ) {
   module.exports = RectanglePacker;
 }
-console.log(RectanglePacker.combinations([[1,2],[3,4],[5,6]], function(x) {console.log(x);},120));
