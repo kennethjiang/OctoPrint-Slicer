@@ -1,6 +1,6 @@
 # OctoPrint Slicer
 
-A full-blown GUI-based slicer. Rotate and scale model; set layer height and other critical parameters.
+A full-blown GUI-based slicer. Rotate and scale model; slice multiple STL files at a time; set layer height and other slicing settings
 
 A picture is worth 1000 words:
 
@@ -12,3 +12,19 @@ Install via the bundled [Plugin Manager](https://github.com/foosel/OctoPrint/wik
 or manually using this URL:
 
     https://github.com/eyal0/OctoPrint-Slicer/archive/master.zip
+
+## Contribute
+
+Are you a proud developer? Do you want to pitch in? I have made it as easy as 1-2-3:
+
+1. [Install Docker](https://docs.docker.com/engine/installation/). Make sure [Docker compose](https://docs.docker.com/compose/) is also installed.
+
+1. Clone OctoPrint-Slicer and run it
+
+```bash
+git clone https://github.com/kennethjiang/OctoPrint-Slicer.git
+cd OctoPrint-Slicer
+docker-compose up
+```
+
+1. Open [http://localhost:5000/](http://localhost:5000/) in your browser

@@ -188,12 +188,32 @@
                               <span class="add-on">mm/s</span>
                           </div>
                       </div>
+                      <div title="Enable filament retraction" class="input-append" data-bind="visible: !_.isUndefined($data['profile.retraction_enable']())">
+                          <label class="control-label">Retraction</label>
+                          <div class="controls checkbox">
+                              <input type="checkbox" data-bind="checked: $data['profile.retraction_enable']"></input>
+                          </div>
+                      </div>
+                      <div title="Filament retraction speed" class="input-append" data-bind="visible: !_.isUndefined($data['profile.retraction_enable']())">
+                          <label class="control-label">Retraction speed</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.retraction_speed'], enable: $data['profile.retraction_enable']" type="number" tabindex="-1" min="0" max="300" step="1"></input>
+                              <span class="add-on">mm/s</span>
+                          </div>
+                      </div>
+                      <div title="Filament retraction distance" class="input-append" data-bind="visible: !_.isUndefined($data['profile.retraction_enable']())">
+                          <label class="control-label">Retraction distance</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.retraction_amount'], enable: $data['profile.retraction_enable']" type="number" tabindex="-1" min="0" max="30" step="0.1"></input>
+                              <span class="add-on">mm</span>
+                          </div>
+                      </div>
                   </div>
                   <div class="span3">
                       <div title="Platform adhesion type" class="input-append" data-bind="visible: !_.isUndefined($data['profile.platform_adhesion']())">
                           <label class="control-label">Adhension</label>
                           <div class="controls">
-                            <select data-bind="options: $data.optionsForKey('platform_adhesion'), value: $data['profile.platform_adhesion'], valueAllowUnset: false"></select>
+                            <select data-bind="options: $data.optionsForKey('platform_adhesion'), value: $data['profile.platform_adhesion'], valueAllowUnset: true"></select>
                           </div>
                       </div>
                       <div title="Filament Diameter" class="input-append" data-bind="visible: !_.isUndefined($data['profile.filament_diameter']())">
@@ -210,28 +230,22 @@
                               <span class="add-on">%</span>
                           </div>
                       </div>
+                      <div title="Enable cooling fan" class="input-append" data-bind="visible: !_.isUndefined($data['profile.fan_enabled']())">
+                          <label class="control-label">Cooling fan</label>
+                          <div class="controls checkbox">
+                              <input type="checkbox" data-bind="checked: $data['profile.fan_enabled']"></input>
+                          </div>
+                      </div>
                       <div title="Extrusion Multiplier" class="input-append" data-bind="visible: !_.isUndefined($data['profile.extrusion_multiplier']())">
                           <label class="control-label">Flow Multiplier</label>
                           <div class="controls">
                               <input data-bind="numericValue: $data['profile.extrusion_multiplier']" type="number" tabindex="-1" min="0" max="2" step="0.001"></input>
                           </div>
                       </div>
-                      <div title="Fan Enabled" class="input-append" data-bind="visible: !_.isUndefined($data['profile.fan_enabled']())">
-                          <label class="control-label">Fan Enabled</label>
-                          <div class="controls checkbox">
-                              <input type="checkbox" data-bind="checked: $data['profile.fan_enabled']"></input>
-                          </div>
-                      </div>
                       <div title="Cooling" class="input-append" data-bind="visible: !_.isUndefined($data['profile.cooling']())">
                           <label class="control-label">Cooling</label>
                           <div class="controls checkbox">
                               <input type="checkbox" data-bind="checked: $data['profile.cooling']"></input>
-                          </div>
-                      </div>
-                      <div title="Enable filament retraction" class="input-append" data-bind="visible: !_.isUndefined($data['profile.retraction_enable']())">
-                          <label class="control-label">Retraction</label>
-                          <div class="controls checkbox">
-                              <input type="checkbox" data-bind="checked: $data['profile.retraction_enable']"></input>
                           </div>
                       </div>
                   </div>
@@ -261,5 +275,5 @@
   </div>
 </div>
 <div id="slicer">
-    <button class="btn btn-primary btn-block" data-bind="click: function() { if ($data.canSliceNow()) { $data.slice() } }, css: {disabled: !$data.canSliceNow()}">Slice it!</button>
+    <button class="btn btn-primary btn-block" data-bind="click: $data.slice, enable: $data.canSliceNow(), text: ($data.canSliceNow() ? 'Slice it!' : 'Slicing disabled - currently printing or no model loaded.')"></button>
 </div>
