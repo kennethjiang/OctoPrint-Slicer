@@ -4,10 +4,13 @@
  * Author: Kenneth Jiang
  * License: AGPLv3
  */
+
+'use strict';
 $(function() {
     function SlicerViewModel(parameters) {
         var self = this;
         self.canvas = document.getElementById( 'slicer-canvas' );
+	self.stlFiles = [];
 
         //check if webGL is present. If not disable Slicer plugin
         try {
@@ -25,24 +28,42 @@ $(function() {
         self.slicingViewModel = parameters[0];
         self.basicOverridesViewModel = parameters[1];
         self.advancedOverridesViewModel = parameters[2];
+        self.printerStateViewModel = parameters[3];
 
         self.lockScale = true;
 
+	// Returns the destination filename based on which models are loaded.
+	// The destination filename is without the final .gco on it because
+	// that will depend on the slicer.
+	self.computeDestinationFilename = function(inputFilenames) {
+	    // TODO: For now, just use the first model's name.
+	    var destinationFilename = inputFilenames[0].substr(0, inputFilenames[0].lastIndexOf("."));
+	    if (destinationFilename.lastIndexOf("/") != 0) {
+                destinationFilename = destinationFilename.substr(destinationFilename.lastIndexOf("/") + 1);
+	    }
+	    return destinationFilename;
+	}
+
         // Override slicingViewModel.show to surpress default slicing behavior
         self.slicingViewModel.show = function(target, file, force) {
-            var filename = file.substr(0, file.lastIndexOf("."));
-            if (filename.lastIndexOf("/") != 0) {
-                filename = filename.substr(filename.lastIndexOf("/") + 1);
-            }
-
-            self.slicingViewModel.requestData();
-            self.slicingViewModel.target = target;
-            self.slicingViewModel.file(file);
-            self.slicingViewModel.destinationFilename(filename);
-            self.slicingViewModel.printerProfile(self.slicingViewModel.printerProfiles.currentProfile());
-
+	    self.stlFiles.push({target: target, file: file, force: force});
+	    if (self.stlFiles.length == 1) {
+		// This is the first model.
+		self.slicingViewModel.requestData();
+		self.slicingViewModel.target = target;
+		self.slicingViewModel.file(file); // TODO: Do we need to fix this?
+		self.slicingViewModel.printerProfile(self.slicingViewModel.printerProfiles.currentProfile());
+		self.stlModified = false;
+	    } else {
+	    	self.stlModified = true;
+	    }
+	    self.slicingViewModel.destinationFilename(
+		self.computeDestinationFilename(
+		    _.map(self.stlFiles, function(m) {
+			return m.file;
+		    })));
             $('a[href="#tab_plugin_slicer"]').tab('show');
-            self.loadSTL(target, file, force);
+            self.loadSTL(target, file, force, self.stlFiles[self.stlFiles.length-1]);
         };
 
         // Print bed size
@@ -91,18 +112,14 @@ $(function() {
         var CANVAS_WIDTH = 588,
             CANVAS_HEIGHT = 588;
 
-        var effectController = {
-                    shininess: 40.0,
-                    ka: 0.17,
-                    kd: 0.625,
-                    ks: 0.55,
-                    hue:        0.121,
-                    saturation: 0.73,
-                    lightness:  0.66,
-                    lhue:        0.04,
-                    lsaturation: 0.01,  // non-zero so that fractions will be shown
-                    llightness:  1.0,
-                };
+        self.effectController = {
+            metalness: 0.5,
+	    roughness: 0.5,
+	    modelInactiveColor: new THREE.Color("#60715b"),
+	    modelActiveColor: new THREE.Color("#34bf0d"),
+	    ambientLightColor: new THREE.Color("#2b2b2b"),
+	    directionalLightColor: new THREE.Color("#ffffff"),
+        };
 
         self.init = function() {
             self.camera = new THREE.PerspectiveCamera( 45, 1.0, 0.1, 5000 );
@@ -111,15 +128,12 @@ $(function() {
             self.scene = new THREE.Scene();
 
             // Lights
-            var ambientLight = new THREE.AmbientLight( 0x333333 );  // 0.2
-            ambientLight.color.setHSL( effectController.hue, effectController.saturation, effectController.lightness * effectController.ka );
+            var ambientLight = new THREE.AmbientLight( self.effectController.ambientLightColor );  // 0.2
             self.scene.add( ambientLight );
-            var directionalLight = new THREE.DirectionalLight( 0xffffff, 1.0);
-            directionalLight.color.setHSL( effectController.lhue, effectController.lsaturation, effectController.llightness );
+            var directionalLight = new THREE.DirectionalLight(self.effectController.directionalLightColor, 1.0);
             directionalLight.position.set( 100, 100, 500 );
             self.scene.add( directionalLight );
-            var directionalLight2= new THREE.DirectionalLight( 0xffffff, 1.0);
-            directionalLight2.color.setHSL( effectController.lhue, effectController.lsaturation, effectController.llightness );
+            var directionalLight2= new THREE.DirectionalLight(self.effectController.directionalLightColor, 1.0);
             directionalLight2.position.set( 100, 100, -500);
             self.scene.add( directionalLight2);
 
@@ -138,7 +152,7 @@ $(function() {
             self.renderer.gammaOutput = true;
 
             $("#slicer-viewport").empty().append('<div class="model">\
-                    <button class="translate" title="Move"><img src="'
+                    <button class="translate disabled" title="Move"><img src="'
                 + PLUGIN_BASEURL
                 + 'slicer/static/img/translate.png"></button>\
                     <button class="rotate disabled" title="Rotate"><img src="'
@@ -147,6 +161,12 @@ $(function() {
                     <button class="scale disabled" title="Scale"><img src="'
                 + PLUGIN_BASEURL
                 + 'slicer/static/img/scale.png"></button>\
+                    <button class="remove disabled" title="Remove"><img src="'
+                + PLUGIN_BASEURL
+                + 'slicer/static/img/remove.png"></button>\
+                    <button class="arrange" title="Arrange"><img src="'
+                + PLUGIN_BASEURL
+                + 'slicer/static/img/arrange.png"></button>\
                 </div>\
                 <div class="values translate">\
                     <div>\
@@ -189,6 +209,7 @@ $(function() {
             self.transformControls.addEventListener("mouseDown", self.startTransform);
             self.transformControls.addEventListener("mouseUp", self.endTransform);
             self.transformControls.addEventListener("change", self.updateTransformInputs);
+            self.transformControls.addEventListener("objectChange", function (e) {self.stlModified = true});
             self.scene.add(self.transformControls);
             self.updatePrinterBed();
 
@@ -203,9 +224,16 @@ $(function() {
                 self.toggleValueInputs($("#slicer-viewport .rotate.values div"));
             });
             $("#slicer-viewport button.scale").click(function(event) {
-				// Set selection mode to scale
-				self.transformControls.setMode("scale");
+		// Set selection mode to scale
+		self.transformControls.setMode("scale");
                 self.toggleValueInputs($("#slicer-viewport .scale.values div"));
+            });
+            $("#slicer-viewport button.remove").click(function(event) {
+		// Remove the currently selected object.
+                self.removeSTL();
+            });
+            $("#slicer-viewport button.arrange").click(function(event) {
+              self.arrange(10 /* mm margin */, 5000 /* milliseconds max */);
             });
             $("#slicer-viewport .values input").change(function() {
                 self.applyChange($(this));
@@ -229,43 +257,138 @@ $(function() {
                 }
             });
 
+	    self.canvas.addEventListener("click", function(e) {
+		var rect = self.canvas.getBoundingClientRect();
+		var x = (e.clientX - rect.left) / rect.width;
+		var y = (e.clientY - rect.top) / rect.height;
+
+		var pointerVector = new THREE.Vector2();
+		pointerVector.set((x*2) - 1, -(y*2) + 1);
+		var ray = new THREE.Raycaster();
+		ray.setFromCamera(pointerVector, self.camera);
+
+		// Clicking should cycle through the stlFiles if there are multiple under the cursor.
+		var foundActiveStlFile = false;
+		var nextPointedStlFile = undefined;
+		var firstPointedStlFile = undefined;
+		for (var i = 0; i < self.stlFiles.length; i++) {
+		    var stlFile = self.stlFiles[i];
+		    var intersections = ray.intersectObjects( [stlFile.model], true );
+		    if (!intersections[0]) {
+			continue;
+		    }
+		    if (!firstPointedStlFile) {
+			firstPointedStlFile = stlFile;
+		    }
+		    if (foundActiveStlFile && !nextPointedStlFile) {
+			nextPointedStlFile = stlFile;
+		    }
+		    if (self.isStlFileActive(stlFile)) {
+			foundActiveStlFile = true;
+		    }
+		}
+		if (nextPointedStlFile) {
+		    self.setStlFileActive(nextPointedStlFile);
+		} else if (firstPointedStlFile) {
+		    self.setStlFileActive(firstPointedStlFile);
+		}
+	    });
         };
 
-        self.loadSTL = function(target, file) {
-            if (self.model) {
-                self.scene.remove(self.model);
-                self.transformControls.detach();
-            }
+	self.isStlFileActive = function(stlFile) {
+	    return stlFile.model.children[0].material.color.equals(self.effectController.modelActiveColor);
+	};
 
+	self.setStlFileActive = function(stlFile) {
+            // Sets one file active and inactivates all the others.
+	    var newActiveStl = false;
+	    _.forEach(self.stlFiles, function (otherStlFile) {
+		if (otherStlFile == stlFile) {
+		    if (!self.isStlFileActive(otherStlFile)) {
+			otherStlFile.model.children[0].material.color.copy(self.effectController.modelActiveColor);
+			newActiveStl = true;
+		    }
+		} else {
+		    otherStlFile.model.children[0].material.color.copy(self.effectController.modelInactiveColor);
+		}
+	    });
+	    if (newActiveStl) {
+		self.transformControls.attach(stlFile.model);
+		//self.transformControls.setMode("rotate");
+		self.updateTransformInputs();
+	    }
+            if (!stlFile) {
+                $("#slicer-viewport .values div").removeClass("show")
+                $("#slicer-viewport button").addClass("disabled");
+            } else {
+                $("#slicer-viewport button").removeClass("disabled");
+            }
+            self.render();
+	};
+      self.arrangeModels = new ArrangeModels();
+      self.arrange = function(margin, timeoutMilliseconds, forceStartOver = false) {
+        var renderFn = function () {
+          self.updateTransformInputs();
+          self.render();
+        }
+        var arrangeResult = self.arrangeModels.arrange(
+            self.stlFiles, self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM,
+            margin, timeoutMilliseconds, renderFn, forceStartOver);
+      };
+
+        self.removeSTL = function() {
+            // Remove all active STL files.
+            var firstRemoved;
+            for (var i = 0; i < self.stlFiles.length; i++) {
+                var stlFile = self.stlFiles[i];
+                if (self.isStlFileActive(stlFile)) {
+                    self.scene.remove(stlFile.model);
+                    firstRemoved = i;
+                }
+                if (self.transformControls.object == stlFile.model) {
+                    self.transformControls.detach();
+                }
+            };
+            _.remove(self.stlFiles, function (stlFile) {
+                return self.isStlFileActive(stlFile);
+            });
+            if (firstRemoved < self.stlFiles.length) {
+                self.setStlFileActive(self.stlFiles[firstRemoved]);
+            } else if (0 < self.stlFiles.length) {
+                self.setStlFileActive(self.stlFiles[0]);
+            } else {
+                self.setStlFileActive();
+            }
+            self.render();
+        };
+
+        self.loadSTL = function(target, file, force, stlFile) {
             var loader = new THREE.STLLoader();
-            loader.load(BASEURL + "downloads/files/" + target + "/" + file, function ( geometry ) {
-                var diffuseColor = new THREE.Color();
-                diffuseColor.setHSL( effectController.hue, effectController.saturation, effectController.lightness );
-                var specularColor = new THREE.Color();
-                specularColor.copy( diffuseColor );
-                diffuseColor.multiplyScalar( effectController.kd );
-                specularColor.multiplyScalar( effectController.ks );
-                var material = new THREE.MeshPhongMaterial({ color: diffuseColor, specular: specularColor, shading: THREE.SmoothShading, side: THREE.DoubleSide, shininess: effectController.shininess });
+            return loader.load(BASEURL + "downloads/files/" + target + "/" + file, function ( geometry ) {
+                var material = new THREE.MeshStandardMaterial({
+		    color: self.effectController.modelInactiveColor,  // We'll mark it active below.
+		    shading: THREE.SmoothShading,
+		    side: THREE.DoubleSide,
+		    metalness: self.effectController.metalness,
+		    roughness: self.effectController.roughness });
 
                 // center model's origin
                 var stlModel = new THREE.Mesh( geometry, material );
-                var center = new THREE.Box3().setFromObject(stlModel).center()
-                self.model = new THREE.Object3D();
-                self.model.add(stlModel);
+                var center = new THREE.Box3().setFromObject(stlModel).center();
+                var model = new THREE.Object3D();
+                model.add(stlModel);
                 stlModel.position.copy(center.negate());
-
-                self.scene.add( self.model );
-                self.transformControls.attach(self.model);
-                self.transformControls.setMode("rotate");
-                self.updateTransformInputs();
+		stlFile['model'] = model;
+		self.setStlFileActive(stlFile);
+                self.scene.add(model);
                 self.render();
-            } );
+            });
         };
 
         self.toggleValueInputs = function(parentDiv) {
             if ( parentDiv.hasClass("show") ) {
                 parentDiv.removeClass("show").children('p').removeClass("show");
-            } else {
+            } else if (self.transformControls.object) {
                 $("#slicer-viewport .values div").removeClass("show");
                 parentDiv.addClass("show").children('p').addClass("show");
             }
@@ -277,6 +400,7 @@ $(function() {
                 self.lockScale = input[0].checked;
             }
             else if(input[0].type == "number" && !isNaN(parseFloat(input.val()))) {
+                self.stlModified = true;
                 input.val(parseFloat(input.val()).toFixed(3));
                 var model = self.transformControls.object;
 
@@ -310,16 +434,18 @@ $(function() {
 
         self.updateTransformInputs = function () {
             var model = self.transformControls.object;
-            $("#slicer-viewport .translate.values input[name=\"x\"]").val(model.position.x.toFixed(3)).attr("min", '');
-            $("#slicer-viewport .translate.values input[name=\"y\"]").val(model.position.y.toFixed(3)).attr("min", '');
-            $("#slicer-viewport .rotate.values input[name=\"x\"]").val((model.rotation.x * 180 / Math.PI).toFixed(3)).attr("min", '');
-            $("#slicer-viewport .rotate.values input[name=\"y\"]").val((model.rotation.y * 180 / Math.PI).toFixed(3)).attr("min", '');
-            $("#slicer-viewport .rotate.values input[name=\"z\"]").val((model.rotation.z * 180 / Math.PI).toFixed(3)).attr("min", '');
-            $("#slicer-viewport .scale.values input[name=\"x\"]").val(model.scale.x.toFixed(3)).attr("min", '');
-            $("#slicer-viewport .scale.values input[name=\"y\"]").val(model.scale.y.toFixed(3)).attr("min", '');
-            $("#slicer-viewport .scale.values input[name=\"z\"]").val(model.scale.z.toFixed(3)).attr("min", '');
-            $("#slicer-viewport .scale.values input[type=\"checkbox\"]").checked = self.lockScale;
-            self.fixZPosition(model);
+            if (model) {
+                $("#slicer-viewport .translate.values input[name=\"x\"]").val(model.position.x.toFixed(3)).attr("min", '');
+                $("#slicer-viewport .translate.values input[name=\"y\"]").val(model.position.y.toFixed(3)).attr("min", '');
+                $("#slicer-viewport .rotate.values input[name=\"x\"]").val((model.rotation.x * 180 / Math.PI).toFixed(3)).attr("min", '');
+                $("#slicer-viewport .rotate.values input[name=\"y\"]").val((model.rotation.y * 180 / Math.PI).toFixed(3)).attr("min", '');
+                $("#slicer-viewport .rotate.values input[name=\"z\"]").val((model.rotation.z * 180 / Math.PI).toFixed(3)).attr("min", '');
+                $("#slicer-viewport .scale.values input[name=\"x\"]").val(model.scale.x.toFixed(3)).attr("min", '');
+                $("#slicer-viewport .scale.values input[name=\"y\"]").val(model.scale.y.toFixed(3)).attr("min", '');
+                $("#slicer-viewport .scale.values input[name=\"z\"]").val(model.scale.z.toFixed(3)).attr("min", '');
+                $("#slicer-viewport .scale.values input[type=\"checkbox\"]").checked = self.lockScale;
+                self.fixZPosition(model);
+            }
             self.render();
         };
 
@@ -435,69 +561,121 @@ $(function() {
             model.position.z -= model.position.z + boundaryBox.min.z - bedLowMinZ;
         }
 
-        self.slice = function() {
-            var form = new FormData();
-            form.append("file", self.blobFromModel(self.model), self.slicingViewModel.file());
+	self.tempFiles = {};
+	self.removeTempFilesAfterSlicing = function (event) {
+	    if ($.inArray(event.data.type, ["SlicingDone", "SlicingFailed"]) >= 0 &&
+		event.data.payload.stl in self.tempFiles) {
+		OctoPrint.files.delete(event.data.payload.stl_location,
+				       event.data.payload.stl);
+		delete self.tempFiles[event.data.payload.stl];
+	    }
+	}
+
+	OctoPrint.socket.onMessage("event", self.removeTempFilesAfterSlicing);
+
+	self.sendSliceCommand = function(filename, group) {
+	    var slicingVM = self.slicingViewModel;
+
+            var destinationFilename = slicingVM._sanitize(slicingVM.destinationFilename());
+
+            var destinationExtensions = slicingVM.data[slicingVM.slicer()] && slicingVM.data[slicingVM.slicer()].extensions && slicingVM.data[slicingVM.slicer()].extensions.destination
+                ? slicingVM.data[slicingVM.slicer()].extensions.destination
+                : ["???"];
+            if (!_.any(destinationExtensions, function(extension) {
+                return _.endsWith(destinationFilename.toLowerCase(), "." + extension.toLowerCase());
+            })) {
+                destinationFilename = destinationFilename + "." + destinationExtensions[0];
+            }
+	    var groupCenter = new THREE.Vector3(0,0,0);
+	    if (group) {
+		groupCenter = new THREE.Box3().setFromObject(group).center();
+	    }
+            var data = {
+                command: "slice",
+                slicer: slicingVM.slicer(),
+                profile: slicingVM.profile(),
+                printerProfile: slicingVM.printerProfile(),
+                destination: destinationFilename,
+                position: { "x": self.ORIGIN_OFFSET_X_MM + groupCenter.x,
+                            "y": self.ORIGIN_OFFSET_Y_MM + groupCenter.y}
+            };
+            _.extend(data, self.basicOverridesViewModel.toJS());
+            _.extend(data, self.advancedOverridesViewModel.toJS());
+
+            if (slicingVM.afterSlicing() == "print") {
+                data["print"] = true;
+            } else if (slicingVM.afterSlicing() == "select") {
+                data["select"] = true;
+            }
             $.ajax({
-                url: API_BASEURL + "files/local",
+                url: API_BASEURL + "files/" + slicingVM.target + "/" + filename,
                 type: "POST",
-                data: form,
-                processData: false,
-                contentType: false,
-                // On success
-                success: function(data) {
-                    var slicingVM = self.slicingViewModel;
-
-                    var destinationFilename = slicingVM._sanitize(slicingVM.destinationFilename());
-
-                    var destinationExtensions = slicingVM.data[slicingVM.slicer()] && slicingVM.data[slicingVM.slicer()].extensions && slicingVM.data[slicingVM.slicer()].extensions.destination
-                                                ? slicingVM.data[slicingVM.slicer()].extensions.destination
-                                                : ["???"];
-                    if (!_.any(destinationExtensions, function(extension) {
-                            return _.endsWith(destinationFilename.toLowerCase(), "." + extension.toLowerCase());
-                        })) {
-                        destinationFilename = destinationFilename + "." + destinationExtensions[0];
-                    }
-
-                    var data = {
-                        command: "slice",
-                        slicer: slicingVM.slicer(),
-                        profile: slicingVM.profile(),
-                        printerProfile: slicingVM.printerProfile(),
-                        destination: destinationFilename,
-                        position: { "x": self.ORIGIN_OFFSET_X_MM+self.model.position.x,
-                            "y": self.ORIGIN_OFFSET_Y_MM+self.model.position.y }
-                    };
-                    _.extend(data, self.basicOverridesViewModel.toJS());
-                    _.extend(data, self.advancedOverridesViewModel.toJS());
-
-                    if (slicingVM.afterSlicing() == "print") {
-                        data["print"] = true;
-                    } else if (slicingVM.afterSlicing() == "select") {
-                        data["select"] = true;
-                    }
-
-                    $.ajax({
-                        url: API_BASEURL + "files/" + slicingVM.target + "/" + slicingVM.file(),
-                        type: "POST",
-                        dataType: "json",
-                        contentType: "application/json; charset=UTF-8",
-                        data: JSON.stringify(data)
-                    });
-                }
+                dataType: "json",
+                contentType: "application/json; charset=UTF-8",
+		data: JSON.stringify(data),
+		error: function(jqXHR, textStatus) {
+		    new PNotify({title: "Slicing failed", text: textStatus, type: "error", hide: false});
+		}
             });
+        };
+
+        self.slice = function() {
+	    if (!self.stlModified) {
+		self.sendSliceCommand(self.slicingViewModel.file());
+	    } else {
+		var form = new FormData();
+		var extensionPosition = self.slicingViewModel.file().lastIndexOf(".")
+		var newFilename = self.computeDestinationFilename(
+		    _.map(self.stlFiles, function(m) {
+			return m.file;
+		    })) +
+		    ".tmp." + (+ new Date()) +
+		    self.slicingViewModel.file().substring(extensionPosition);
+		var group = new THREE.Group();
+		_.forEach(self.stlFiles, function (stlFile) {
+		    var modelCopy = stlFile.model.clone(true);
+		    group.add(modelCopy);
+		});
+		form.append("file", self.blobFromModel(group), newFilename);
+		$.ajax({
+                    url: API_BASEURL + "files/local",
+                    type: "POST",
+                    data: form,
+                    processData: false,
+                    contentType: false,
+                    // On success
+                    success: function(data) {
+			self.tempFiles[newFilename] = 1;
+			self.sendSliceCommand(newFilename, group);
+                    },
+                    error: function(jqXHR, textStatus) {
+	                new PNotify({title: "Slicing failed", text: textStatus, type: "error", hide: false});
+	            }
+		});
+	    }
         };
 
         self.blobFromModel = function( model ) {
     	    var exporter = new THREE.STLBinaryExporter();
     	    return new Blob([exporter.parse(model)], {type: "text/plain"});
-        }
+        };
 
         self.render = function() {
             self.orbitControls.update();
             self.transformControls.update();
             self.renderer.render( self.scene, self.camera );
         };
+
+	self.isPrinting = ko.computed(function () {
+	    return self.printerStateViewModel.isPrinting() ||
+		self.printerStateViewModel.isPaused();
+	});
+
+	self.canSliceNow = ko.computed(function () {
+            // TODO: We should be checking for same_device here, too.
+	    return self.slicingViewModel.enableSliceButton() &&
+		!self.isPrinting();
+	});
 
         self.init();
         self.render();
@@ -508,7 +686,7 @@ $(function() {
         SlicerViewModel,
 
         // e.g. loginStateViewModel, settingsViewModel, ...
-        [ "slicingViewModel", "basicOverridesViewModel", "advancedOverridesViewModel" ],
+        [ "slicingViewModel", "basicOverridesViewModel", "advancedOverridesViewModel", "printerStateViewModel" ],
 
         // e.g. #settings_plugin_slicer, #tab_plugin_slicer, ...
         [ "#slicer" ]
