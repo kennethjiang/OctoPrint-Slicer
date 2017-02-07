@@ -616,8 +616,6 @@ $(function() {
 		error: function(jqXHR, textStatus) {
 		    new PNotify({title: "Slicing failed", text: textStatus, type: "error", hide: false});
 		}
-
-		}
             });
         };
 
