@@ -1,4 +1,4 @@
-FROM ubuntu
+FROM resin/rpi-raspbian:latest
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python-pip \
@@ -23,7 +23,9 @@ RUN pip install -r requirements.txt
 RUN python setup.py install
 
 ADD . /app
-RUN cd /app && python setup.py develop
+WORKDIR /app
+RUN python setup.py develop
+
 WORKDIR /app/data
 
 EXPOSE 5000
