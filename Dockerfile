@@ -4,6 +4,7 @@ ADD . /app
 WORKDIR /app
 RUN python setup.py develop
 
+
 WORKDIR /app/data
 RUN if [ ! -f /app/data/config.yaml ]; then cp /data/config.yaml /app/data/; fi
 EXPOSE 5000
