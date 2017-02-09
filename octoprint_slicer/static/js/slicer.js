@@ -219,19 +219,24 @@ $(function() {
             if (self.collisionLoopRunner) {
               clearTimeout(self.collisionLoopRunner);
             }
-            var collisionDetector = new CollisionDetection(_.map(
-                self.stlFiles,
-                function (stlFile) {
-                  if (stlFile.model.children[0].geometry.isBufferGeometry) {
-                    stlFile.model.children[0].geometry =
-                        new THREE.Geometry().fromBufferGeometry(stlFile.model.children[0].geometry);
-                  }
-                  return stlFile.model;
-                })).findCollisions(50);
-            var t = 50;
+            var allObjects = _.map(
+              self.stlFiles,
+              function (stlFile) {
+                if (stlFile.model.children[0].geometry.isBufferGeometry) {
+                  stlFile.model.children[0].geometry =
+                    new THREE.Geometry().fromBufferGeometry(stlFile.model.children[0].geometry);
+                }
+                return stlFile.model;
+              });
+            var printVolume = new THREE.Box3(
+              new THREE.Vector3(-self.BEDSIZE_X_MM/2, -self.BEDSIZE_Y_MM/2, -self.BEDSIZE_Z_MM/2),
+              new THREE.Vector3(self.BEDSIZE_X_MM/2, self.BEDSIZE_Y_MM/2, self.BEDSIZE_Z_MM/2));
+            var TASK_SWITCH_MS = 50;
+            var collisionDetector = new CollisionDetection(allObjects, printVolume)
+                .findCollisions(TASK_SWITCH_MS);
             collisionLoop = function() {
               self.collisionLoopRunner = setTimeout(function() {
-                var result = collisionDetector.next(t);
+                var result = collisionDetector.next(TASK_SWITCH_MS);
                 console.log(result);
                 if (!result.done) {
                   collisionLoop();
