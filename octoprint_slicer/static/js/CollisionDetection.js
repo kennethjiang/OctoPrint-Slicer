@@ -1,6 +1,6 @@
 'use strict';
 
-var CollisionDetection = function () {
+var CollisionDetection = function (objects, boundingBox) {
   var self = this;
 
   var linesIntersect = function(a1, a2, a3, a4) {
@@ -74,24 +74,25 @@ var CollisionDetection = function () {
     return false;
   };
 
+  var geometries = _.map(
+      objects,
+      function (o) {
+        var newGeo = o.children[0].geometry.clone();
+        newGeo.applyMatrix(o.children[0].matrixWorld);
+        return newGeo;
+      });
+
+  var geometryBoxes = _.map(
+      geometries,
+      function (g) {
+        var b3 = new THREE.Box3().setFromPoints(g.vertices);
+        return new THREE.Box2(new THREE.Vector2(b3.min.x, b3.min.y),
+                              new THREE.Vector2(b3.max.x, b3.max.y));
+      });
+
   // Report all models that collide with any other model or stick out
   // of the provided boundingBox.
-  self.findCollisions = function(objects, boundingBox, startOver = false) {
-    var geometries = _.map(
-        objects,
-        function (o) {
-          var newGeo = o.children[0].geometry.clone();
-          newGeo.applyMatrix(o.children[0].matrixWorld);
-          return newGeo;
-        });
-
-    var geometryBoxes = _.map(
-        geometries,
-        function (g) {
-          var b3 = new THREE.Box3().setFromPoints(g.vertices);
-          return new THREE.Box2(new THREE.Vector2(b3.min.x, b3.min.y),
-                                new THREE.Vector2(b3.max.x, b3.max.y));
-        });
+  self.findCollisions = function() {
     //debugger;
     var intersecting = [];
     for (var geometry=0; geometry < geometries.length; geometry++) {
@@ -109,7 +110,7 @@ var CollisionDetection = function () {
         // Now search the models that we skipped if we still need to.
         if (!intersecting[geometry]) {
           for (var otherGeometry=geometry + 1; otherGeometry < geometries.length; otherGeometry++) {
-            if (intersecting[otherGeometry] &&  // First pass, skip the already marked ones.
+            if (intersecting[otherGeometry] &&  // Second pass, only process the marked ones.
                 geometryBoxes[geometry].intersectsBox(geometryBoxes[otherGeometry]) &&
                     geometriesCollide(geometries[geometry], geometries[otherGeometry],
                                       geometryBoxes[geometry], geometryBoxes[otherGeometry])) {
