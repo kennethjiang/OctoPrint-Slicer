@@ -228,8 +228,9 @@ $(function() {
                 }
                 return stlFile.model;
               });
+            var EPSILON_Z = 0.0001;  // To deal with rounding error after fixZ.
             var printVolume = new THREE.Box3(
-              new THREE.Vector3(-self.BEDSIZE_X_MM/2, -self.BEDSIZE_Y_MM/2, 0),
+              new THREE.Vector3(-self.BEDSIZE_X_MM/2, -self.BEDSIZE_Y_MM/2, -EPSILON_Z),
               new THREE.Vector3(self.BEDSIZE_X_MM/2, self.BEDSIZE_Y_MM/2, self.BEDSIZE_Z_MM));
             var TASK_SWITCH_MS = 50;
             var collisionDetector = new CollisionDetection(allObjects, printVolume)
@@ -504,6 +505,7 @@ $(function() {
                 model.scale.y =  parseFloat($("#slicer-viewport .scale.values input[name=\"y\"]").val())
                 model.scale.z =  parseFloat($("#slicer-viewport .scale.values input[name=\"z\"]").val())
                 self.fixZPosition(model);
+                self.startCollisionDetection();
                 self.render();
             }
         };
@@ -640,11 +642,10 @@ $(function() {
         }
 
         self.fixZPosition = function ( model ) {
-            var bedLowMinZ = 0.0;
             var boundaryBox = new THREE.Box3().setFromObject(model);
             boundaryBox.min.sub(model.position);
             boundaryBox.max.sub(model.position);
-            model.position.z -= model.position.z + boundaryBox.min.z - bedLowMinZ;
+            model.position.z = -boundaryBox.min.z;
         }
 
 	self.tempFiles = {};
