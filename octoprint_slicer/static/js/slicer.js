@@ -663,7 +663,7 @@ $(function() {
         self.render = function() {
             self.orbitControls.update();
           self.transformControls.update();
-          console.log(CollisionDetection.findCollisions(_.map(
+          console.log(new CollisionDetection().findCollisions(_.map(
               self.stlFiles,
               function (stlFile) {
                 if (stlFile.model.children[0].geometry.isBufferGeometry) {
