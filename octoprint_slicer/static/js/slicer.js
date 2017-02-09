@@ -663,7 +663,7 @@ $(function() {
         self.render = function() {
             self.orbitControls.update();
           self.transformControls.update();
-          console.log(new CollisionDetection(_.map(
+          var collisionDetector = new CollisionDetection(_.map(
               self.stlFiles,
               function (stlFile) {
                 if (stlFile.model.children[0].geometry.isBufferGeometry) {
@@ -671,7 +671,8 @@ $(function() {
                       new THREE.Geometry().fromBufferGeometry(stlFile.model.children[0].geometry);
                 }
                 return stlFile.model;
-              })).findCollisions());
+              })).findCollisions();
+          console.log(collisionDetector.next());
           self.renderer.render( self.scene, self.camera );
         };
 
