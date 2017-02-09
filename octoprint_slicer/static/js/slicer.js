@@ -660,9 +660,13 @@ $(function() {
     	    return new Blob([exporter.parse(model)], {type: "text/plain"});
         };
 
+      self.collisionLoopRunner = null;
         self.render = function() {
             self.orbitControls.update();
           self.transformControls.update();
+          if (self.collisionLoopRunner) {
+            clearTimeout(self.collisionLoopRunner);
+          }
           var collisionDetector = new CollisionDetection(_.map(
               self.stlFiles,
               function (stlFile) {
@@ -671,8 +675,18 @@ $(function() {
                       new THREE.Geometry().fromBufferGeometry(stlFile.model.children[0].geometry);
                 }
                 return stlFile.model;
-              })).findCollisions();
-          console.log(collisionDetector.next());
+              })).findCollisions(50);
+          var t = 50;
+          collisionLoop = function() {
+            self.collisionLoopRunner = setTimeout(function() {
+              var result = collisionDetector.next(t);
+              console.log(result);
+              if (!result.done) {
+                collisionLoop();
+              }
+            }, 10);
+          };
+          //collisionLoop();
           self.renderer.render( self.scene, self.camera );
         };
 
