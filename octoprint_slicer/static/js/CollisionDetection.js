@@ -82,24 +82,35 @@ var CollisionDetection = function (objects, boundingBox) {
   // of the provided boundingBox.
   var intersecting = [];
   self.findCollisions = function*(timeoutMilliseconds) {
-    //console.log("first time at " + performance.now());
+    var endTime = undefined;
+    if (timeoutMilliseconds) {
+      endTime = performance.now() + timeoutMilliseconds;
+    }
+
     var geometries = [];
     var geometryBoxes = [];
     for (var o = 0; o < objects.length; o++) {
       var obj = objects[o];
-      console.log("now1 is " + performance.now());
-      var newGeo = obj.children[0].geometry.clone();
-      console.log("now2 is " + performance.now());
+      var newGeo = new THREE.Geometry();
+      for (var f=0; f < obj.children[0].geometry.faces.length; f++) {
+        newGeo.faces.push(obj.children[0].geometry.faces[f].clone());
+        if (endTime && performance.now() > endTime) {
+          timeoutMilliseconds = (yield intersecting);
+          if (timeoutMilliseconds) {
+            endTime = performance.now() + timeoutMilliseconds;
+          } else {
+            endTime = undefined;
+          }
+        }
+      }
       var newGeoBox = new THREE.Box2();
-      for (var v=0; v < newGeo.vertices.length; v++) {
+      for (var v=0; v < obj.children[0].geometry.vertices.length; v++) {
+        newGeo.vertices.push(obj.children[0].geometry.vertices[v].clone());
         newGeo.vertices[v].applyMatrix4(obj.children[0].matrixWorld);
         newGeoBox.expandByPoint(new THREE.Vector2(newGeo.vertices[v].x,
                                                   newGeo.vertices[v].y));
         if (endTime && performance.now() > endTime) {
-          //console.log("now is " + performance.now());
-          //console.log("endTime was " + endTime);
           timeoutMilliseconds = (yield intersecting);
-          //console.log("new timeout ms is " + timeoutMilliseconds);
           if (timeoutMilliseconds) {
             endTime = performance.now() + timeoutMilliseconds;
           } else {
@@ -111,10 +122,6 @@ var CollisionDetection = function (objects, boundingBox) {
       geometryBoxes.push(newGeoBox);
     }
 
-    var endTime = undefined;
-    if (timeoutMilliseconds) {
-      endTime = performance.now() + timeoutMilliseconds;
-    }
     //debugger;
     for (var geometry=0; geometry < geometries.length; geometry++) {
       for (var otherGeometry=geometry + 1; otherGeometry < geometries.length; otherGeometry++) {
@@ -136,10 +143,7 @@ var CollisionDetection = function (objects, boundingBox) {
                 break;
               }
               if (endTime && performance.now() > endTime) {
-                //console.log("now is " + performance.now());
-                //console.log("endTime was " + endTime);
                 timeoutMilliseconds = (yield intersecting);
-                //console.log("new timeout ms is " + timeoutMilliseconds);
                 if (timeoutMilliseconds) {
                   endTime = performance.now() + timeoutMilliseconds;
                 } else {
