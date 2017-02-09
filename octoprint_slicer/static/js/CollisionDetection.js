@@ -77,26 +77,41 @@ var CollisionDetection = function (objects, boundingBox) {
     return false;
   };
 
-  var geometries = _.map(
-      objects,
-      function (o) {
-        var newGeo = o.children[0].geometry.clone();
-        newGeo.applyMatrix(o.children[0].matrixWorld);
-        return newGeo;
-      });
-
-  var geometryBoxes = _.map(
-      geometries,
-      function (g) {
-        var b3 = new THREE.Box3().setFromPoints(g.vertices);
-        return new THREE.Box2(new THREE.Vector2(b3.min.x, b3.min.y),
-                              new THREE.Vector2(b3.max.x, b3.max.y));
-      });
-
+  console.log("getting ready at " + performance.now());
   // Report all models that collide with any other model or stick out
   // of the provided boundingBox.
   self.findCollisions = function*(timeoutMilliseconds) {
-    var endTime;
+    console.log("first time at " + performance.now());
+    var geometries = _.map(
+        objects,
+        function (o) {
+          var newGeo = o.children[0].geometry.clone();
+          for (var v=0; v < newGeo.vertices.length; v++) {
+            newGeo.vertices[v].applyMatrix4(o.children[0].matrixWorld);
+            if (endTime && performance.now() > endTime) {
+              console.log("now is " + performance.now());
+              console.log("endTime was " + endTime);
+              var timeoutMilliseconds = (yield intersecting);
+              console.log("new timeout ms is " + timeoutMilliseconds);
+              if (timeoutMilliseconds) {
+                endTime = performance.now() + timeoutMilliseconds;
+              } else {
+                endTime = undefined;
+              }
+            }
+          }
+          return newGeo;
+        });
+
+    var geometryBoxes = _.map(
+        geometries,
+        function (g) {
+          var b3 = new THREE.Box3().setFromPoints(g.vertices);
+          return new THREE.Box2(new THREE.Vector2(b3.min.x, b3.min.y),
+                                new THREE.Vector2(b3.max.x, b3.max.y));
+        });
+
+    var endTime = undefined;
     if (timeoutMilliseconds) {
       endTime = performance.now() + timeoutMilliseconds;
     }
@@ -122,7 +137,15 @@ var CollisionDetection = function (objects, boundingBox) {
                 break;
               }
               if (endTime && performance.now() > endTime) {
-                yield intersecting;
+                console.log("now is " + performance.now());
+                console.log("endTime was " + endTime);
+                var timeoutMilliseconds = (yield intersecting);
+                console.log("new timeout ms is " + timeoutMilliseconds);
+                if (timeoutMilliseconds) {
+                  endTime = performance.now() + timeoutMilliseconds;
+                } else {
+                  endTime = undefined;
+                }
               }
             }
           }
