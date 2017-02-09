@@ -229,8 +229,8 @@ $(function() {
                 return stlFile.model;
               });
             var printVolume = new THREE.Box3(
-              new THREE.Vector3(-self.BEDSIZE_X_MM/2, -self.BEDSIZE_Y_MM/2, -self.BEDSIZE_Z_MM/2),
-              new THREE.Vector3(self.BEDSIZE_X_MM/2, self.BEDSIZE_Y_MM/2, self.BEDSIZE_Z_MM/2));
+              new THREE.Vector3(-self.BEDSIZE_X_MM/2, -self.BEDSIZE_Y_MM/2, 0),
+              new THREE.Vector3(self.BEDSIZE_X_MM/2, self.BEDSIZE_Y_MM/2, self.BEDSIZE_Z_MM));
             var TASK_SWITCH_MS = 50;
             var collisionDetector = new CollisionDetection(allObjects, printVolume)
                 .findCollisions(TASK_SWITCH_MS);
