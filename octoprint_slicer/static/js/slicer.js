@@ -684,9 +684,9 @@ $(function() {
               if (!result.done) {
                 collisionLoop();
               }
-            }, 10);
+            }, 0);
           };
-          //collisionLoop();
+          collisionLoop();
           self.renderer.render( self.scene, self.camera );
         };
 
