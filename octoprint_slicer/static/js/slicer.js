@@ -115,8 +115,12 @@ $(function() {
         self.effectController = {
             metalness: 0.5,
 	    roughness: 0.5,
-	    modelInactiveColor: new THREE.Color("#60715b"),
-	    modelActiveColor: new THREE.Color("#34bf0d"),
+	  modelInactiveColor: new THREE.Color("#568349"),
+	  modelActiveColor: new THREE.Color("#34bf0d"),
+
+          modelInactiveCollidingColor: new THREE.Color("#834949"),
+          modelActiveCollidingColor: new THREE.Color("#bf0d0d"),
+
 	    ambientLightColor: new THREE.Color("#2b2b2b"),
 	    directionalLightColor: new THREE.Color("#ffffff"),
         };
@@ -208,9 +212,48 @@ $(function() {
             self.transformControls.addEventListener("change", self.render);
             self.transformControls.addEventListener("mouseDown", self.startTransform);
             self.transformControls.addEventListener("mouseUp", self.endTransform);
-            self.transformControls.addEventListener("change", self.updateTransformInputs);
-            self.transformControls.addEventListener("objectChange", function (e) {self.stlModified = true});
-            self.scene.add(self.transformControls);
+          self.transformControls.addEventListener("change", self.updateTransformInputs);
+
+          self.collisionLoopRunner = null;
+          self.startCollisionDetection = function () {
+            if (self.collisionLoopRunner) {
+              clearTimeout(self.collisionLoopRunner);
+            }
+            var allObjects = _.map(
+              self.stlFiles,
+              function (stlFile) {
+                if (stlFile.model.children[0].geometry.isBufferGeometry) {
+                  stlFile.model.children[0].geometry =
+                    new THREE.Geometry().fromBufferGeometry(stlFile.model.children[0].geometry);
+                }
+                return stlFile.model;
+              });
+            var EPSILON_Z = 0.0001;  // To deal with rounding error after fixZ.
+            var printVolume = new THREE.Box3(
+              new THREE.Vector3(-self.BEDSIZE_X_MM/2, -self.BEDSIZE_Y_MM/2, -EPSILON_Z),
+              new THREE.Vector3(self.BEDSIZE_X_MM/2, self.BEDSIZE_Y_MM/2, self.BEDSIZE_Z_MM));
+            var TASK_SWITCH_MS = 50;
+            var collisionDetector = new CollisionDetection(allObjects, printVolume)
+                .findCollisions(TASK_SWITCH_MS);
+            collisionLoop = function() {
+              self.collisionLoopRunner = setTimeout(function() {
+                var result = collisionDetector.next(TASK_SWITCH_MS);
+                console.log(result);
+                if (!result.done) {
+                  collisionLoop();
+                } else {
+                  self.markCollidingModels(result.value);
+                }
+              }, 0);
+            };
+            collisionLoop();
+          }
+
+          self.transformControls.addEventListener("objectChange", function (e) {
+            self.stlModified = true;
+            self.startCollisionDetection();
+          });
+          self.scene.add(self.transformControls);
             self.updatePrinterBed();
 
             $("#slicer-viewport button.translate").click(function(event) {
@@ -296,7 +339,13 @@ $(function() {
         };
 
 	self.isStlFileActive = function(stlFile) {
-	    return stlFile.model.children[0].material.color.equals(self.effectController.modelActiveColor);
+	  return stlFile.model.children[0].material.color.equals(self.effectController.modelActiveColor) ||
+              stlFile.model.children[0].material.color.equals(self.effectController.modelActiveCollidingColor);
+	};
+
+	self.isStlFileColliding = function(stlFile) {
+	  return stlFile.model.children[0].material.color.equals(self.effectController.modelActiveCollidingColor) ||
+              stlFile.model.children[0].material.color.equals(self.effectController.modelInactiveCollidingColor);
 	};
 
 	self.setStlFileActive = function(stlFile) {
@@ -304,12 +353,20 @@ $(function() {
 	    var newActiveStl = false;
 	    _.forEach(self.stlFiles, function (otherStlFile) {
 		if (otherStlFile == stlFile) {
-		    if (!self.isStlFileActive(otherStlFile)) {
-			otherStlFile.model.children[0].material.color.copy(self.effectController.modelActiveColor);
-			newActiveStl = true;
+		  if (!self.isStlFileActive(otherStlFile)) {
+                    if (self.isStlFileColliding(otherStlFile)) {
+		      otherStlFile.model.children[0].material.color.copy(self.effectController.modelActiveCollidingColor);
+                    } else {
+		      otherStlFile.model.children[0].material.color.copy(self.effectController.modelActiveColor);
+                    }
+		    newActiveStl = true;
 		    }
 		} else {
+                  if (self.isStlFileColliding(otherStlFile)) {
+		    otherStlFile.model.children[0].material.color.copy(self.effectController.modelInactiveCollidingColor);
+                  } else {
 		    otherStlFile.model.children[0].material.color.copy(self.effectController.modelInactiveColor);
+                  }
 		}
 	    });
 	    if (newActiveStl) {
@@ -325,6 +382,35 @@ $(function() {
             }
             self.render();
 	};
+
+      self.markCollidingModels = function (collisions) {
+        var changes = false;
+        var updateColor = function (stlFile, newColor) {
+          if (!stlFile.model.children[0].material.color.equals(newColor)) {
+            stlFile.model.children[0].material.color.copy(newColor);
+            changes = true;
+          }
+        };
+        for (var i = 0; i < self.stlFiles.length; i++) {
+          var stlFile = self.stlFiles[i];
+          if (self.isStlFileActive(stlFile)) {
+            if (collisions[i]) {
+	      updateColor(stlFile, self.effectController.modelActiveCollidingColor);
+            } else {
+	      updateColor(stlFile, self.effectController.modelActiveColor);
+            }
+          } else {
+            if (collisions[i]) {
+	      updateColor(stlFile, self.effectController.modelInactiveCollidingColor);
+            } else {
+	      updateColor(stlFile, self.effectController.modelInactiveColor);
+            }
+	  }
+        }
+        if (changes) {
+          self.render();
+        }
+      }
       self.arrangeModels = new ArrangeModels();
       self.arrange = function(margin, timeoutMilliseconds, forceStartOver = false) {
         var renderFn = function () {
@@ -380,8 +466,9 @@ $(function() {
                 stlModel.position.copy(center.negate());
 		stlFile['model'] = model;
 		self.setStlFileActive(stlFile);
-                self.scene.add(model);
-                self.render();
+              self.scene.add(model);
+              self.render();
+              self.startCollisionDetection();
             });
         };
 
@@ -418,6 +505,7 @@ $(function() {
                 model.scale.y =  parseFloat($("#slicer-viewport .scale.values input[name=\"y\"]").val())
                 model.scale.z =  parseFloat($("#slicer-viewport .scale.values input[name=\"z\"]").val())
                 self.fixZPosition(model);
+                self.startCollisionDetection();
                 self.render();
             }
         };
@@ -554,11 +642,10 @@ $(function() {
         }
 
         self.fixZPosition = function ( model ) {
-            var bedLowMinZ = 0.0;
             var boundaryBox = new THREE.Box3().setFromObject(model);
             boundaryBox.min.sub(model.position);
             boundaryBox.max.sub(model.position);
-            model.position.z -= model.position.z + boundaryBox.min.z - bedLowMinZ;
+            model.position.z = -boundaryBox.min.z;
         }
 
 	self.tempFiles = {};
@@ -660,11 +747,14 @@ $(function() {
     	    return new Blob([exporter.parse(model)], {type: "text/plain"});
         };
 
+      self.collisionLoopRunner = null;
         self.render = function() {
             self.orbitControls.update();
-            self.transformControls.update();
-            self.renderer.render( self.scene, self.camera );
-        };
+          self.transformControls.update();
+          self.renderer.render( self.scene, self.camera );
+          };
+
+
 
 	self.isPrinting = ko.computed(function () {
 	    return self.printerStateViewModel.isPrinting() ||
