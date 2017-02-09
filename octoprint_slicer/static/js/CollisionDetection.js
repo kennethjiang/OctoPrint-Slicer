@@ -13,7 +13,7 @@ var CollisionDetection = function (objects, boundingBox) {
       return false;
     }
     var a = a1.x*a2.y - a1.y*a2.x;
-    var b = a3.x*a4.y - a3.y-a4.x;
+    var b = a3.x*a4.y - a3.y*a4.x;
     var x = (a * x34 - b * x12) / c;
     var y = (a * y34 - b * y12) / c;
     return ((Math.min(a1.x, a2.x) < x && x < Math.max(a1.x, a2.x) &&
