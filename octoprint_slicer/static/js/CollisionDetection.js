@@ -16,7 +16,10 @@ var CollisionDetection = function (objects, boundingBox) {
     var b = a3.x*a4.y - a3.y-a4.x;
     var x = (a * x34 - b * x12) / c;
     var y = (a * y34 - b * y12) / c;
-    return x > a1.x && x < a2.x;
+    return ((Math.min(a1.x, a2.x) < x && x < Math.max(a1.x, a2.x) &&
+             Math.min(a3.x, a4.x) < x && x < Math.max(a3.x, a4.x)) ||
+            (Math.min(a1.y, a2.y) < y && y < Math.max(a1.y, a2.y) &&
+             Math.min(a3.y, a4.y) < y && y < Math.max(a3.y, a4.y)));
   };
 
   var trianglesIntersect = function(t0,t1) {
