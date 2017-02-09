@@ -1,6 +1,6 @@
 'use strict';
 
-var CollisionDetection = function (objects, boundingBox) {
+var CollisionDetection = function (objects, volume) {
   var self = this;
 
   var linesIntersect = function(a1, a2, a3, a4) {
@@ -106,12 +106,11 @@ var CollisionDetection = function (objects, boundingBox) {
           }
         }
       }
-      var newGeoBox = new THREE.Box2();
+      var newGeoBox = new THREE.Box3();
       for (var v=0; v < obj.children[0].geometry.vertices.length; v++) {
         newGeo.vertices.push(obj.children[0].geometry.vertices[v].clone());
         newGeo.vertices[v].applyMatrix4(obj.children[0].matrixWorld);
-        newGeoBox.expandByPoint(new THREE.Vector2(newGeo.vertices[v].x,
-                                                  newGeo.vertices[v].y));
+        newGeoBox.expandByPoint(newGeo.vertices[v]);
         if (endTime && performance.now() > endTime) {
           timeoutMilliseconds = (yield intersecting);
           if (timeoutMilliseconds) {
@@ -125,10 +124,20 @@ var CollisionDetection = function (objects, boundingBox) {
       geometryBoxes.push(newGeoBox);
     }
 
+    var intersectsBox2D = function (box1, box2) {
+      // Convert boxes to 2D before checking intersection.
+      var b1 = new THREE.Box2D().copy(box1);
+      var b2 = new THREE.Box2D().copy(box2);
+      return b1.intersectsBox(b2);
+    }
+
     //debugger;
     for (var geometry=0; geometry < geometries.length; geometry++) {
+      if (!volume.containsBox(geometryBoxes[geometry])) {
+        intersecting[geometry] = true;
+      }
       for (var otherGeometry=geometry + 1; otherGeometry < geometries.length; otherGeometry++) {
-        if (geometryBoxes[geometry].intersectsBox(geometryBoxes[otherGeometry])) {
+        if (intersectsBox2D(geometryBoxes[geometry], geometryBoxes[otherGeometry])) {
           var geo1 = geometries[geometry];
           var geo2 = geometries[otherGeometry];
           var box1 = geometryBoxes[geometry];
