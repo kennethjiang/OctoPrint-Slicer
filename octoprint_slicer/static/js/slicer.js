@@ -233,6 +233,15 @@ $(function() {
                 self.removeSTL();
             });
             $("#slicer-viewport button.arrange").click(function(event) {
+              console.log(CollisionDetection.findCollisions(_.map(
+                self.stlFiles,
+                function (stlFile) {
+                  if (stlFile.model.children[0].geometry.isBufferGeometry) {
+                    stlFile.model.children[0].geometry =
+                      new THREE.Geometry().fromBufferGeometry(stlFile.model.children[0].geometry);
+                  }
+                  return stlFile.model;
+                })));
               self.arrange(10 /* mm margin */, 5000 /* milliseconds max */);
             });
             $("#slicer-viewport .values input").change(function() {
