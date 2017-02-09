@@ -59,7 +59,7 @@ var CollisionDetection = function (objects, boundingBox) {
     return triangles;
   };
 
-  var geometriesCollide = function(geo1, geo2, box1, box2) {
+  var geometriesCollide = function(geo1, geo2, box1, box2, endTime) {
     var intersectionBox = box1.intersect(box2);
     var triangles = getTrianglesFromGeometry(geo1, intersectionBox);
     var otherTriangles = getTrianglesFromGeometry(geo2, intersectionBox);
@@ -67,6 +67,9 @@ var CollisionDetection = function (objects, boundingBox) {
       for (var t1 = 0; t1 < otherTriangles.length; t1++) {
         if (triangles[t0].boundingBox.intersectsBox(otherTriangles[t1].boundingBox) &&
             trianglesIntersect(triangles[t0], otherTriangles[t1])) {
+          if (performance.now() > endTime) {
+            yield;
+          }
           return true;
         }
       }
@@ -92,30 +95,35 @@ var CollisionDetection = function (objects, boundingBox) {
 
   // Report all models that collide with any other model or stick out
   // of the provided boundingBox.
-  self.findCollisions = function() {
+  self.findCollisions = function*(timeoutMilliseconds) {
+    var endTime;
+    if (timeoutMilliseconds) {
+      endTime = performance.now() + timeoutMilliseconds;
+    }
     //debugger;
     var intersecting = [];
     for (var geometry=0; geometry < geometries.length; geometry++) {
-      if (!intersecting[geometry]) {
-        // First search against models that haven't got collisions because that gets us a two-for-one.
-        for (var otherGeometry=geometry + 1; otherGeometry < geometries.length; otherGeometry++) {
-          if (!intersecting[otherGeometry] &&  // First pass, skip the already marked ones.
-              geometryBoxes[geometry].intersectsBox(geometryBoxes[otherGeometry]) &&
-              geometriesCollide(geometries[geometry], geometries[otherGeometry],
-                                geometryBoxes[geometry], geometryBoxes[otherGeometry])) {
-            intersecting[geometry] = true;
-            intersecting[otherGeometry] = true;
-          }
-        }
-        // Now search the models that we skipped if we still need to.
-        if (!intersecting[geometry]) {
-          for (var otherGeometry=geometry + 1; otherGeometry < geometries.length; otherGeometry++) {
-            if (intersecting[otherGeometry] &&  // Second pass, only process the marked ones.
-                geometryBoxes[geometry].intersectsBox(geometryBoxes[otherGeometry]) &&
-                    geometriesCollide(geometries[geometry], geometries[otherGeometry],
-                                      geometryBoxes[geometry], geometryBoxes[otherGeometry])) {
-              intersecting[geometry] = true;
-              // intersecting[otherGeometry] = true;  No need, it's already true.
+      for (var otherGeometry=geometry + 1; otherGeometry < geometries.length; otherGeometry++) {
+        if (geometryBoxes[geometry].intersectsBox(geometryBoxes[otherGeometry])) {
+          var geo1 = geometries[geometry];
+          var geo2 = geometries[otherGeometry];
+          var box1 = geometryBoxes[geometry];
+          var box2 = geometryBoxes[otherGeometry];
+          var intersectionBox = box1.intersect(box2);
+          var triangles = getTrianglesFromGeometry(geo1, intersectionBox);
+          var otherTriangles = getTrianglesFromGeometry(geo2, intersectionBox);
+          for (var t0 = 0; t0 < triangles.length; t0++) {
+            for (var t1 = 0; t1 < otherTriangles.length; t1++) {
+              if (triangles[t0].boundingBox.intersectsBox(otherTriangles[t1].boundingBox) &&
+                  trianglesIntersect(triangles[t0], otherTriangles[t1])) {
+                intersecting[geometry] = true;
+                intersecting[otherGeometry] = true;
+                t0 = triangles.length; // To force a break.
+                break;
+              }
+              if (endTime && performance.now() > endTime) {
+                yield intersecting;
+              }
             }
           }
         }
