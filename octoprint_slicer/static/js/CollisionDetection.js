@@ -1,6 +1,9 @@
 'use strict';
 
-var CollisionDetection = function (objects, volume) {
+// callbackFn is called with a list of true/false results of collisions.
+// Yet unknown results are undefined
+
+var CollisionDetection = function (callbackFn) {
   var self = this;
 
   var linesIntersect = function(a1, a2, a3, a4) {
@@ -42,7 +45,9 @@ var CollisionDetection = function (objects, volume) {
         Math.min(t.a.y, t.b.y, t.c.y) > b.max.y);
   };
 
-  // Gets all triangles that might intersect the provided box.
+  // Gets all triangles that might intersect the provided box.  box is
+  // assumed to be Box2 but we pass in Box3 below.  That's okay, we'll
+  // ignore the z axis.
   var getTrianglesFromGeometry = function(geo, box) {
     var triangles = [];
     for (var f=0; f < geo.faces.length; f++) {
@@ -57,27 +62,9 @@ var CollisionDetection = function (objects, volume) {
       if (triangleOutsideBox(tri, box)) {
         continue; // Skip this face, it doesn't intersection the other.
       }
-      triangles.push(tri);
+      triangles.push(tri);  // Maybe intersects, keep it for further checking.
     }
     return triangles;
-  };
-
-  var geometriesCollide = function(geo1, geo2, box1, box2, endTime) {
-    var intersectionBox = box1.intersect(box2);
-    var triangles = getTrianglesFromGeometry(geo1, intersectionBox);
-    var otherTriangles = getTrianglesFromGeometry(geo2, intersectionBox);
-    for (var t0 = 0; t0 < triangles.length; t0++) {
-      for (var t1 = 0; t1 < otherTriangles.length; t1++) {
-        if (triangles[t0].boundingBox.intersectsBox(otherTriangles[t1].boundingBox) &&
-            trianglesIntersect(triangles[t0], otherTriangles[t1])) {
-          if (performance.now() > endTime) {
-            yield;
-          }
-          return true;
-        }
-      }
-    }
-    return false;
   };
 
   console.log("getting ready at " + performance.now());
@@ -92,8 +79,8 @@ var CollisionDetection = function (objects, volume) {
 
     var geometries = [];
     var geometryBoxes = [];
-    for (var o = 0; o < objects.length; o++) {
-      var obj = objects[o];
+    for (var o = 0; o < self.objects.length; o++) {
+      var obj = self.objects[o];
       var newGeo = new THREE.Geometry();
       for (var f=0; f < obj.children[0].geometry.faces.length; f++) {
         newGeo.faces.push(obj.children[0].geometry.faces[f].clone());
@@ -126,14 +113,14 @@ var CollisionDetection = function (objects, volume) {
 
     var intersectsBox2D = function (box1, box2) {
       // Convert boxes to 2D before checking intersection.
-      var b1 = new THREE.Box2D().copy(box1);
-      var b2 = new THREE.Box2D().copy(box2);
+      var b1 = new THREE.Box2().copy(box1);
+      var b2 = new THREE.Box2().copy(box2);
       return b1.intersectsBox(b2);
     }
 
     //debugger;
     for (var geometry=0; geometry < geometries.length; geometry++) {
-      if (!volume.containsBox(geometryBoxes[geometry])) {
+      if (!self.volume.containsBox(geometryBoxes[geometry])) {
         intersecting[geometry] = true;
       }
       for (var otherGeometry=geometry + 1; otherGeometry < geometries.length; otherGeometry++) {
@@ -142,7 +129,7 @@ var CollisionDetection = function (objects, volume) {
           var geo2 = geometries[otherGeometry];
           var box1 = geometryBoxes[geometry];
           var box2 = geometryBoxes[otherGeometry];
-          var intersectionBox = box1.intersect(box2);
+          var intersectionBox = box1.clone().intersect(box2);
           var triangles = getTrianglesFromGeometry(geo1, intersectionBox);
           var otherTriangles = getTrianglesFromGeometry(geo2, intersectionBox);
           for (var t0 = 0; t0 < triangles.length; t0++) {
@@ -166,8 +153,51 @@ var CollisionDetection = function (objects, volume) {
           }
         }
       }
+      if (intersecting[geometry] === undefined) {
+        // No collision yet and there won't be one so mark this one
+        // as known.
+        intersecting[geometry] = false;
+      }
     }
     return intersecting;
+  };
+
+  self.collisionLoopRunner = null;
+
+  // This starts collision detection in a loop on the provided objects
+  // and print volume.  If start is called while it's already running,
+  // it will cancel and restart.  The callback will be called every
+  // timeoutMilliseconds.  If the result has only true and false
+  // values and is as long as the original input, that means that the
+  // collision detection is done.  undefined in the result array means
+  // that the collision status is yet unknown.  timeoutMilliseconds is
+  // how often to pause to do other events on the webpage, for
+  // cooperative multitasking.
+  self.start = function (objects, volume, timeoutMilliseconds) {
+    if (self.collisionLoopRunner) {
+      clearTimeout(self.collisionLoopRunner);
+    }
+    for (var i = 0; i < objects.length; i++) {
+      if (objects[i].children[0].geometry.isBufferGeometry) {
+        objects[i].children[0].geometry =
+          new THREE.Geometry().fromBufferGeometry(objects[i].children[0].geometry);
+      }
+    }
+    self.objects = objects;
+    self.volume = volume;
+    intersecting = [];
+    // collisionDetector is a ES6 javascript generator.
+    var collisionDetector = self.findCollisions(timeoutMilliseconds);
+    var collisionLoop = function () {
+      self.collisionLoopRunner = setTimeout(function() {
+        var result = collisionDetector.next(timeoutMilliseconds);
+        callbackFn(result.value);
+        if (!result.done) {
+          collisionLoop();
+        }
+      }, 0);
+    };
+    collisionLoop();
   };
 };
 
