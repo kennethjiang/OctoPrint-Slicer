@@ -41,17 +41,17 @@ $(function() {
         };
 
         self.updateOverridesFromProfile = function(profile) {
-	    // Some options are numeric but might have a percent sign after them.
-	    // Remove the percent and save it to replace later.
-	    self.endings = {};
-	    var stripEndings = function(m, k) {
-		if (_.isString(m[k]) && m[k].endsWith("%")) {
-		    self.endings[k] = "%";
-		    return m[k].slice(0,-1);
-		} else {
-		    return m[k];
-		}
-	    }
+            // Some options are numeric but might have a percent sign after them.
+            // Remove the percent and save it to replace later.
+            self.endings = {};
+            var stripEndings = function(m, k) {
+                if (_.isString(m[k]) && m[k].endsWith("%")) {
+                    self.endings[k] = "%";
+                    return m[k].slice(0,-1);
+                } else {
+                    return m[k];
+                }
+            }
 
             // Some options are booleans but can be stored as 0/1 or false/true.
             // Convert to native true/false and keep track of the style.
@@ -77,33 +77,33 @@ $(function() {
             }
 
 
-	    // Some options are arrays in cura but not Slic3r.  Keep track of which.
-	    self.isArray = [];
+            // Some options are arrays in cura but not Slic3r.  Keep track of which.
+            self.isArray = [];
 
             _.forEach(ITEM_KEYS, function(k) { self["profile." + k]( stripEndings(profile,k) ); });
             _.forEach(BOOLEAN_KEYS, function(k) { self["profile." + k]( convertBoolean(profile,k) ); });
             _.forEach(ENUM_KEYS, function(v, k) { self["profile." + k]( profile[k] ); });
             _.forEach(ARRAY_KEYS, function(k) {
-		// Some config options are arrays in cura but not in Slic3r.
-		// Detect which ones are arrays and only convert those.
-		if (_.isArray(profile[k])) {
-		    self.isArray.push(k);  // Remember this for later.
-		    self["profile." + k](profile[k][0]);
-		} else {
-		    self["profile." + k](profile[k]);
-		}});
+                // Some config options are arrays in cura but not in Slic3r.
+                // Detect which ones are arrays and only convert those.
+                if (_.isArray(profile[k])) {
+                    self.isArray.push(k);  // Remember this for later.
+                    self["profile." + k](profile[k][0]);
+                } else {
+                    self["profile." + k](profile[k]);
+                }});
         };
 
         self.updateOverrides = function(newValue) {
             var slicing = self.slicingViewModel;
 
             if ( slicing.profile() && slicing.slicer()
-                    && (self.previousProfile != slicing.profile() || self.previousSlicer != slicing.slicer()) ) {
-				$.ajax({
-					url: API_BASEURL + "slicing/" + slicing.slicer() + "/profiles/" + slicing.profile(),
-					type: "GET",
-					// On success
-					success: function(data) {
+                && (self.previousProfile != slicing.profile() || self.previousSlicer != slicing.slicer()) ) {
+                $.ajax({
+                    url: API_BASEURL + "slicing/" + slicing.slicer() + "/profiles/" + slicing.profile(),
+                    type: "GET",
+                    // On success
+                    success: function(data) {
                         self.updateOverridesFromProfile(data.data);
                     }
                 });
@@ -118,27 +118,27 @@ $(function() {
         self.toJS = function() {
             var result = ko.mapping.toJS(self, {
                 ignore: ["slicingViewModel",
-                         "updateOverridesFromProfile",
-                         "updateOverrides",
-                         "toJS",
-                         "optionsForKey",
-			 "stripEndings",
-			 "isArray",
-			 "endings"]
+                    "updateOverridesFromProfile",
+                    "updateOverrides",
+                    "toJS",
+                    "optionsForKey",
+                    "stripEndings",
+                    "isArray",
+                    "endings"]
             });
             _.forEach(ITEM_KEYS, function(k) {
-		if(self.endings.hasOwnProperty(k)) {
-		    result["profile." + k] += self.endings[k];
-		}});
+                if(self.endings.hasOwnProperty(k)) {
+                    result["profile." + k] += self.endings[k];
+                }});
             _.forEach(BOOLEAN_KEYS, function(k) {
-	        if(self.booleans.hasOwnProperty(k)) {
+                if(self.booleans.hasOwnProperty(k)) {
                     // Convert false/true to the correct string.
-		    result["profile." + k] = self.booleans[k][result["profile." + k]?1:0];
-	        }});
+                    result["profile." + k] = self.booleans[k][result["profile." + k]?1:0];
+                }});
 
             for (var key in result) {
-		var baseKey = key.replace("profile.", "");
-		// Convert it back to an array if it was an array originally.
+                var baseKey = key.replace("profile.", "");
+                // Convert it back to an array if it was an array originally.
                 if (_.contains(ARRAY_KEYS, baseKey) && _.contains(self.isArray, baseKey)) {
                     result[key] = [result[key]];
                 }
@@ -156,39 +156,39 @@ $(function() {
 
     function BasicOverridesViewModel(parameters) {
         OverridesViewModel.call(this, parameters,
-                            ["print_temperature"],
-                            { "support" : ko.observableArray(["none", "buildplate", "everywhere"])},
-                            ["layer_height",
-			     "temperature",
-                             "bed_temperature",
-                             "print_bed_temperature",
-                             "fill_density",
-                             "wall_thickness",
-                             "print_speed",
-                             "solid_layer_thickness"],
-                            ["support_material",
-                             "overhangs"]);
+            ["print_temperature"],
+            { "support" : ko.observableArray(["none", "buildplate", "everywhere"])},
+            ["layer_height",
+                "temperature",
+                "bed_temperature",
+                "print_bed_temperature",
+                "fill_density",
+                "wall_thickness",
+                "print_speed",
+                "solid_layer_thickness"],
+            ["support_material",
+                "overhangs"]);
     }
 
     function AdvancedOverridesViewModel(parameters) {
         OverridesViewModel.call(this, parameters,
-                            ["start_gcode",
-			     "end_gcode",
-			     "filament_diameter"],
-                            { "platform_adhesion" : ko.observableArray(["none", "brim", "raft"])},
-                            ["travel_speed",
-			     "outer_shell_speed",
-			     "inner_shell_speed",
-			     "infill_speed",
-			     "bottom_layer_speed",
-                             "filament_flow",
-                             "retraction_speed",
-                             "retraction_amount",
-			     "extrusion_multiplier",
-                            ],
-                            ["retraction_enable",
-			     "fan_enabled",
-			     "cooling"]);
+            ["start_gcode",
+                "end_gcode",
+                "filament_diameter"],
+            { "platform_adhesion" : ko.observableArray(["none", "brim", "raft"])},
+            ["travel_speed",
+                "outer_shell_speed",
+                "inner_shell_speed",
+                "infill_speed",
+                "bottom_layer_speed",
+                "filament_flow",
+                "retraction_speed",
+                "retraction_amount",
+                "extrusion_multiplier",
+            ],
+            ["retraction_enable",
+                "fan_enabled",
+                "cooling"]);
     }
 
 
@@ -198,9 +198,9 @@ $(function() {
         [ "slicingViewModel" ],
         [ "#basic_overrides" ]
     ],
-    [
-        AdvancedOverridesViewModel,
-        [ "slicingViewModel" ],
-        [ "#advanced_overrides" ]
-    ]);
+        [
+            AdvancedOverridesViewModel,
+            [ "slicingViewModel" ],
+            [ "#advanced_overrides" ]
+        ]);
 });
