@@ -207,6 +207,11 @@ $(function() {
             self.transformControls.addEventListener("mouseDown", self.startTransform);
             self.transformControls.addEventListener("mouseUp", self.endTransform);
             self.transformControls.addEventListener("change", self.updateTransformInputs);
+          self.transformControls.addEventListener("objectChange", function (e) {
+            self.stlModified = true;
+            self.startCollisionDetection();
+          });
+          self.scene.add(self.transformControls);
 
           self.collisionDetector = new CollisionDetection(self.markCollidingModels);
           self.startCollisionDetection = function () {
@@ -225,11 +230,6 @@ $(function() {
                                          TASK_SWITCH_MS);
           }
 
-          self.transformControls.addEventListener("objectChange", function (e) {
-            self.stlModified = true;
-            self.startCollisionDetection();
-          });
-          self.scene.add(self.transformControls);
             self.updatePrinterBed();
 
             $("#slicer-viewport button.translate").click(function(event) {
