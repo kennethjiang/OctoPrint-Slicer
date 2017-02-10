@@ -424,8 +424,8 @@ $(function() {
             } else {
                 self.setStlFileActive();
             }
-            self.startCollisionDetection();
             self.render();
+            self.startCollisionDetection();
         };
 
         self.loadSTL = function(target, file, force) {
