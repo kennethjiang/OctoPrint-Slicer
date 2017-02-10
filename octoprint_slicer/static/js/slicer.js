@@ -109,11 +109,11 @@ $(function() {
         self.effectController = {
             metalness: 0.5,
 	    roughness: 0.5,
-	  modelInactiveColor: new THREE.Color("#568349"),
-	  modelActiveColor: new THREE.Color("#34bf0d"),
+	  modelInactiveColor: new THREE.Color("#3d4d36"),
+	  modelActiveColor: new THREE.Color("#3ee610"),
 
-          modelInactiveCollidingColor: new THREE.Color("#834949"),
-          modelActiveCollidingColor: new THREE.Color("#bf0d0d"),
+          modelInactiveCollidingColor: new THREE.Color("#4d3636"),
+          modelActiveCollidingColor: new THREE.Color("#e61010"),
 
 	    ambientLightColor: new THREE.Color("#2b2b2b"),
 	    directionalLightColor: new THREE.Color("#ffffff"),
@@ -212,24 +212,6 @@ $(function() {
             self.startCollisionDetection();
           });
           self.scene.add(self.transformControls);
-
-          self.collisionDetector = new CollisionDetection(self.markCollidingModels);
-          self.startCollisionDetection = function () {
-            var allObjects = _.map(
-              self.stlFiles,
-              function (stlFile) {
-                return stlFile.model;
-              });
-            var EPSILON_Z = 0.0001;  // To deal with rounding error after fixZ.
-            var printVolume = new THREE.Box3(
-              new THREE.Vector3(-self.BEDSIZE_X_MM/2, -self.BEDSIZE_Y_MM/2, -EPSILON_Z),
-              new THREE.Vector3(self.BEDSIZE_X_MM/2, self.BEDSIZE_Y_MM/2, self.BEDSIZE_Z_MM));
-            var TASK_SWITCH_MS = 50;
-            self.collisionDetector.start(allObjects,
-                                         printVolume,
-                                         TASK_SWITCH_MS);
-          }
-
             self.updatePrinterBed();
 
             $("#slicer-viewport button.translate").click(function(event) {
@@ -389,7 +371,25 @@ $(function() {
         if (changes) {
           self.render();
         }
+      };
+
+      self.collisionDetector = new CollisionDetection(self.markCollidingModels);
+      self.startCollisionDetection = function () {
+        var allObjects = _.map(
+          self.stlFiles,
+          function (stlFile) {
+            return stlFile.model;
+          });
+        var EPSILON_Z = 0.0001;  // To deal with rounding error after fixZ.
+        var printVolume = new THREE.Box3(
+          new THREE.Vector3(-self.BEDSIZE_X_MM/2, -self.BEDSIZE_Y_MM/2, -EPSILON_Z),
+          new THREE.Vector3(self.BEDSIZE_X_MM/2, self.BEDSIZE_Y_MM/2, self.BEDSIZE_Z_MM));
+        var TASK_SWITCH_MS = 50;
+            self.collisionDetector.start(allObjects,
+                                         printVolume,
+                                         TASK_SWITCH_MS);
       }
+
       self.arrangeModels = new ArrangeModels();
       self.arrange = function(margin, timeoutMilliseconds, forceStartOver = false) {
         var renderFn = function () {
