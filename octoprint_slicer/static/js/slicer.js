@@ -747,7 +747,6 @@ $(function() {
     	    return new Blob([exporter.parse(model)], {type: "text/plain"});
         };
 
-      self.collisionLoopRunner = null;
         self.render = function() {
             self.orbitControls.update();
           self.transformControls.update();
