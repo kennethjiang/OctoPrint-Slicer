@@ -60,61 +60,87 @@
           <form class="form-horizontal">
               <div class="row">
                   <div class="span3">
-                      <div title="Printing temperature" class="input-append">
-                          <label class="control-label">Printing temperature</label>
+                      <div title="Temperature" class="input-append" data-bind="visible: !_.isUndefined($data['profile.temperature']())">
+                          <label class="control-label">Temperature</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.temperature']" type="number" tabindex="-1" min="150" max="315" step="1"></input>
+                              <span class="add-on">°C</span>
+                          </div>
+                      </div>
+                      <div title="Print temperature" class="input-append" data-bind="visible: !_.isUndefined($data['profile.print_temperature']())">
+                          <label class="control-label">Print temperature</label>
                           <div class="controls">
                               <input data-bind="numericValue: $data['profile.print_temperature']" type="number" tabindex="-1" min="150" max="315" step="1"></input>
                               <span class="add-on">°C</span>
                           </div>
                       </div>
-                      <div title="Heatbed temperature" class="input-append">
-                          <label class="control-label">Heatbed temperature</label>
+                      <div title="Print Bed temperature" class="input-append" data-bind="visible: !_.isUndefined($data['profile.print_bed_temperature']())">
+                          <label class="control-label">Print bed temperature</label>
                           <div class="controls">
                               <input data-bind="numericValue: $data['profile.print_bed_temperature']" type="number" tabindex="-1" min="0" max="110" step="1"></input>
                               <span class="add-on">°C</span>
                           </div>
                       </div>
-                      <div title="Height of each layer" class="input-append">
+                      <div title="Bed temperature" class="input-append" data-bind="visible: !_.isUndefined($data['profile.bed_temperature']())">
+                          <label class="control-label">Bed temperature</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.bed_temperature']" type="number" tabindex="-1" min="0" max="110" step="1"></input>
+                              <span class="add-on">°C</span>
+                          </div>
+                      </div>
+                      <div title="Height of each layer" class="input-append" data-bind="visible: !_.isUndefined($data['profile.layer_height']())">
                           <label class="control-label">Layer height</label>
                           <div class="controls">
                               <input data-bind="numericValue: $data['profile.layer_height']" type="number" tabindex="-1" min="0.01" max="0.35" step="0.01"></input>
                               <span class="add-on">mm</span>
                           </div>
                       </div>
-                      <div title="Percentage of the model that is filled in" class="input-append">
+                      <div title="Percentage of the model that is filled in" class="input-append" data-bind="visible: !_.isUndefined($data['profile.fill_density']())">
                           <label class="control-label">Fill density</label>
                           <div class="controls">
-                              <input data-bind="numericValue: $data['profile.fill_density']" type="number" tabindex="-1" min="0" max="100" step="0.01"></input>
+                              <input data-bind="numericValue: $data['profile.fill_density']" type="number" tabindex="-1" min="0" max="100" step="1"></input>
                               <span class="add-on">%</span>
                           </div>
                       </div>
                   </div>
                   <div class="span3">
-                      <div title="Shell thickness" class="input-append">
+                      <div title="Shell thickness" class="input-append" data-bind="visible: !_.isUndefined($data['profile.wall_thickness']())">
                           <label class="control-label">Shell thickness</label>
                           <div class="controls">
                               <input data-bind="numericValue: $data['profile.wall_thickness']" type="number" tabindex="-1" min="0.1" max="2" step="0.05"></input>
                               <span class="add-on">mm</span>
                           </div>
                       </div>
-                      <div title="Speed of the extruder's movements while printing" class="input-append">
+                      <div title="Speed of the extruder's movements while printing" class="input-append" data-bind="visible: !_.isUndefined($data['profile.print_speed']())">
                           <label class="control-label">Print speed</label>
                           <div class="controls">
                               <input data-bind="numericValue: $data['profile.print_speed']" type="number" tabindex="-1" min="2" max="150" step="0.1"></input>
                               <span class="add-on">mm/s</span>
                           </div>
                       </div>
-                      <div title="Top and bottom thickness" class="input-append">
+                      <div title="Top and bottom thickness" class="input-append" class="input-append" data-bind="visible: !_.isUndefined($data['profile.solid_layer_thickness']())">
                           <label class="control-label">Top/bottom</label>
                           <div class="controls">
                               <input data-bind="numericValue: $data['profile.solid_layer_thickness']" type="number" tabindex="-1" min="0.1" max="2" step="0.05"></input>
                               <span class="add-on">mm</span>
                           </div>
                       </div>
-                      <div title="Support for overhangs" class="input-append">
+                      <div title="Support for overhangs" class="input-append" data-bind="visible: !_.isUndefined($data['profile.support']())">
                           <label class="control-label">Support</label>
                           <div class="controls">
-                              <select data-bind="options: $data.optionsForKey('support'), value: $data['profile.support'], valueAllowUnset: false"></select>
+                              <select data-bind="options: $data.optionsForKey('support'), value: $data['profile.support'], valueAllowUnset: true"></select>
+                          </div>
+                      </div>
+                      <div title="Generate support material" class="input-append" data-bind="visible: !_.isUndefined($data['profile.support_material']())">
+                          <label class="control-label">Supports</label>
+                          <div class="controls checkbox">
+                              <input type="checkbox" data-bind="checked: $data['profile.support_material']"></input>
+                          </div>
+                      </div>
+                      <div title="Detect Bridging Perimeters (recommended when using supports)" class="input-append" data-bind="visible: !_.isUndefined($data['profile.overhangs']())">
+                          <label class="control-label">Detect overhangs</label>
+                          <div class="controls checkbox">
+                              <input type="checkbox" data-bind="checked: $data['profile.overhangs']"></input>
                           </div>
                       </div>
                   </div>
@@ -127,55 +153,55 @@
           <form class="form-horizontal">
               <div class="row">
                   <div class="span3">
-                      <div title="Travel speed while not printing" class="input-append">
+                      <div title="Travel speed while not printing" class="input-append" data-bind="visible: !_.isUndefined($data['profile.travel_speed']())">
                           <label class="control-label">Travel speed</label>
                           <div class="controls">
                               <input data-bind="numericValue: $data['profile.travel_speed']" type="number" tabindex="-1" min="0" max="300" step="1"></input>
                               <span class="add-on">mm/s</span>
                           </div>
                       </div>
-                      <div title="Speed while printing infill" class="input-append">
+                      <div title="Speed while printing infill" class="input-append" data-bind="visible: !_.isUndefined($data['profile.infill_speed']())">
                           <label class="control-label">Infill speed</label>
                           <div class="controls">
                               <input data-bind="numericValue: $data['profile.infill_speed']" type="number" tabindex="-1" min="0" max="300" step="1"></input>
                               <span class="add-on">mm/s</span>
                           </div>
                       </div>
-                      <div title="Speed while printing outer shell" class="input-append">
+                      <div title="Speed while printing outer shell" class="input-append" data-bind="visible: !_.isUndefined($data['profile.outer_shell_speed']())">
                           <label class="control-label">Outer shell speed</label>
                           <div class="controls">
                               <input data-bind="numericValue: $data['profile.outer_shell_speed']" type="number" tabindex="-1" min="0" max="300" step="1"></input>
                               <span class="add-on">mm/s</span>
                           </div>
                       </div>
-                      <div title="Speed while printing inner shell" class="input-append">
+                      <div title="Speed while printing inner shell" class="input-append" data-bind="visible: !_.isUndefined($data['profile.inner_shell_speed']())">
                           <label class="control-label">Inner shell speed</label>
                           <div class="controls">
                               <input data-bind="numericValue: $data['profile.inner_shell_speed']" type="number" tabindex="-1" min="0" max="300" step="1"></input>
                               <span class="add-on">mm/s</span>
                           </div>
                       </div>
-                      <div title="Speed while printing Bottom layer" class="input-append">
+                      <div title="Speed while printing Bottom layer" class="input-append" data-bind="visible: !_.isUndefined($data['profile.bottom_layer_speed']())">
                           <label class="control-label">Bottom layer speed</label>
                           <div class="controls">
                               <input data-bind="numericValue: $data['profile.bottom_layer_speed']" type="number" tabindex="-1" min="0" max="300" step="1"></input>
                               <span class="add-on">mm/s</span>
                           </div>
                       </div>
-                      <div title="Enable filament retraction" class="input-append">
+                      <div title="Enable filament retraction" class="input-append" data-bind="visible: !_.isUndefined($data['profile.retraction_enable']())">
                           <label class="control-label">Retraction</label>
                           <div class="controls checkbox">
                               <input type="checkbox" data-bind="checked: $data['profile.retraction_enable']"></input>
                           </div>
                       </div>
-                      <div title="Filament retraction speed" class="input-append">
+                      <div title="Filament retraction speed" class="input-append" data-bind="visible: !_.isUndefined($data['profile.retraction_enable']())">
                           <label class="control-label">Retraction speed</label>
                           <div class="controls">
                               <input data-bind="numericValue: $data['profile.retraction_speed'], enable: $data['profile.retraction_enable']" type="number" tabindex="-1" min="0" max="300" step="1"></input>
                               <span class="add-on">mm/s</span>
                           </div>
                       </div>
-                      <div title="Filament retraction distance" class="input-append">
+                      <div title="Filament retraction distance" class="input-append" data-bind="visible: !_.isUndefined($data['profile.retraction_enable']())">
                           <label class="control-label">Retraction distance</label>
                           <div class="controls">
                               <input data-bind="numericValue: $data['profile.retraction_amount'], enable: $data['profile.retraction_enable']" type="number" tabindex="-1" min="0" max="30" step="0.1"></input>
@@ -184,30 +210,42 @@
                       </div>
                   </div>
                   <div class="span3">
-                      <div title="Platform adhesion type" class="input-append">
+                      <div title="Platform adhesion type" class="input-append" data-bind="visible: !_.isUndefined($data['profile.platform_adhesion']())">
                           <label class="control-label">Adhension</label>
                           <div class="controls">
-                            <select data-bind="options: $data.optionsForKey('platform_adhesion'), value: $data['profile.platform_adhesion'], valueAllowUnset: false"></select>
+                            <select data-bind="options: $data.optionsForKey('platform_adhesion'), value: $data['profile.platform_adhesion'], valueAllowUnset: true"></select>
                           </div>
                       </div>
-                      <div title="Filament Diameter" class="input-append">
+                      <div title="Filament Diameter" class="input-append" data-bind="visible: !_.isUndefined($data['profile.filament_diameter']())">
                           <label class="control-label">Filament</label>
                           <div class="controls">
                               <input data-bind="numericValue: $data['profile.filament_diameter']" type="number" tabindex="-1" min="0" max="100" step="0.01"></input>
                               <span class="add-on">mm</span>
                           </div>
                       </div>
-                      <div title="Filament Flow" class="input-append">
-                          <label class="control-label">Flow</label>
+                      <div title="Filament Flow" class="input-append" data-bind="visible: !_.isUndefined($data['profile.filament_flow']())">
+                          <label class="control-label">Filament Flow</label>
                           <div class="controls">
-                              <input data-bind="numericValue: $data['profile.filament_flow']" type="number" tabindex="-1" min="0" max="100" step="0.1"></input>
+                              <input data-bind="numericValue: $data['profile.filament_flow']" type="number" tabindex="-1" min="0" max="200" step="0.1"></input>
                               <span class="add-on">%</span>
                           </div>
                       </div>
-                      <div title="Enable cooling fan" class="input-append">
+                      <div title="Enable cooling fan" class="input-append" data-bind="visible: !_.isUndefined($data['profile.fan_enabled']())">
                           <label class="control-label">Cooling fan</label>
                           <div class="controls checkbox">
                               <input type="checkbox" data-bind="checked: $data['profile.fan_enabled']"></input>
+                          </div>
+                      </div>
+                      <div title="Extrusion Multiplier" class="input-append" data-bind="visible: !_.isUndefined($data['profile.extrusion_multiplier']())">
+                          <label class="control-label">Flow Multiplier</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.extrusion_multiplier']" type="number" tabindex="-1" min="0" max="2" step="0.001"></input>
+                          </div>
+                      </div>
+                      <div title="Cooling" class="input-append" data-bind="visible: !_.isUndefined($data['profile.cooling']())">
+                          <label class="control-label">Cooling</label>
+                          <div class="controls checkbox">
+                              <input type="checkbox" data-bind="checked: $data['profile.cooling']"></input>
                           </div>
                       </div>
                   </div>
