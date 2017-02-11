@@ -109,11 +109,11 @@ $(function() {
         self.effectController = {
             metalness: 0.5,
             roughness: 0.5,
-            modelInactiveColor: new THREE.Color("#3d4d36"),
-            modelActiveColor: new THREE.Color("#3ee610"),
+            modelInactiveColor: new THREE.Color("#304d26"),
+            modelActiveColor: new THREE.Color("#56ff19"),
 
-            modelInactiveCollidingColor: new THREE.Color("#4d3636"),
-            modelActiveCollidingColor: new THREE.Color("#e61010"),
+            modelInactiveCollidingColor: new THREE.Color("#4d2626"),
+            modelActiveCollidingColor: new THREE.Color("#ff1919"),
 
             ambientLightColor: new THREE.Color("#2b2b2b"),
             directionalLightColor: new THREE.Color("#ffffff"),
