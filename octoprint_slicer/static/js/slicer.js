@@ -46,7 +46,7 @@ $(function() {
 
         // Override slicingViewModel.show to surpress default slicing behavior
         self.slicingViewModel.show = function(target, file, force) {
-	    if (self.stlFiles.length == 0) {
+            if (self.stlFiles.length == 0) {
                 // This is the first model.
                 self.slicingViewModel.requestData();
                 self.slicingViewModel.target = target;
@@ -109,8 +109,8 @@ $(function() {
         self.effectController = {
             metalness: 0.5,
             roughness: 0.5,
-	    modelInactiveColor: new THREE.Color("#3d4d36"),
-	    modelActiveColor: new THREE.Color("#3ee610"),
+            modelInactiveColor: new THREE.Color("#3d4d36"),
+            modelActiveColor: new THREE.Color("#3ee610"),
 
             modelInactiveCollidingColor: new THREE.Color("#4d3636"),
             modelActiveCollidingColor: new THREE.Color("#e61010"),
@@ -297,12 +297,12 @@ $(function() {
         };
 
         self.isStlFileActive = function(stlFile) {
-	    return stlFile.model.children[0].material.color.equals(self.effectController.modelActiveColor) ||
+            return stlFile.model.children[0].material.color.equals(self.effectController.modelActiveColor) ||
                 stlFile.model.children[0].material.color.equals(self.effectController.modelActiveCollidingColor);
-	};
+        };
 
-	self.isStlFileColliding = function(stlFile) {
-	    return stlFile.model.children[0].material.color.equals(self.effectController.modelActiveCollidingColor) ||
+        self.isStlFileColliding = function(stlFile) {
+            return stlFile.model.children[0].material.color.equals(self.effectController.modelActiveCollidingColor) ||
                 stlFile.model.children[0].material.color.equals(self.effectController.modelInactiveCollidingColor);
         };
 
@@ -313,19 +313,19 @@ $(function() {
                 if (otherStlFile == stlFile) {
                     if (!self.isStlFileActive(otherStlFile)) {
                         if (self.isStlFileColliding(otherStlFile)) {
-		            otherStlFile.model.children[0].material.color.copy(self.effectController.modelActiveCollidingColor);
+                            otherStlFile.model.children[0].material.color.copy(self.effectController.modelActiveCollidingColor);
                         } else {
-		            otherStlFile.model.children[0].material.color.copy(self.effectController.modelActiveColor);
+                            otherStlFile.model.children[0].material.color.copy(self.effectController.modelActiveColor);
                         }
-		        newActiveStl = true;
+                        newActiveStl = true;
                     }
                 } else {
                     if (self.isStlFileColliding(otherStlFile)) {
-		        otherStlFile.model.children[0].material.color.copy(self.effectController.modelInactiveCollidingColor);
+                        otherStlFile.model.children[0].material.color.copy(self.effectController.modelInactiveCollidingColor);
                     } else {
-		        otherStlFile.model.children[0].material.color.copy(self.effectController.modelInactiveColor);
+                        otherStlFile.model.children[0].material.color.copy(self.effectController.modelInactiveColor);
                     }
-		}
+                }
             });
             if (newActiveStl) {
                 self.transformControls.attach(stlFile.model);
@@ -356,17 +356,17 @@ $(function() {
                 var stlFile = self.stlFiles[i];
                 if (self.isStlFileActive(stlFile)) {
                     if (collisions[i] === true) {
-	                updateColor(stlFile, self.effectController.modelActiveCollidingColor);
+                        updateColor(stlFile, self.effectController.modelActiveCollidingColor);
                     } else if (collisions[i] === false) {
-	                updateColor(stlFile, self.effectController.modelActiveColor);
+                        updateColor(stlFile, self.effectController.modelActiveColor);
                     }
                 } else {
                     if (collisions[i] === true) {
-	                updateColor(stlFile, self.effectController.modelInactiveCollidingColor);
+                        updateColor(stlFile, self.effectController.modelInactiveCollidingColor);
                     } else if (collisions[i] === false) {
-	                updateColor(stlFile, self.effectController.modelInactiveColor);
+                        updateColor(stlFile, self.effectController.modelInactiveColor);
                     }
-	        }
+                }
             }
             if (changes) {
                 self.render();
@@ -432,11 +432,11 @@ $(function() {
             var loader = new THREE.STLLoader();
             return loader.load(BASEURL + "downloads/files/" + target + "/" + file, function ( geometry ) {
                 var material = new THREE.MeshStandardMaterial({
-	            color: self.effectController.modelInactiveColor,  // We'll mark it active below.
-	            shading: THREE.SmoothShading,
-	            side: THREE.DoubleSide,
-	            metalness: self.effectController.metalness,
-	            roughness: self.effectController.roughness });
+                    color: self.effectController.modelInactiveColor,  // We'll mark it active below.
+                    shading: THREE.SmoothShading,
+                    side: THREE.DoubleSide,
+                    metalness: self.effectController.metalness,
+                    roughness: self.effectController.roughness });
 
                 // center model's origin
                 var stlModel = new THREE.Mesh( geometry, material );
@@ -450,11 +450,11 @@ $(function() {
                                model: model};
                 self.stlFiles.push(stlFile);
                 self.slicingViewModel.destinationFilename(
-	            self.computeDestinationFilename(
-		        _.map(self.stlFiles, function(m) {
-		            return m.file;
-		        })));
-	        self.setStlFileActive(stlFile);
+                    self.computeDestinationFilename(
+                        _.map(self.stlFiles, function(m) {
+                            return m.file;
+                        })));
+                self.setStlFileActive(stlFile);
                 self.scene.add(model);
                 self.render();
                 self.startCollisionDetection();
@@ -701,7 +701,7 @@ $(function() {
             } else {
                 var form = new FormData();
                 var extensionPosition = self.slicingViewModel.file().lastIndexOf(".")
-	        var newFilename = self.slicingViewModel.destinationFilename() +
+                var newFilename = self.slicingViewModel.destinationFilename() +
                     ".tmp." + (+ new Date()) +
                     self.slicingViewModel.file().substring(extensionPosition);
                 var group = new THREE.Group();
