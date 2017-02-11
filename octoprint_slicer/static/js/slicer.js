@@ -10,7 +10,7 @@ $(function() {
     function SlicerViewModel(parameters) {
         var self = this;
         self.canvas = document.getElementById( 'slicer-canvas' );
-	self.stlFiles = [];
+        self.stlFiles = [];
 
         //check if webGL is present. If not disable Slicer plugin
         try {
@@ -32,30 +32,30 @@ $(function() {
 
         self.lockScale = true;
 
-	// Returns the destination filename based on which models are loaded.
-	// The destination filename is without the final .gco on it because
-	// that will depend on the slicer.
-	self.computeDestinationFilename = function(inputFilenames) {
-	    // TODO: For now, just use the first model's name.
-	    var destinationFilename = inputFilenames[0].substr(0, inputFilenames[0].lastIndexOf("."));
-	    if (destinationFilename.lastIndexOf("/") != 0) {
+        // Returns the destination filename based on which models are loaded.
+        // The destination filename is without the final .gco on it because
+        // that will depend on the slicer.
+        self.computeDestinationFilename = function(inputFilenames) {
+            // TODO: For now, just use the first model's name.
+            var destinationFilename = inputFilenames[0].substr(0, inputFilenames[0].lastIndexOf("."));
+            if (destinationFilename.lastIndexOf("/") != 0) {
                 destinationFilename = destinationFilename.substr(destinationFilename.lastIndexOf("/") + 1);
-	    }
-	    return destinationFilename;
-	}
+            }
+            return destinationFilename;
+        }
 
         // Override slicingViewModel.show to surpress default slicing behavior
         self.slicingViewModel.show = function(target, file, force) {
 	    if (self.stlFiles.length == 0) {
-		// This is the first model.
-		self.slicingViewModel.requestData();
-		self.slicingViewModel.target = target;
-		self.slicingViewModel.file(file); // TODO: Do we need to fix this?
-		self.slicingViewModel.printerProfile(self.slicingViewModel.printerProfiles.currentProfile());
-		self.stlModified = false;
-	    } else {
-	    	self.stlModified = true;
-	    }
+                // This is the first model.
+                self.slicingViewModel.requestData();
+                self.slicingViewModel.target = target;
+                self.slicingViewModel.file(file); // TODO: Do we need to fix this?
+                self.slicingViewModel.printerProfile(self.slicingViewModel.printerProfiles.currentProfile());
+                self.stlModified = false;
+            } else {
+                self.stlModified = true;
+            }
             $('a[href="#tab_plugin_slicer"]').tab('show');
             self.loadSTL(target, file, force);
         };
@@ -108,15 +108,15 @@ $(function() {
 
         self.effectController = {
             metalness: 0.5,
-	    roughness: 0.5,
+            roughness: 0.5,
 	    modelInactiveColor: new THREE.Color("#3d4d36"),
 	    modelActiveColor: new THREE.Color("#3ee610"),
 
             modelInactiveCollidingColor: new THREE.Color("#4d3636"),
             modelActiveCollidingColor: new THREE.Color("#e61010"),
 
-	    ambientLightColor: new THREE.Color("#2b2b2b"),
-	    directionalLightColor: new THREE.Color("#ffffff"),
+            ambientLightColor: new THREE.Color("#2b2b2b"),
+            directionalLightColor: new THREE.Color("#ffffff"),
         };
 
         self.init = function() {
@@ -225,12 +225,12 @@ $(function() {
                 self.toggleValueInputs($("#slicer-viewport .rotate.values div"));
             });
             $("#slicer-viewport button.scale").click(function(event) {
-		// Set selection mode to scale
-		self.transformControls.setMode("scale");
+                // Set selection mode to scale
+                self.transformControls.setMode("scale");
                 self.toggleValueInputs($("#slicer-viewport .scale.values div"));
             });
             $("#slicer-viewport button.remove").click(function(event) {
-		// Remove the currently selected object.
+                // Remove the currently selected object.
                 self.removeSTL();
             });
             $("#slicer-viewport button.arrange").click(function(event) {
@@ -258,45 +258,45 @@ $(function() {
                 }
             });
 
-	    self.canvas.addEventListener("click", function(e) {
-		var rect = self.canvas.getBoundingClientRect();
-		var x = (e.clientX - rect.left) / rect.width;
-		var y = (e.clientY - rect.top) / rect.height;
+            self.canvas.addEventListener("click", function(e) {
+                var rect = self.canvas.getBoundingClientRect();
+                var x = (e.clientX - rect.left) / rect.width;
+                var y = (e.clientY - rect.top) / rect.height;
 
-		var pointerVector = new THREE.Vector2();
-		pointerVector.set((x*2) - 1, -(y*2) + 1);
-		var ray = new THREE.Raycaster();
-		ray.setFromCamera(pointerVector, self.camera);
+                var pointerVector = new THREE.Vector2();
+                pointerVector.set((x*2) - 1, -(y*2) + 1);
+                var ray = new THREE.Raycaster();
+                ray.setFromCamera(pointerVector, self.camera);
 
-		// Clicking should cycle through the stlFiles if there are multiple under the cursor.
-		var foundActiveStlFile = false;
-		var nextPointedStlFile = undefined;
-		var firstPointedStlFile = undefined;
-		for (var i = 0; i < self.stlFiles.length; i++) {
-		    var stlFile = self.stlFiles[i];
-		    var intersections = ray.intersectObjects( [stlFile.model], true );
-		    if (!intersections[0]) {
-			continue;
-		    }
-		    if (!firstPointedStlFile) {
-			firstPointedStlFile = stlFile;
-		    }
-		    if (foundActiveStlFile && !nextPointedStlFile) {
-			nextPointedStlFile = stlFile;
-		    }
-		    if (self.isStlFileActive(stlFile)) {
-			foundActiveStlFile = true;
-		    }
-		}
-		if (nextPointedStlFile) {
-		    self.setStlFileActive(nextPointedStlFile);
-		} else if (firstPointedStlFile) {
-		    self.setStlFileActive(firstPointedStlFile);
-		}
-	    });
+                // Clicking should cycle through the stlFiles if there are multiple under the cursor.
+                var foundActiveStlFile = false;
+                var nextPointedStlFile = undefined;
+                var firstPointedStlFile = undefined;
+                for (var i = 0; i < self.stlFiles.length; i++) {
+                    var stlFile = self.stlFiles[i];
+                    var intersections = ray.intersectObjects( [stlFile.model], true );
+                    if (!intersections[0]) {
+                        continue;
+                    }
+                    if (!firstPointedStlFile) {
+                        firstPointedStlFile = stlFile;
+                    }
+                    if (foundActiveStlFile && !nextPointedStlFile) {
+                        nextPointedStlFile = stlFile;
+                    }
+                    if (self.isStlFileActive(stlFile)) {
+                        foundActiveStlFile = true;
+                    }
+                }
+                if (nextPointedStlFile) {
+                    self.setStlFileActive(nextPointedStlFile);
+                } else if (firstPointedStlFile) {
+                    self.setStlFileActive(firstPointedStlFile);
+                }
+            });
         };
 
-	self.isStlFileActive = function(stlFile) {
+        self.isStlFileActive = function(stlFile) {
 	    return stlFile.model.children[0].material.color.equals(self.effectController.modelActiveColor) ||
                 stlFile.model.children[0].material.color.equals(self.effectController.modelActiveCollidingColor);
 	};
@@ -304,34 +304,34 @@ $(function() {
 	self.isStlFileColliding = function(stlFile) {
 	    return stlFile.model.children[0].material.color.equals(self.effectController.modelActiveCollidingColor) ||
                 stlFile.model.children[0].material.color.equals(self.effectController.modelInactiveCollidingColor);
-	};
+        };
 
-	self.setStlFileActive = function(stlFile) {
+        self.setStlFileActive = function(stlFile) {
             // Sets one file active and inactivates all the others.
-	    var newActiveStl = false;
-	    _.forEach(self.stlFiles, function (otherStlFile) {
-		if (otherStlFile == stlFile) {
-		    if (!self.isStlFileActive(otherStlFile)) {
+            var newActiveStl = false;
+            _.forEach(self.stlFiles, function (otherStlFile) {
+                if (otherStlFile == stlFile) {
+                    if (!self.isStlFileActive(otherStlFile)) {
                         if (self.isStlFileColliding(otherStlFile)) {
 		            otherStlFile.model.children[0].material.color.copy(self.effectController.modelActiveCollidingColor);
                         } else {
 		            otherStlFile.model.children[0].material.color.copy(self.effectController.modelActiveColor);
                         }
 		        newActiveStl = true;
-		    }
-		} else {
+                    }
+                } else {
                     if (self.isStlFileColliding(otherStlFile)) {
 		        otherStlFile.model.children[0].material.color.copy(self.effectController.modelInactiveCollidingColor);
                     } else {
 		        otherStlFile.model.children[0].material.color.copy(self.effectController.modelInactiveColor);
                     }
 		}
-	    });
-	    if (newActiveStl) {
-		self.transformControls.attach(stlFile.model);
-		//self.transformControls.setMode("rotate");
-		self.updateTransformInputs();
-	    }
+            });
+            if (newActiveStl) {
+                self.transformControls.attach(stlFile.model);
+                //self.transformControls.setMode("rotate");
+                self.updateTransformInputs();
+            }
             if (!stlFile) {
                 $("#slicer-viewport .values div").removeClass("show")
                 $("#slicer-viewport button").addClass("disabled");
@@ -339,7 +339,7 @@ $(function() {
                 $("#slicer-viewport button").removeClass("disabled");
             }
             self.render();
-	};
+        };
 
         // collisions is an array of true/false/undefined.  true means
         // colliding, false means no, undefined means that we haven't
@@ -637,20 +637,20 @@ $(function() {
             model.position.z = -boundaryBox.min.z;
         }
 
-	self.tempFiles = {};
-	self.removeTempFilesAfterSlicing = function (event) {
-	    if ($.inArray(event.data.type, ["SlicingDone", "SlicingFailed"]) >= 0 &&
-		event.data.payload.stl in self.tempFiles) {
-		OctoPrint.files.delete(event.data.payload.stl_location,
-				       event.data.payload.stl);
-		delete self.tempFiles[event.data.payload.stl];
-	    }
-	}
+        self.tempFiles = {};
+        self.removeTempFilesAfterSlicing = function (event) {
+            if ($.inArray(event.data.type, ["SlicingDone", "SlicingFailed"]) >= 0 &&
+                event.data.payload.stl in self.tempFiles) {
+                OctoPrint.files.delete(event.data.payload.stl_location,
+                    event.data.payload.stl);
+                delete self.tempFiles[event.data.payload.stl];
+            }
+        }
 
-	OctoPrint.socket.onMessage("event", self.removeTempFilesAfterSlicing);
+        OctoPrint.socket.onMessage("event", self.removeTempFilesAfterSlicing);
 
-	self.sendSliceCommand = function(filename, group) {
-	    var slicingVM = self.slicingViewModel;
+        self.sendSliceCommand = function(filename, group) {
+            var slicingVM = self.slicingViewModel;
 
             var destinationFilename = slicingVM._sanitize(slicingVM.destinationFilename());
 
@@ -662,10 +662,10 @@ $(function() {
             })) {
                 destinationFilename = destinationFilename + "." + destinationExtensions[0];
             }
-	    var groupCenter = new THREE.Vector3(0,0,0);
-	    if (group) {
-		groupCenter = new THREE.Box3().setFromObject(group).center();
-	    }
+            var groupCenter = new THREE.Vector3(0,0,0);
+            if (group) {
+                groupCenter = new THREE.Box3().setFromObject(group).center();
+            }
             var data = {
                 command: "slice",
                 slicer: slicingVM.slicer(),
@@ -673,7 +673,7 @@ $(function() {
                 printerProfile: slicingVM.printerProfile(),
                 destination: destinationFilename,
                 position: { "x": self.ORIGIN_OFFSET_X_MM + groupCenter.x,
-                            "y": self.ORIGIN_OFFSET_Y_MM + groupCenter.y}
+                    "y": self.ORIGIN_OFFSET_Y_MM + groupCenter.y}
             };
             _.extend(data, self.basicOverridesViewModel.toJS());
             _.extend(data, self.advancedOverridesViewModel.toJS());
@@ -688,29 +688,29 @@ $(function() {
                 type: "POST",
                 dataType: "json",
                 contentType: "application/json; charset=UTF-8",
-		data: JSON.stringify(data),
-		error: function(jqXHR, textStatus) {
-		    new PNotify({title: "Slicing failed", text: textStatus, type: "error", hide: false});
-		}
+                data: JSON.stringify(data),
+                error: function(jqXHR, textStatus) {
+                    new PNotify({title: "Slicing failed", text: textStatus, type: "error", hide: false});
+                }
             });
         };
 
         self.slice = function() {
-	    if (!self.stlModified) {
-		self.sendSliceCommand(self.slicingViewModel.file());
-	    } else {
-		var form = new FormData();
-		var extensionPosition = self.slicingViewModel.file().lastIndexOf(".")
+            if (!self.stlModified) {
+                self.sendSliceCommand(self.slicingViewModel.file());
+            } else {
+                var form = new FormData();
+                var extensionPosition = self.slicingViewModel.file().lastIndexOf(".")
 	        var newFilename = self.slicingViewModel.destinationFilename() +
-		    ".tmp." + (+ new Date()) +
-		    self.slicingViewModel.file().substring(extensionPosition);
-		var group = new THREE.Group();
-		_.forEach(self.stlFiles, function (stlFile) {
-		    var modelCopy = stlFile.model.clone(true);
-		    group.add(modelCopy);
-		});
-		form.append("file", self.blobFromModel(group), newFilename);
-		$.ajax({
+                    ".tmp." + (+ new Date()) +
+                    self.slicingViewModel.file().substring(extensionPosition);
+                var group = new THREE.Group();
+                _.forEach(self.stlFiles, function (stlFile) {
+                    var modelCopy = stlFile.model.clone(true);
+                    group.add(modelCopy);
+                });
+                form.append("file", self.blobFromModel(group), newFilename);
+                $.ajax({
                     url: API_BASEURL + "files/local",
                     type: "POST",
                     data: form,
@@ -718,19 +718,19 @@ $(function() {
                     contentType: false,
                     // On success
                     success: function(data) {
-			self.tempFiles[newFilename] = 1;
-			self.sendSliceCommand(newFilename, group);
+                        self.tempFiles[newFilename] = 1;
+                        self.sendSliceCommand(newFilename, group);
                     },
                     error: function(jqXHR, textStatus) {
-	                new PNotify({title: "Slicing failed", text: textStatus, type: "error", hide: false});
-	            }
-		});
-	    }
+                        new PNotify({title: "Slicing failed", text: textStatus, type: "error", hide: false});
+                    }
+                });
+            }
         };
 
         self.blobFromModel = function( model ) {
-    	    var exporter = new THREE.STLBinaryExporter();
-    	    return new Blob([exporter.parse(model)], {type: "text/plain"});
+            var exporter = new THREE.STLBinaryExporter();
+            return new Blob([exporter.parse(model)], {type: "text/plain"});
         };
 
         self.render = function() {
@@ -741,16 +741,16 @@ $(function() {
 
 
 
-	self.isPrinting = ko.computed(function () {
-	    return self.printerStateViewModel.isPrinting() ||
-		self.printerStateViewModel.isPaused();
-	});
+        self.isPrinting = ko.computed(function () {
+            return self.printerStateViewModel.isPrinting() ||
+                self.printerStateViewModel.isPaused();
+        });
 
-	self.canSliceNow = ko.computed(function () {
+        self.canSliceNow = ko.computed(function () {
             // TODO: We should be checking for same_device here, too.
-	    return self.slicingViewModel.enableSliceButton() &&
-		!self.isPrinting();
-	});
+            return self.slicingViewModel.enableSliceButton() &&
+                !self.isPrinting();
+        });
 
         self.init();
         self.render();
