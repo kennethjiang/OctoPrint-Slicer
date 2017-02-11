@@ -245,17 +245,17 @@ $(function() {
 
             window.addEventListener( 'keydown', function ( event ) {
                 switch ( event.keyCode ) {
-                case 17: // Ctrl
-                    self.transformControls.setRotationSnap(null);
-                    break;
+                    case 17: // Ctrl
+                        self.transformControls.setRotationSnap(null);
+                        break;
                 }
             });
 
             window.addEventListener( 'keyup', function ( event ) {
                 switch ( event.keyCode ) {
-                case 17: // Ctrl
-                    self.transformControls.setRotationSnap( THREE.Math.degToRad( 15 ) );
-                    break;
+                    case 17: // Ctrl
+                        self.transformControls.setRotationSnap( THREE.Math.degToRad( 15 ) );
+                        break;
                 }
             });
 
@@ -544,18 +544,18 @@ $(function() {
             var textWidth = textGeometry.boundingBox.max.x - textGeometry.boundingBox.min.x;
             var textHeight = textGeometry.boundingBox.max.y - textGeometry.boundingBox.min.y;
             switch (text) {
-            case "Front":
-                mesh.position.set(-textWidth/2.0, -depth/2.0, 1.0);
-                break;
-            case "Back":
-                mesh.position.set(-textWidth/2.0, depth/2.0-textHeight, 1.0);
-                break;
-            case "Left":
-                mesh.position.set(-width/2.0, -textHeight/2, 1.0);
-                break;
-            case "Right":
-                mesh.position.set(width/2.0-textWidth, -textHeight/2, 1.0);
-                break;
+                case "Front":
+                    mesh.position.set(-textWidth/2.0, -depth/2.0, 1.0);
+                    break;
+                case "Back":
+                    mesh.position.set(-textWidth/2.0, depth/2.0-textHeight, 1.0);
+                    break;
+                case "Left":
+                    mesh.position.set(-width/2.0, -textHeight/2, 1.0);
+                    break;
+                case "Right":
+                    mesh.position.set(width/2.0-textWidth, -textHeight/2, 1.0);
+                    break;
             }
             parentObj.add(mesh);
         };
@@ -643,7 +643,7 @@ $(function() {
             if ($.inArray(event.data.type, ["SlicingDone", "SlicingFailed"]) >= 0 &&
                 event.data.payload.stl in self.tempFiles) {
                 OctoPrint.files.delete(event.data.payload.stl_location,
-                    event.data.payload.stl);
+                                       event.data.payload.stl);
                 delete self.tempFiles[event.data.payload.stl];
             }
         }
@@ -674,7 +674,7 @@ $(function() {
                 printerProfile: slicingVM.printerProfile(),
                 destination: destinationFilename,
                 position: { "x": self.ORIGIN_OFFSET_X_MM + groupCenter.x,
-                    "y": self.ORIGIN_OFFSET_Y_MM + groupCenter.y}
+                            "y": self.ORIGIN_OFFSET_Y_MM + groupCenter.y}
             };
             _.extend(data, self.basicOverridesViewModel.toJS());
             _.extend(data, self.advancedOverridesViewModel.toJS());
@@ -739,8 +739,6 @@ $(function() {
             self.transformControls.update();
             self.renderer.render( self.scene, self.camera );
         };
-
-
 
         self.isPrinting = ko.computed(function () {
             return self.printerStateViewModel.isPrinting() ||
