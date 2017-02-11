@@ -149,22 +149,23 @@ $(function() {
             self.renderer.gammaInput = true;
             self.renderer.gammaOutput = true;
 
-            $("#slicer-viewport").empty().append('<div class="model">\
+            $("#slicer-viewport").empty().append(
+                '<div class="model">\
                     <button class="translate disabled" title="Move"><img src="'
-                                                 + PLUGIN_BASEURL
-                                                 + 'slicer/static/img/translate.png"></button>\
+                    + PLUGIN_BASEURL
+                    + 'slicer/static/img/translate.png"></button>\
                     <button class="rotate disabled" title="Rotate"><img src="'
-                                                 + PLUGIN_BASEURL
-                                                 + 'slicer/static/img/rotate.png"></button>\
+                    + PLUGIN_BASEURL
+                    + 'slicer/static/img/rotate.png"></button>\
                     <button class="scale disabled" title="Scale"><img src="'
-                                                 + PLUGIN_BASEURL
-                                                 + 'slicer/static/img/scale.png"></button>\
+                    + PLUGIN_BASEURL
+                    + 'slicer/static/img/scale.png"></button>\
                     <button class="remove disabled" title="Remove"><img src="'
-                                                 + PLUGIN_BASEURL
-                                                 + 'slicer/static/img/remove.png"></button>\
+                    + PLUGIN_BASEURL
+                    + 'slicer/static/img/remove.png"></button>\
                     <button class="arrange" title="Arrange"><img src="'
-                                                 + PLUGIN_BASEURL
-                                                 + 'slicer/static/img/arrange.png"></button>\
+                    + PLUGIN_BASEURL
+                    + 'slicer/static/img/arrange.png"></button>\
                 </div>\
                 <div class="values translate">\
                     <div>\
