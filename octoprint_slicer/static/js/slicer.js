@@ -46,6 +46,7 @@ $(function() {
 
         // Override slicingViewModel.show to surpress default slicing behavior
         self.slicingViewModel.show = function(target, file, force) {
+            mixpanel.track("Load STL");
             self.stlFiles.push({target: target, file: file, force: force});
             if (self.stlFiles.length == 1) {
                 // This is the first model.
@@ -620,6 +621,7 @@ $(function() {
         };
 
         self.slice = function() {
+            mixpanel.track("Slice Model");
             if (!self.stlModified) {
                 self.sendSliceCommand(self.slicingViewModel.file());
             } else {
