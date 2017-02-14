@@ -13,11 +13,7 @@ $(function() {
         self.stlFiles = [];
 
         //check if webGL is present. If not disable Slicer plugin
-        try {
-            var ctx = self.canvas.getContext('webgl') || self.canvas.getContext('experimental-webgl');
-            var exts = ctx.getSupportedExtensions();
-        }
-        catch (e) {
+        if ( ! Detector.webgl ) {
             $('#tab_plugin_slicer').empty().append("<h3>Slicer Plugin is disabled because your browser doesn't support WebGL</h3>");
             return;
         }
