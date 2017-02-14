@@ -395,7 +395,9 @@ $(function() {
         self.arrangeModels = new ArrangeModels();
         self.arrange = function(margin, timeoutMilliseconds, forceStartOver = false) {
             var renderFn = function () {
+                self.stlModified = true;
                 self.updateTransformInputs();
+                self.startCollisionDetection();
                 self.render();
             }
             var arrangeResult = self.arrangeModels.arrange(
