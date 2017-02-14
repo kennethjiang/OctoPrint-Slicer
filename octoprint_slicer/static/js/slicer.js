@@ -47,8 +47,7 @@ $(function() {
         // Override slicingViewModel.show to surpress default slicing behavior
         self.slicingViewModel.show = function(target, file, force) {
             mixpanel.track("Load STL");
-            self.stlFiles.push({target: target, file: file, force: force});
-            if (self.stlFiles.length == 1) {
+            if (self.stlFiles.length == 0) {
                 // This is the first model.
                 self.slicingViewModel.requestData();
                 self.slicingViewModel.target = target;
@@ -58,13 +57,8 @@ $(function() {
             } else {
                 self.stlModified = true;
             }
-            self.slicingViewModel.destinationFilename(
-                self.computeDestinationFilename(
-                    _.map(self.stlFiles, function(m) {
-                        return m.file;
-                    })));
             $('a[href="#tab_plugin_slicer"]').tab('show');
-            self.loadSTL(target, file, force, self.stlFiles[self.stlFiles.length-1]);
+            self.loadSTL(target, file, force);
         };
 
         // Print bed size
@@ -116,8 +110,12 @@ $(function() {
         self.effectController = {
             metalness: 0.5,
             roughness: 0.5,
-            modelInactiveColor: new THREE.Color("#60715b"),
-            modelActiveColor: new THREE.Color("#34bf0d"),
+            modelInactiveColor: new THREE.Color("#304d26"),
+            modelActiveColor: new THREE.Color("#56ff19"),
+
+            modelInactiveCollidingColor: new THREE.Color("#4d2626"),
+            modelActiveCollidingColor: new THREE.Color("#ff1919"),
+
             ambientLightColor: new THREE.Color("#2b2b2b"),
             directionalLightColor: new THREE.Color("#ffffff"),
         };
@@ -152,22 +150,23 @@ $(function() {
             self.renderer.gammaInput = true;
             self.renderer.gammaOutput = true;
 
-            $("#slicer-viewport").empty().append('<div class="model">\
+            $("#slicer-viewport").empty().append(
+                '<div class="model">\
                     <button class="translate disabled" title="Move"><img src="'
-                + PLUGIN_BASEURL
-                + 'slicer/static/img/translate.png"></button>\
+                    + PLUGIN_BASEURL
+                    + 'slicer/static/img/translate.png"></button>\
                     <button class="rotate disabled" title="Rotate"><img src="'
-                + PLUGIN_BASEURL
-                + 'slicer/static/img/rotate.png"></button>\
+                    + PLUGIN_BASEURL
+                    + 'slicer/static/img/rotate.png"></button>\
                     <button class="scale disabled" title="Scale"><img src="'
-                + PLUGIN_BASEURL
-                + 'slicer/static/img/scale.png"></button>\
+                    + PLUGIN_BASEURL
+                    + 'slicer/static/img/scale.png"></button>\
                     <button class="remove disabled" title="Remove"><img src="'
-                + PLUGIN_BASEURL
-                + 'slicer/static/img/remove.png"></button>\
+                    + PLUGIN_BASEURL
+                    + 'slicer/static/img/remove.png"></button>\
                     <button class="arrange" title="Arrange"><img src="'
-                + PLUGIN_BASEURL
-                + 'slicer/static/img/arrange.png"></button>\
+                    + PLUGIN_BASEURL
+                    + 'slicer/static/img/arrange.png"></button>\
                 </div>\
                 <div class="values translate">\
                     <div>\
@@ -210,7 +209,10 @@ $(function() {
             self.transformControls.addEventListener("mouseDown", self.startTransform);
             self.transformControls.addEventListener("mouseUp", self.endTransform);
             self.transformControls.addEventListener("change", self.updateTransformInputs);
-            self.transformControls.addEventListener("objectChange", function (e) {self.stlModified = true});
+            self.transformControls.addEventListener("objectChange", function (e) {
+                self.stlModified = true;
+                self.startCollisionDetection();
+            });
             self.scene.add(self.transformControls);
             self.updatePrinterBed();
 
@@ -297,7 +299,13 @@ $(function() {
         };
 
         self.isStlFileActive = function(stlFile) {
-            return stlFile.model.children[0].material.color.equals(self.effectController.modelActiveColor);
+            return stlFile.model.children[0].material.color.equals(self.effectController.modelActiveColor) ||
+                stlFile.model.children[0].material.color.equals(self.effectController.modelActiveCollidingColor);
+        };
+
+        self.isStlFileColliding = function(stlFile) {
+            return stlFile.model.children[0].material.color.equals(self.effectController.modelActiveCollidingColor) ||
+                stlFile.model.children[0].material.color.equals(self.effectController.modelInactiveCollidingColor);
         };
 
         self.setStlFileActive = function(stlFile) {
@@ -306,11 +314,19 @@ $(function() {
             _.forEach(self.stlFiles, function (otherStlFile) {
                 if (otherStlFile == stlFile) {
                     if (!self.isStlFileActive(otherStlFile)) {
-                        otherStlFile.model.children[0].material.color.copy(self.effectController.modelActiveColor);
+                        if (self.isStlFileColliding(otherStlFile)) {
+                            otherStlFile.model.children[0].material.color.copy(self.effectController.modelActiveCollidingColor);
+                        } else {
+                            otherStlFile.model.children[0].material.color.copy(self.effectController.modelActiveColor);
+                        }
                         newActiveStl = true;
                     }
                 } else {
-                    otherStlFile.model.children[0].material.color.copy(self.effectController.modelInactiveColor);
+                    if (self.isStlFileColliding(otherStlFile)) {
+                        otherStlFile.model.children[0].material.color.copy(self.effectController.modelInactiveCollidingColor);
+                    } else {
+                        otherStlFile.model.children[0].material.color.copy(self.effectController.modelInactiveColor);
+                    }
                 }
             });
             if (newActiveStl) {
@@ -326,10 +342,62 @@ $(function() {
             }
             self.render();
         };
+
+        // collisions is an array of true/false/undefined.  true means
+        // colliding, false means no, undefined means that we haven't
+        // figured it out yet.
+        self.markCollidingModels = function (collisions) {
+            var changes = false;
+            var updateColor = function (stlFile, newColor) {
+                if (!stlFile.model.children[0].material.color.equals(newColor)) {
+                    stlFile.model.children[0].material.color.copy(newColor);
+                    changes = true;
+                }
+            };
+            for (var i = 0; i < self.stlFiles.length; i++) {
+                var stlFile = self.stlFiles[i];
+                if (self.isStlFileActive(stlFile)) {
+                    if (collisions[i] === true) {
+                        updateColor(stlFile, self.effectController.modelActiveCollidingColor);
+                    } else if (collisions[i] === false) {
+                        updateColor(stlFile, self.effectController.modelActiveColor);
+                    }
+                } else {
+                    if (collisions[i] === true) {
+                        updateColor(stlFile, self.effectController.modelInactiveCollidingColor);
+                    } else if (collisions[i] === false) {
+                        updateColor(stlFile, self.effectController.modelInactiveColor);
+                    }
+                }
+            }
+            if (changes) {
+                self.render();
+            }
+        };
+
+        self.collisionDetector = new CollisionDetection(self.markCollidingModels);
+        self.startCollisionDetection = function () {
+            var allObjects = _.map(
+                self.stlFiles,
+                function (stlFile) {
+                    return stlFile.model;
+                });
+            var EPSILON_Z = 0.0001;  // To deal with rounding error after fixZ.
+            var printVolume = new THREE.Box3(
+                new THREE.Vector3(-self.BEDSIZE_X_MM/2, -self.BEDSIZE_Y_MM/2, -EPSILON_Z),
+                new THREE.Vector3(self.BEDSIZE_X_MM/2, self.BEDSIZE_Y_MM/2, self.BEDSIZE_Z_MM));
+            var TASK_SWITCH_MS = 50;
+            self.collisionDetector.start(allObjects,
+                                         printVolume,
+                                         TASK_SWITCH_MS);
+        }
+
         self.arrangeModels = new ArrangeModels();
         self.arrange = function(margin, timeoutMilliseconds, forceStartOver = false) {
             var renderFn = function () {
+                self.stlModified = true;
                 self.updateTransformInputs();
+                self.startCollisionDetection();
                 self.render();
             }
             var arrangeResult = self.arrangeModels.arrange(
@@ -360,10 +428,11 @@ $(function() {
             } else {
                 self.setStlFileActive();
             }
+            self.startCollisionDetection();
             self.render();
         };
 
-        self.loadSTL = function(target, file, force, stlFile) {
+        self.loadSTL = function(target, file, force) {
             var loader = new THREE.STLLoader();
             return loader.load(BASEURL + "downloads/files/" + target + "/" + file, function ( geometry ) {
                 var material = new THREE.MeshStandardMaterial({
@@ -379,9 +448,19 @@ $(function() {
                 var model = new THREE.Object3D();
                 model.add(stlModel);
                 stlModel.position.copy(center.negate());
-                stlFile['model'] = model;
+                var stlFile = {target: target,
+                               file: file,
+                               force: force,
+                               model: model};
+                self.stlFiles.push(stlFile);
+                self.slicingViewModel.destinationFilename(
+                    self.computeDestinationFilename(
+                        _.map(self.stlFiles, function(m) {
+                            return m.file;
+                        })));
                 self.setStlFileActive(stlFile);
                 self.scene.add(model);
+                self.startCollisionDetection();
                 self.render();
             });
         };
@@ -419,6 +498,7 @@ $(function() {
                 model.scale.y =  parseFloat($("#slicer-viewport .scale.values input[name=\"y\"]").val())
                 model.scale.z =  parseFloat($("#slicer-viewport .scale.values input[name=\"z\"]").val())
                 self.fixZPosition(model);
+                self.startCollisionDetection();
                 self.render();
             }
         };
@@ -555,11 +635,10 @@ $(function() {
         }
 
         self.fixZPosition = function ( model ) {
-            var bedLowMinZ = 0.0;
             var boundaryBox = new THREE.Box3().setFromObject(model);
             boundaryBox.min.sub(model.position);
             boundaryBox.max.sub(model.position);
-            model.position.z -= model.position.z + boundaryBox.min.z - bedLowMinZ;
+            model.position.z = -boundaryBox.min.z;
         }
 
         self.tempFiles = {};
@@ -567,7 +646,7 @@ $(function() {
             if ($.inArray(event.data.type, ["SlicingDone", "SlicingFailed"]) >= 0 &&
                 event.data.payload.stl in self.tempFiles) {
                 OctoPrint.files.delete(event.data.payload.stl_location,
-                    event.data.payload.stl);
+                                       event.data.payload.stl);
                 delete self.tempFiles[event.data.payload.stl];
             }
         }
@@ -598,7 +677,7 @@ $(function() {
                 printerProfile: slicingVM.printerProfile(),
                 destination: destinationFilename,
                 position: { "x": self.ORIGIN_OFFSET_X_MM + groupCenter.x,
-                    "y": self.ORIGIN_OFFSET_Y_MM + groupCenter.y}
+                            "y": self.ORIGIN_OFFSET_Y_MM + groupCenter.y}
             };
             _.extend(data, self.basicOverridesViewModel.toJS());
             _.extend(data, self.advancedOverridesViewModel.toJS());
@@ -627,10 +706,7 @@ $(function() {
             } else {
                 var form = new FormData();
                 var extensionPosition = self.slicingViewModel.file().lastIndexOf(".")
-                var newFilename = self.computeDestinationFilename(
-                    _.map(self.stlFiles, function(m) {
-                        return m.file;
-                    })) +
+                var newFilename = self.slicingViewModel.destinationFilename() +
                     ".tmp." + (+ new Date()) +
                     self.slicingViewModel.file().substring(extensionPosition);
                 var group = new THREE.Group();
