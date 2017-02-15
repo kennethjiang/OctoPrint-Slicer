@@ -63,6 +63,7 @@ $(function() {
             self.loadSTL(target, file, force, self.stlFiles[self.stlFiles.length-1]);
         };
 
+        self.stlViewPort = new THREE.STLViewPort(self.canvas, 200, 200);
         // Print bed size
         self.BEDSIZE_X_MM = 200;
         self.BEDSIZE_Y_MM = 200;
