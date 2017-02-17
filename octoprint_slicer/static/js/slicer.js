@@ -19,8 +19,6 @@ $(function() {
         }
 
         // assign the injected parameters, e.g.:
-        // self.loginStateViewModel = parameters[0];
-        // self.settingsViewModel = parameters[1];
         self.slicingViewModel = parameters[0];
         self.basicOverridesViewModel = parameters[1];
         self.advancedOverridesViewModel = parameters[2];
@@ -42,34 +40,36 @@ $(function() {
 
         // Override slicingViewModel.show to surpress default slicing behavior
         self.slicingViewModel.show = function(target, file, force) {
-            mixpanel.track("Load STL");
-            self.stlFiles.push({target: target, file: file, force: force});
-            if (self.stlFiles.length == 1) {
-                // This is the first model.
-                self.slicingViewModel.requestData();
-                self.slicingViewModel.target = target;
-                self.slicingViewModel.file(file); // TODO: Do we need to fix this?
-                self.slicingViewModel.printerProfile(self.slicingViewModel.printerProfiles.currentProfile());
-                self.stlModified = false;
-            } else {
-                self.stlModified = true;
+            if (!self.slicingViewModel.enableSlicingDialog() && !force) {
+                return;
             }
-            self.slicingViewModel.destinationFilename(
-                self.computeDestinationFilename(
-                    _.map(self.stlFiles, function(m) {
-                        return m.file;
-                    })));
-            $('a[href="#tab_plugin_slicer"]').tab('show');
-            self.loadSTL(target, file, force, self.stlFiles[self.stlFiles.length-1]);
-        };
 
-        self.stlViewPort = new THREE.STLViewPort(self.canvas, 200, 200);
-        // Print bed size
-        self.BEDSIZE_X_MM = 200;
-        self.BEDSIZE_Y_MM = 200;
-        self.BEDSIZE_Z_MM = 200;
-        self.ORIGIN_OFFSET_X_MM = 0;
-        self.ORIGIN_OFFSET_Y_MM = 0;
+            mixpanel.track("Load STL");
+
+            self.stlViewPort.loadSTL(BASEURL + "downloads/files/" + target + "/" + file, function(model) {
+                self.stlFiles.push({target: target, file: file, model: model});
+                self.fixZPosition(model);
+                self.stlViewPort.makeModelActive(model);
+
+                $('a[href="#tab_plugin_slicer"]').tab('show');
+
+                if (self.stlFiles.length == 1) {
+                    // This is the first model.
+                    self.slicingViewModel.requestData();
+                    self.slicingViewModel.target = target;
+                    self.slicingViewModel.file(file); // TODO: Do we need to fix this?
+                    self.slicingViewModel.printerProfile(self.slicingViewModel.printerProfiles.currentProfile());
+                    self.stlModified = false;
+                } else {
+                    self.stlModified = true;
+                }
+                self.slicingViewModel.destinationFilename(
+                    self.computeDestinationFilename(
+                        _.map(self.stlFiles, function(m) {
+                            return m.file;
+                        })));
+            });
+        };
 
         self.updatePrinterProfile = function(printerProfile) {
             if (! self.printerProfiles) {
@@ -107,47 +107,27 @@ $(function() {
             self.drawWalls(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM, self.BEDSIZE_Z_MM);
         }
 
+        // Print bed size
+        self.BEDSIZE_X_MM = 200;
+        self.BEDSIZE_Y_MM = 200;
+        self.BEDSIZE_Z_MM = 200;
+        self.ORIGIN_OFFSET_X_MM = 0;
+        self.ORIGIN_OFFSET_Y_MM = 0;
+
         var CANVAS_WIDTH = 588,
             CANVAS_HEIGHT = 588;
 
-        self.effectController = {
-            metalness: 0.5,
-            roughness: 0.5,
-            modelInactiveColor: new THREE.Color("#60715b"),
-            modelActiveColor: new THREE.Color("#34bf0d"),
-            ambientLightColor: new THREE.Color("#2b2b2b"),
-            directionalLightColor: new THREE.Color("#ffffff"),
-        };
 
         self.init = function() {
-            self.camera = new THREE.PerspectiveCamera( 45, 1.0, 0.1, 5000 );
-            self.camera.up.set( 0, 0, 1 );
-            self.camera.position.set( -100, -200, 250 );
-            self.scene = new THREE.Scene();
 
-            // Lights
-            var ambientLight = new THREE.AmbientLight( self.effectController.ambientLightColor );  // 0.2
-            self.scene.add( ambientLight );
-            var directionalLight = new THREE.DirectionalLight(self.effectController.directionalLightColor, 1.0);
-            directionalLight.position.set( 100, 100, 500 );
-            self.scene.add( directionalLight );
-            var directionalLight2= new THREE.DirectionalLight(self.effectController.directionalLightColor, 1.0);
-            directionalLight2.position.set( 100, 100, -500);
-            self.scene.add( directionalLight2);
+            self.stlViewPort = new THREE.STLViewPort(self.canvas, CANVAS_WIDTH, CANVAS_HEIGHT, self.modelsChanged)
+            self.stlViewPort.init();
 
             //Walls and Floor
             self.walls = new THREE.Object3D();
             self.floor = new THREE.Object3D();
-            self.scene.add(self.walls);
-            self.scene.add(self.floor);
-
-            self.renderer = new THREE.WebGLRenderer( { canvas: self.canvas, antialias: true } );
-            self.renderer.setClearColor( 0xd8d8d8 );
-            self.renderer.setSize( CANVAS_WIDTH, CANVAS_HEIGHT );
-            self.renderer.setPixelRatio( window.devicePixelRatio );
-
-            self.renderer.gammaInput = true;
-            self.renderer.gammaOutput = true;
+            self.stlViewPort.scene.add(self.walls);
+            self.stlViewPort.scene.add(self.floor);
 
             $("#slicer-viewport").empty().append('<div class="model">\
                     <button class="translate disabled" title="Move"><img src="'
@@ -191,45 +171,31 @@ $(function() {
                     </div>\
                </div>');
 
-            $("#slicer-viewport").append(self.renderer.domElement);
-            self.orbitControls = new THREE.OrbitControls(self.camera, self.renderer.domElement);
-            self.orbitControls.enableDamping = true;
-            self.orbitControls.dampingFactor = 0.25;
-            self.orbitControls.enablePan = false;
-            self.orbitControls.addEventListener("change", self.render);
-
-            self.transformControls = new THREE.TransformControls(self.camera, self.renderer.domElement);
-            self.transformControls.space = "world";
-            //self.transformControls.setAllowedTranslation("XY");
-            //self.transformControls.setRotationDisableE(true);
-            self.transformControls.setRotationSnap( THREE.Math.degToRad( 15 ) )
-            self.transformControls.addEventListener("change", self.render);
-            self.transformControls.addEventListener("mouseDown", self.startTransform);
-            self.transformControls.addEventListener("mouseUp", self.endTransform);
-            self.transformControls.addEventListener("change", self.updateTransformInputs);
-            self.transformControls.addEventListener("objectChange", function (e) {self.stlModified = true});
-            self.scene.add(self.transformControls);
-            self.updatePrinterBed();
+            $("#slicer-viewport").append(self.stlViewPort.renderer.domElement);
 
             $("#slicer-viewport button.translate").click(function(event) {
                 // Set selection mode to translate
-                self.transformControls.setMode("translate");
+                self.stlViewPort.transformControls.setMode("translate");
                 self.toggleValueInputs($("#slicer-viewport .translate.values div"));
             });
             $("#slicer-viewport button.rotate").click(function(event) {
                 // Set selection mode to rotate
-                self.transformControls.setMode("rotate");
+                self.stlViewPort.transformControls.setMode("rotate");
                 self.toggleValueInputs($("#slicer-viewport .rotate.values div"));
             });
             $("#slicer-viewport button.scale").click(function(event) {
                 // Set selection mode to scale
-                self.transformControls.setMode("scale");
+                self.stlViewPort.transformControls.setMode("scale");
                 self.toggleValueInputs($("#slicer-viewport .scale.values div"));
             });
             $("#slicer-viewport button.remove").click(function(event) {
                 // Remove the currently selected object.
-                self.removeSTL();
+                var model = self.stlViewPort.removeActiveModel();
+                _.remove(self.stlFiles, function(stlFile) {
+                    return stlFile.model == model;
+                });
             });
+
             $("#slicer-viewport button.arrange").click(function(event) {
                 self.arrange(10 /* mm margin */, 5000 /* milliseconds max */);
             });
@@ -239,90 +205,34 @@ $(function() {
 
             ko.applyBindings(self.slicingViewModel, $('#slicing-settings')[0]);
 
-            window.addEventListener( 'keydown', function ( event ) {
-                switch ( event.keyCode ) {
-                    case 17: // Ctrl
-                        self.transformControls.setRotationSnap(null);
-                        break;
-                }
-            });
+            self.updatePrinterBed();
 
-            window.addEventListener( 'keyup', function ( event ) {
-                switch ( event.keyCode ) {
-                    case 17: // Ctrl
-                        self.transformControls.setRotationSnap( THREE.Math.degToRad( 15 ) );
-                        break;
-                }
-            });
-
-            self.canvas.addEventListener("click", function(e) {
-                var rect = self.canvas.getBoundingClientRect();
-                var x = (e.clientX - rect.left) / rect.width;
-                var y = (e.clientY - rect.top) / rect.height;
-
-                var pointerVector = new THREE.Vector2();
-                pointerVector.set((x*2) - 1, -(y*2) + 1);
-                var ray = new THREE.Raycaster();
-                ray.setFromCamera(pointerVector, self.camera);
-
-                // Clicking should cycle through the stlFiles if there are multiple under the cursor.
-                var foundActiveStlFile = false;
-                var nextPointedStlFile = undefined;
-                var firstPointedStlFile = undefined;
-                for (var i = 0; i < self.stlFiles.length; i++) {
-                    var stlFile = self.stlFiles[i];
-                    var intersections = ray.intersectObjects( [stlFile.model], true );
-                    if (!intersections[0]) {
-                        continue;
-                    }
-                    if (!firstPointedStlFile) {
-                        firstPointedStlFile = stlFile;
-                    }
-                    if (foundActiveStlFile && !nextPointedStlFile) {
-                        nextPointedStlFile = stlFile;
-                    }
-                    if (self.isStlFileActive(stlFile)) {
-                        foundActiveStlFile = true;
-                    }
-                }
-                if (nextPointedStlFile) {
-                    self.setStlFileActive(nextPointedStlFile);
-                } else if (firstPointedStlFile) {
-                    self.setStlFileActive(firstPointedStlFile);
-                }
-            });
         };
 
-        self.isStlFileActive = function(stlFile) {
-            return stlFile.model.children[0].material.color.equals(self.effectController.modelActiveColor);
-        };
-
-        self.setStlFileActive = function(stlFile) {
-            // Sets one file active and inactivates all the others.
-            var newActiveStl = false;
-            _.forEach(self.stlFiles, function (otherStlFile) {
-                if (otherStlFile == stlFile) {
-                    if (!self.isStlFileActive(otherStlFile)) {
-                        otherStlFile.model.children[0].material.color.copy(self.effectController.modelActiveColor);
-                        newActiveStl = true;
-                    }
-                } else {
-                    otherStlFile.model.children[0].material.color.copy(self.effectController.modelInactiveColor);
-                }
-            });
-            if (newActiveStl) {
-                self.transformControls.attach(stlFile.model);
-                //self.transformControls.setMode("rotate");
-                self.updateTransformInputs();
+        self.modelsChanged = function() {
+            self.stlModified = true
+            var model = self.stlViewPort.activeModel();
+            if (model) {
+                $("#slicer-viewport .translate.values input[name=\"x\"]").val(model.position.x.toFixed(3)).attr("min", '');
+                $("#slicer-viewport .translate.values input[name=\"y\"]").val(model.position.y.toFixed(3)).attr("min", '');
+                $("#slicer-viewport .rotate.values input[name=\"x\"]").val((model.rotation.x * 180 / Math.PI).toFixed(3)).attr("min", '');
+                $("#slicer-viewport .rotate.values input[name=\"y\"]").val((model.rotation.y * 180 / Math.PI).toFixed(3)).attr("min", '');
+                $("#slicer-viewport .rotate.values input[name=\"z\"]").val((model.rotation.z * 180 / Math.PI).toFixed(3)).attr("min", '');
+                $("#slicer-viewport .scale.values input[name=\"x\"]").val(model.scale.x.toFixed(3)).attr("min", '');
+                $("#slicer-viewport .scale.values input[name=\"y\"]").val(model.scale.y.toFixed(3)).attr("min", '');
+                $("#slicer-viewport .scale.values input[name=\"z\"]").val(model.scale.z.toFixed(3)).attr("min", '');
+                $("#slicer-viewport .scale.values input[type=\"checkbox\"]").checked = self.lockScale;
+                self.fixZPosition(model);
             }
-            if (!stlFile) {
+
+            if (!self.stlViewPort.activeModel()) {
                 $("#slicer-viewport .values div").removeClass("show")
                 $("#slicer-viewport button").addClass("disabled");
             } else {
                 $("#slicer-viewport button").removeClass("disabled");
             }
-            self.render();
         };
+
         self.arrangeModels = new ArrangeModels();
         self.arrange = function(margin, timeoutMilliseconds, forceStartOver = false) {
             var renderFn = function () {
@@ -334,59 +244,10 @@ $(function() {
                 margin, timeoutMilliseconds, renderFn, forceStartOver);
         };
 
-        self.removeSTL = function() {
-            // Remove all active STL files.
-            var firstRemoved;
-            for (var i = 0; i < self.stlFiles.length; i++) {
-                var stlFile = self.stlFiles[i];
-                if (self.isStlFileActive(stlFile)) {
-                    self.scene.remove(stlFile.model);
-                    firstRemoved = i;
-                }
-                if (self.transformControls.object == stlFile.model) {
-                    self.transformControls.detach();
-                }
-            };
-            _.remove(self.stlFiles, function (stlFile) {
-                return self.isStlFileActive(stlFile);
-            });
-            if (firstRemoved < self.stlFiles.length) {
-                self.setStlFileActive(self.stlFiles[firstRemoved]);
-            } else if (0 < self.stlFiles.length) {
-                self.setStlFileActive(self.stlFiles[0]);
-            } else {
-                self.setStlFileActive();
-            }
-            self.render();
-        };
-
-        self.loadSTL = function(target, file, force, stlFile) {
-            var loader = new THREE.STLLoader();
-            return loader.load(BASEURL + "downloads/files/" + target + "/" + file, function ( geometry ) {
-                var material = new THREE.MeshStandardMaterial({
-                    color: self.effectController.modelInactiveColor,  // We'll mark it active below.
-                    shading: THREE.SmoothShading,
-                    side: THREE.DoubleSide,
-                    metalness: self.effectController.metalness,
-                    roughness: self.effectController.roughness });
-
-                // center model's origin
-                var stlModel = new THREE.Mesh( geometry, material );
-                var center = new THREE.Box3().setFromObject(stlModel).center();
-                var model = new THREE.Object3D();
-                model.add(stlModel);
-                stlModel.position.copy(center.negate());
-                stlFile['model'] = model;
-                self.setStlFileActive(stlFile);
-                self.scene.add(model);
-                self.render();
-            });
-        };
-
         self.toggleValueInputs = function(parentDiv) {
             if ( parentDiv.hasClass("show") ) {
                 parentDiv.removeClass("show").children('p').removeClass("show");
-            } else if (self.transformControls.object) {
+            } else if (self.stlViewPort.activeModel()) {
                 $("#slicer-viewport .values div").removeClass("show");
                 parentDiv.addClass("show").children('p').addClass("show");
             }
@@ -400,7 +261,7 @@ $(function() {
             else if(input[0].type == "number" && !isNaN(parseFloat(input.val()))) {
                 self.stlModified = true;
                 input.val(parseFloat(input.val()).toFixed(3));
-                var model = self.transformControls.object;
+                var model = self.stlViewPort.activeModel();
 
                 if (input.closest(".values").hasClass("scale") && self.lockScale) {
                     $("#slicer-viewport .scale.values input").val(input.val());
@@ -416,35 +277,7 @@ $(function() {
                 model.scale.y =  parseFloat($("#slicer-viewport .scale.values input[name=\"y\"]").val())
                 model.scale.z =  parseFloat($("#slicer-viewport .scale.values input[name=\"z\"]").val())
                 self.fixZPosition(model);
-                self.render();
             }
-        };
-
-        self.startTransform = function () {
-            // Disable orbit controls
-            self.orbitControls.enabled = false;
-        };
-
-        self.endTransform = function () {
-            // Enable orbit controls
-            self.orbitControls.enabled = true;
-        };
-
-        self.updateTransformInputs = function () {
-            var model = self.transformControls.object;
-            if (model) {
-                $("#slicer-viewport .translate.values input[name=\"x\"]").val(model.position.x.toFixed(3)).attr("min", '');
-                $("#slicer-viewport .translate.values input[name=\"y\"]").val(model.position.y.toFixed(3)).attr("min", '');
-                $("#slicer-viewport .rotate.values input[name=\"x\"]").val((model.rotation.x * 180 / Math.PI).toFixed(3)).attr("min", '');
-                $("#slicer-viewport .rotate.values input[name=\"y\"]").val((model.rotation.y * 180 / Math.PI).toFixed(3)).attr("min", '');
-                $("#slicer-viewport .rotate.values input[name=\"z\"]").val((model.rotation.z * 180 / Math.PI).toFixed(3)).attr("min", '');
-                $("#slicer-viewport .scale.values input[name=\"x\"]").val(model.scale.x.toFixed(3)).attr("min", '');
-                $("#slicer-viewport .scale.values input[name=\"y\"]").val(model.scale.y.toFixed(3)).attr("min", '');
-                $("#slicer-viewport .scale.values input[name=\"z\"]").val(model.scale.z.toFixed(3)).attr("min", '');
-                $("#slicer-viewport .scale.values input[type=\"checkbox\"]").checked = self.lockScale;
-                self.fixZPosition(model);
-            }
-            self.render();
         };
 
         self.createText = function(font, text, width, depth, parentObj) {
@@ -509,7 +342,6 @@ $(function() {
                 self.createText(font, "Back", width, depth, self.floor);
                 self.createText(font, "Left", width, depth, self.floor);
                 self.createText(font, "Right", width, depth, self.floor);
-                self.render();
             } );
         };
 
@@ -659,12 +491,6 @@ $(function() {
             return new Blob([exporter.parse(model)], {type: "text/plain"});
         };
 
-        self.render = function() {
-            self.orbitControls.update();
-            self.transformControls.update();
-            self.renderer.render( self.scene, self.camera );
-        };
-
         self.isPrinting = ko.computed(function () {
             return self.printerStateViewModel.isPrinting() ||
                 self.printerStateViewModel.isPaused();
@@ -677,7 +503,6 @@ $(function() {
         });
 
         self.init();
-        self.render();
     }
 
     // view model class, parameters for constructor, container to bind to
