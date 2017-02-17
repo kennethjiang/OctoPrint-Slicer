@@ -136,7 +136,8 @@ $(function() {
 
             // Buttons on the canvas, and their behaviors.
             // TODO: it's not DRY. mix of prez code and logics. need to figure out a better way
-            $("#slicer-viewport").empty().append('<div class="model">\
+            $("#slicer-viewport").empty().append('<div class="report"><a href="https://github.com/kennethjiang/OctoPrint-Slicer/issues/new">Report a slicer problem</a></div>\
+                  <div class="model">\
                     <button class="translate disabled" title="Move"><img src="'
                 + PLUGIN_BASEURL
                 + 'slicer/static/img/translate.png"></button>\

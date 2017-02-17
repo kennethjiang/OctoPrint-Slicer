@@ -259,6 +259,12 @@
     position: relative;
 }
 
+#slicer-viewport > div.report {
+    top: 10px;
+    left: 75%;
+    z-index: 5;
+}
+
 #slicer-viewport > div > button.disabled, #slicer-viewport > div > button.disabled.delete, #slicer-viewport > div > button.disabled.clone, #slicer-viewport > div > button.disabled.reset, #slicer-viewport > div > button.disabled.merge, #slicer-viewport > div > button.cut.off {
     opacity: 0.5;
     pointer-events: none;
