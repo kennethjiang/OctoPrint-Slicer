@@ -120,7 +120,7 @@ $(function() {
 
         self.init = function() {
 
-            self.stlViewPort = new THREE.STLViewPort(self.canvas, CANVAS_WIDTH, CANVAS_HEIGHT, self.onChange)
+            self.stlViewPort = new THREE.STLViewPort(self.canvas, CANVAS_WIDTH, CANVAS_HEIGHT, self.onModelChange)
             self.stlViewPort.init();
 
             //Walls and Floor
@@ -129,6 +129,12 @@ $(function() {
             self.stlViewPort.scene.add(self.walls);
             self.stlViewPort.scene.add(self.floor);
 
+            self.updatePrinterBed();
+
+            ko.applyBindings(self.slicingViewModel, $('#slicing-settings')[0]);
+
+            // Buttons on the canvas, and their behaviors.
+            // TODO: it's not DRY. mix of prez code and logics. need to figure out a better way
             $("#slicer-viewport").empty().append('<div class="model">\
                     <button class="translate disabled" title="Move"><img src="'
                 + PLUGIN_BASEURL
@@ -200,48 +206,9 @@ $(function() {
                 self.arrange(10 /* mm margin */, 5000 /* milliseconds max */);
             });
             $("#slicer-viewport .values input").change(function() {
-                self.applyChange($(this));
+                self.applyValueInputs($(this));
             });
 
-            ko.applyBindings(self.slicingViewModel, $('#slicing-settings')[0]);
-
-            self.updatePrinterBed();
-
-        };
-
-        self.onChange = function() {
-            self.stlModified = true
-            var model = self.stlViewPort.activeModel();
-            if (model) {
-                $("#slicer-viewport .translate.values input[name=\"x\"]").val(model.position.x.toFixed(3)).attr("min", '');
-                $("#slicer-viewport .translate.values input[name=\"y\"]").val(model.position.y.toFixed(3)).attr("min", '');
-                $("#slicer-viewport .rotate.values input[name=\"x\"]").val((model.rotation.x * 180 / Math.PI).toFixed(3)).attr("min", '');
-                $("#slicer-viewport .rotate.values input[name=\"y\"]").val((model.rotation.y * 180 / Math.PI).toFixed(3)).attr("min", '');
-                $("#slicer-viewport .rotate.values input[name=\"z\"]").val((model.rotation.z * 180 / Math.PI).toFixed(3)).attr("min", '');
-                $("#slicer-viewport .scale.values input[name=\"x\"]").val(model.scale.x.toFixed(3)).attr("min", '');
-                $("#slicer-viewport .scale.values input[name=\"y\"]").val(model.scale.y.toFixed(3)).attr("min", '');
-                $("#slicer-viewport .scale.values input[name=\"z\"]").val(model.scale.z.toFixed(3)).attr("min", '');
-                $("#slicer-viewport .scale.values input[type=\"checkbox\"]").checked = self.lockScale;
-                self.fixZPosition(model);
-            }
-
-            if (!self.stlViewPort.activeModel()) {
-                $("#slicer-viewport .values div").removeClass("show")
-                $("#slicer-viewport button").addClass("disabled");
-            } else {
-                $("#slicer-viewport button").removeClass("disabled");
-            }
-        };
-
-        self.arrangeModels = new ArrangeModels();
-        self.arrange = function(margin, timeoutMilliseconds, forceStartOver = false) {
-            var renderFn = function () {
-                self.updateTransformInputs();
-                self.render();
-            }
-            var arrangeResult = self.arrangeModels.arrange(
-                self.stlFiles, self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM,
-                margin, timeoutMilliseconds, renderFn, forceStartOver);
         };
 
         self.toggleValueInputs = function(parentDiv) {
@@ -253,7 +220,7 @@ $(function() {
             }
         };
 
-        self.applyChange = function(input) {
+        self.applyValueInputs = function(input) {
             input.blur();
             if(input[0].type == "checkbox") {
                 self.lockScale = input[0].checked;
@@ -280,109 +247,6 @@ $(function() {
             }
         };
 
-        self.createText = function(font, text, width, depth, parentObj) {
-            var textGeometry = new THREE.TextGeometry( text, {
-                font: font,
-                size: 10,
-                height: 0.1,
-                material: 0, extrudeMaterial: 1
-            });
-            var materialFront = new THREE.MeshBasicMaterial( { color: 0x048e06} );
-            var materialSide = new THREE.MeshBasicMaterial( { color: 0x8A8A8A} );
-            var materialArray = [ materialFront, materialSide ];
-            var textMaterial = new THREE.MeshFaceMaterial(materialArray);
-
-            var mesh = new THREE.Mesh( textGeometry, textMaterial );
-            textGeometry.computeBoundingBox();
-            var textWidth = textGeometry.boundingBox.max.x - textGeometry.boundingBox.min.x;
-            var textHeight = textGeometry.boundingBox.max.y - textGeometry.boundingBox.min.y;
-            switch (text) {
-                case "Front":
-                    mesh.position.set(-textWidth/2.0, -depth/2.0, 1.0);
-                    break;
-                case "Back":
-                    mesh.position.set(-textWidth/2.0, depth/2.0-textHeight, 1.0);
-                    break;
-                case "Left":
-                    mesh.position.set(-width/2.0, -textHeight/2, 1.0);
-                    break;
-                case "Right":
-                    mesh.position.set(width/2.0-textWidth, -textHeight/2, 1.0);
-                    break;
-            }
-            parentObj.add(mesh);
-        };
-
-        self.drawBedFloor = function ( width, depth, segments ) {
-            for(var i = self.floor.children.length - 1; i >= 0; i--) {
-                var obj = self.floor.children[i];
-                self.floor.remove(obj);
-            }
-
-            segments = segments || 20;
-            var geometry = new THREE.PlaneGeometry(width, depth, segments, segments);
-            var materialEven = new THREE.MeshBasicMaterial({color: 0xccccfc});
-            var materialOdd = new THREE.MeshBasicMaterial({color: 0x444464});
-            var materials = [materialEven, materialOdd];
-            for (var x = 0; x < segments; x++) {
-                for (var y = 0; y < segments; y++) {
-                    var i = x * segments + y;
-                    var j = 2 * i;
-                    geometry.faces[ j ].materialIndex = geometry.faces[ j + 1 ].materialIndex = (x + y) % 2;
-                }
-            }
-            var mesh = new THREE.Mesh(geometry, new THREE.MeshFaceMaterial(materials));
-            mesh.receiveShadow = true;
-            self.floor.add(mesh);
-
-            //Add text to indicate front/back of print bed
-            var loader = new THREE.FontLoader();
-            loader.load( PLUGIN_BASEURL + "slicer/static/js/optimer_bold.typeface.json", function ( font ) {
-                self.createText(font, "Front", width, depth, self.floor);
-                self.createText(font, "Back", width, depth, self.floor);
-                self.createText(font, "Left", width, depth, self.floor);
-                self.createText(font, "Right", width, depth, self.floor);
-            } );
-        };
-
-        self.drawWalls = function ( width, depth, height ) {
-            for(var i = self.walls.children.length - 1; i >= 0; i--) {
-                var obj = self.walls.children[i];
-                self.walls.remove(obj);
-            }
-
-            var wall1 = self.rectShape( width, height, 0x8888fc );
-            wall1.rotation.x = Math.PI / 2;
-            wall1.position.set(0, depth/2, height/2);
-            self.walls.add(wall1);
-
-            var wall2 = self.rectShape( height, depth, 0x8888dc );
-            wall2.rotation.y = Math.PI / 2;
-            wall2.position.set(-width/2, 0, height/2);
-            self.walls.add(wall2);
-
-            var wall3 = self.rectShape( width, height, 0x8888fc );
-            wall3.rotation.x = -Math.PI / 2;
-            wall3.position.set(0, -depth/2, height/2);
-            self.walls.add(wall3);
-
-            var wall4 = self.rectShape( height, depth, 0x8888dc );
-            wall4.rotation.y = -Math.PI / 2;
-            wall4.position.set(width/2, 0, height/2);
-            self.walls.add(wall4);
-        }
-
-        self.rectShape = function ( rectLength, rectWidth, color ) {
-            var rectShape = new THREE.Shape();
-            rectShape.moveTo( -rectLength/2,-rectWidth/2 );
-            rectShape.lineTo( -rectLength/2, rectWidth/2 );
-            rectShape.lineTo( rectLength/2, rectWidth/2 );
-            rectShape.lineTo( rectLength/2, -rectWidth/2 );
-            rectShape.lineTo( -rectLength/2, -rectWidth/2 );
-            var rectGeom = new THREE.ShapeGeometry( rectShape );
-            return new THREE.Mesh( rectGeom, new THREE.MeshBasicMaterial( { color: color } ) ) ;
-        }
-
         self.fixZPosition = function ( model ) {
             var bedLowMinZ = 0.0;
             var boundaryBox = new THREE.Box3().setFromObject(model);
@@ -391,6 +255,45 @@ $(function() {
             model.position.z -= model.position.z + boundaryBox.min.z - bedLowMinZ;
         }
 
+        // callback function when models are changed by TransformControls
+        self.onModelChange = function() {
+            self.stlModified = true
+            var model = self.stlViewPort.activeModel();
+            if (model) {
+                $("#slicer-viewport .translate.values input[name=\"x\"]").val(model.position.x.toFixed(3)).attr("min", '');
+                $("#slicer-viewport .translate.values input[name=\"y\"]").val(model.position.y.toFixed(3)).attr("min", '');
+                $("#slicer-viewport .rotate.values input[name=\"x\"]").val((model.rotation.x * 180 / Math.PI).toFixed(3)).attr("min", '');
+                $("#slicer-viewport .rotate.values input[name=\"y\"]").val((model.rotation.y * 180 / Math.PI).toFixed(3)).attr("min", '');
+                $("#slicer-viewport .rotate.values input[name=\"z\"]").val((model.rotation.z * 180 / Math.PI).toFixed(3)).attr("min", '');
+                $("#slicer-viewport .scale.values input[name=\"x\"]").val(model.scale.x.toFixed(3)).attr("min", '');
+                $("#slicer-viewport .scale.values input[name=\"y\"]").val(model.scale.y.toFixed(3)).attr("min", '');
+                $("#slicer-viewport .scale.values input[name=\"z\"]").val(model.scale.z.toFixed(3)).attr("min", '');
+                $("#slicer-viewport .scale.values input[type=\"checkbox\"]").checked = self.lockScale;
+                self.fixZPosition(model);
+            }
+
+            if (!self.stlViewPort.activeModel()) {
+                $("#slicer-viewport .values div").removeClass("show")
+                $("#slicer-viewport button").addClass("disabled");
+            } else {
+                $("#slicer-viewport button").removeClass("disabled");
+            }
+        };
+
+
+        self.arrangeModels = new ArrangeModels();
+        self.arrange = function(margin, timeoutMilliseconds, forceStartOver = false) {
+            var renderFn = function () {
+                self.updateTransformInputs();
+                self.render();
+            }
+            var arrangeResult = self.arrangeModels.arrange(
+                self.stlFiles, self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM,
+                margin, timeoutMilliseconds, renderFn, forceStartOver);
+        };
+
+        // Slicing
+        //
         self.tempFiles = {};
         self.removeTempFilesAfterSlicing = function (event) {
             if ($.inArray(event.data.type, ["SlicingDone", "SlicingFailed"]) >= 0 &&
@@ -501,6 +404,113 @@ $(function() {
             return self.slicingViewModel.enableSliceButton() &&
                 !self.isPrinting();
         });
+        // END: Slicing
+
+        // Helpers for drawing walls and floor
+        //
+        self.createText = function(font, text, width, depth, parentObj) {
+            var textGeometry = new THREE.TextGeometry( text, {
+                font: font,
+                size: 10,
+                height: 0.1,
+                material: 0, extrudeMaterial: 1
+            });
+            var materialFront = new THREE.MeshBasicMaterial( { color: 0x048e06} );
+            var materialSide = new THREE.MeshBasicMaterial( { color: 0x8A8A8A} );
+            var materialArray = [ materialFront, materialSide ];
+            var textMaterial = new THREE.MeshFaceMaterial(materialArray);
+
+            var mesh = new THREE.Mesh( textGeometry, textMaterial );
+            textGeometry.computeBoundingBox();
+            var textWidth = textGeometry.boundingBox.max.x - textGeometry.boundingBox.min.x;
+            var textHeight = textGeometry.boundingBox.max.y - textGeometry.boundingBox.min.y;
+            switch (text) {
+                case "Front":
+                    mesh.position.set(-textWidth/2.0, -depth/2.0, 1.0);
+                    break;
+                case "Back":
+                    mesh.position.set(-textWidth/2.0, depth/2.0-textHeight, 1.0);
+                    break;
+                case "Left":
+                    mesh.position.set(-width/2.0, -textHeight/2, 1.0);
+                    break;
+                case "Right":
+                    mesh.position.set(width/2.0-textWidth, -textHeight/2, 1.0);
+                    break;
+            }
+            parentObj.add(mesh);
+        };
+
+        self.drawBedFloor = function ( width, depth, segments ) {
+            for(var i = self.floor.children.length - 1; i >= 0; i--) {
+                var obj = self.floor.children[i];
+                self.floor.remove(obj);
+            }
+
+            segments = segments || 20;
+            var geometry = new THREE.PlaneGeometry(width, depth, segments, segments);
+            var materialEven = new THREE.MeshBasicMaterial({color: 0xccccfc});
+            var materialOdd = new THREE.MeshBasicMaterial({color: 0x444464});
+            var materials = [materialEven, materialOdd];
+            for (var x = 0; x < segments; x++) {
+                for (var y = 0; y < segments; y++) {
+                    var i = x * segments + y;
+                    var j = 2 * i;
+                    geometry.faces[ j ].materialIndex = geometry.faces[ j + 1 ].materialIndex = (x + y) % 2;
+                }
+            }
+            var mesh = new THREE.Mesh(geometry, new THREE.MeshFaceMaterial(materials));
+            mesh.receiveShadow = true;
+            self.floor.add(mesh);
+
+            //Add text to indicate front/back of print bed
+            var loader = new THREE.FontLoader();
+            loader.load( PLUGIN_BASEURL + "slicer/static/js/optimer_bold.typeface.json", function ( font ) {
+                self.createText(font, "Front", width, depth, self.floor);
+                self.createText(font, "Back", width, depth, self.floor);
+                self.createText(font, "Left", width, depth, self.floor);
+                self.createText(font, "Right", width, depth, self.floor);
+            } );
+        };
+
+        self.drawWalls = function ( width, depth, height ) {
+            for(var i = self.walls.children.length - 1; i >= 0; i--) {
+                var obj = self.walls.children[i];
+                self.walls.remove(obj);
+            }
+
+            var wall1 = self.rectShape( width, height, 0x8888fc );
+            wall1.rotation.x = Math.PI / 2;
+            wall1.position.set(0, depth/2, height/2);
+            self.walls.add(wall1);
+
+            var wall2 = self.rectShape( height, depth, 0x8888dc );
+            wall2.rotation.y = Math.PI / 2;
+            wall2.position.set(-width/2, 0, height/2);
+            self.walls.add(wall2);
+
+            var wall3 = self.rectShape( width, height, 0x8888fc );
+            wall3.rotation.x = -Math.PI / 2;
+            wall3.position.set(0, -depth/2, height/2);
+            self.walls.add(wall3);
+
+            var wall4 = self.rectShape( height, depth, 0x8888dc );
+            wall4.rotation.y = -Math.PI / 2;
+            wall4.position.set(width/2, 0, height/2);
+            self.walls.add(wall4);
+        };
+
+        self.rectShape = function ( rectLength, rectWidth, color ) {
+            var rectShape = new THREE.Shape();
+            rectShape.moveTo( -rectLength/2,-rectWidth/2 );
+            rectShape.lineTo( -rectLength/2, rectWidth/2 );
+            rectShape.lineTo( rectLength/2, rectWidth/2 );
+            rectShape.lineTo( rectLength/2, -rectWidth/2 );
+            rectShape.lineTo( -rectLength/2, -rectWidth/2 );
+            var rectGeom = new THREE.ShapeGeometry( rectShape );
+            return new THREE.Mesh( rectGeom, new THREE.MeshBasicMaterial( { color: color } ) ) ;
+        };
+        // END: Helpers for drawing walls and floor
 
         self.init();
     }

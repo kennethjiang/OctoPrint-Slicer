@@ -5,16 +5,16 @@
  * Description: A THREE view port for STL models
  *
  * Usage:
- *  var loader = new THREE.STLLoader();
- *  loader.load( './models/stl/slotted_disk.stl', function ( geometry ) {
- *    scene.add( new THREE.Mesh( geometry ) );
+ *  var viewPort = new THREE.STLViewPort(canvas, width, height, function() {
+ *     //things to do when any model in the view port changes
  *  });
+ *  viewPort.init();
+ *  viewPort.loadSTL(url, fucntion(model) {
+ *     viewPort.makeModelActive(model);
+ *     //things to do when model is loaded
+ *  });
+ *  var scene = viewPort.scene; // direct access to the scene for to add THREE.Object
  *
- * For binary STLs geometry might contain colors for vertices. To use it:
- *  // use the same code to load STL as above
- *  if (geometry.hasColors) {
- *    material = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
- *  } else { .... }
  */
 
 THREE.STLViewPort = function ( canvas, width, height, onChange ) {
@@ -22,12 +22,11 @@ THREE.STLViewPort = function ( canvas, width, height, onChange ) {
     var self = this;
 
     self.canvas = canvas;
-    self.canvasWidth = ( width !== undefined ) ? width : canvas.width;
-    self.canvasHeight = ( height !== undefined ) ? height : canvas.height;
+    self.canvasWidth = width;
+    self.canvasHeight = height;
     self.onChange = onChange;
 
     self.models = [];
-
 
     self.effectController = {
         metalness: 0.5,
@@ -76,15 +75,13 @@ THREE.STLViewPort = function ( canvas, width, height, onChange ) {
         self.transformControls = new THREE.TransformControls(self.camera, self.renderer.domElement);
 
         self.transformControls.space = "world";
-        //self.transformControls.setAllowedTranslation("XY");
-        //self.transformControls.setRotationDisableE(true);
+        self.transformControls.setAllowedTranslation("XY");
+        self.transformControls.setRotationDisableE(true);
         self.transformControls.setRotationSnap( THREE.Math.degToRad( 15 ) )
         self.transformControls.addEventListener("change", self.render);
         self.transformControls.addEventListener("mouseDown", self.startTransform);
         self.transformControls.addEventListener("mouseUp", self.endTransform);
         self.transformControls.addEventListener("change", self.onChange);
-        self.transformControls.setAllowedTranslation("XY");
-        self.transformControls.setRotationDisableE(true);
         self.scene.add(self.transformControls);
 
         self.canvas.addEventListener("click", self.pickActiveModel);
@@ -116,7 +113,7 @@ THREE.STLViewPort = function ( canvas, width, height, onChange ) {
 
 
     self.loadSTL = function ( url, onLoad ) {
-        var loader = new THREE.STLLoader().load(url, function ( geometry ) {
+        new THREE.STLLoader().load(url, function ( geometry ) {
             var material = new THREE.MeshStandardMaterial({
                 color: self.effectController.modelInactiveColor,  // We'll mark it active below.
                 shading: THREE.SmoothShading,
