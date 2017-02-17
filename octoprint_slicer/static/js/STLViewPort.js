@@ -157,7 +157,7 @@ THREE.STLViewPort = function ( canvas, width, height, onChange ) {
         var firstPointedModel = undefined;
         for (var i = 0; i < self.models.length; i++) {
             var model = self.models[i];
-            var intersections = ray.intersectObjects( model, true );
+            var intersections = ray.intersectObjects( model.children, true ); // Not sure why ray will intersect the children but not the model itself.
             if (!intersections[0]) {
                 continue;
             }
@@ -215,6 +215,7 @@ THREE.STLViewPort = function ( canvas, width, height, onChange ) {
                 self.models.splice(index, 1);
             }
 
+            self.scene.remove(model);
             self.makeModelActive(undefined);
             return model;
         }
