@@ -120,7 +120,7 @@ $(function() {
 
         self.init = function() {
 
-            self.stlViewPort = new THREE.STLViewPort(self.canvas, CANVAS_WIDTH, CANVAS_HEIGHT, self.modelsChanged)
+            self.stlViewPort = new THREE.STLViewPort(self.canvas, CANVAS_WIDTH, CANVAS_HEIGHT, self.onChange)
             self.stlViewPort.init();
 
             //Walls and Floor
@@ -209,7 +209,7 @@ $(function() {
 
         };
 
-        self.modelsChanged = function() {
+        self.onChange = function() {
             self.stlModified = true
             var model = self.stlViewPort.activeModel();
             if (model) {

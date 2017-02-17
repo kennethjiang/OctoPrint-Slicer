@@ -28,12 +28,6 @@ THREE.STLViewPort = function ( canvas, width, height, onChange ) {
 
     self.models = [];
 
-    self.scene = new THREE.Scene();
-    self.renderer = new THREE.WebGLRenderer( { canvas: self.canvas, antialias: true } );
-
-    self.camera = new THREE.PerspectiveCamera( 45, 1.0, 0.1, 5000 );
-    self.orbitControls = new THREE.OrbitControls(self.camera, self.renderer.domElement);
-    self.transformControls = new THREE.TransformControls(self.camera, self.renderer.domElement);
 
     self.effectController = {
         metalness: 0.5,
@@ -45,8 +39,13 @@ THREE.STLViewPort = function ( canvas, width, height, onChange ) {
     };
 
     self.init = function() {
+
+        self.camera = new THREE.PerspectiveCamera( 45, 1.0, 0.1, 5000 );
+
         self.camera.up.set( 0, 0, 1 );
         self.camera.position.set( -100, -200, 250 );
+
+        self.scene = new THREE.Scene();
 
         // Lights
         var ambientLight = new THREE.AmbientLight( self.effectController.ambientLightColor );  // 0.2
@@ -58,6 +57,8 @@ THREE.STLViewPort = function ( canvas, width, height, onChange ) {
         directionalLight2.position.set( 100, 100, -500);
         self.scene.add( directionalLight2);
 
+        self.renderer = new THREE.WebGLRenderer( { canvas: self.canvas, antialias: true } );
+
         self.renderer.setClearColor( 0xd8d8d8 );
         self.renderer.setSize( self.canvasWidth, self.canvasHeight );
         self.renderer.setPixelRatio( window.devicePixelRatio );
@@ -65,10 +66,14 @@ THREE.STLViewPort = function ( canvas, width, height, onChange ) {
         self.renderer.gammaInput = true;
         self.renderer.gammaOutput = true;
 
+        self.orbitControls = new THREE.OrbitControls(self.camera, self.renderer.domElement);
+
         self.orbitControls.enableDamping = true;
         self.orbitControls.dampingFactor = 0.25;
         self.orbitControls.enablePan = false;
         self.orbitControls.addEventListener("change", self.render);
+
+        self.transformControls = new THREE.TransformControls(self.camera, self.renderer.domElement);
 
         self.transformControls.space = "world";
         //self.transformControls.setAllowedTranslation("XY");
@@ -78,6 +83,8 @@ THREE.STLViewPort = function ( canvas, width, height, onChange ) {
         self.transformControls.addEventListener("mouseDown", self.startTransform);
         self.transformControls.addEventListener("mouseUp", self.endTransform);
         self.transformControls.addEventListener("change", self.onChange);
+        self.transformControls.setAllowedTranslation("XY");
+        self.transformControls.setRotationDisableE(true);
         self.scene.add(self.transformControls);
 
         self.canvas.addEventListener("click", self.pickActiveModel);
