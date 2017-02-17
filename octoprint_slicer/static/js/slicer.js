@@ -245,6 +245,7 @@ $(function() {
                 model.scale.y =  parseFloat($("#slicer-viewport .scale.values input[name=\"y\"]").val())
                 model.scale.z =  parseFloat($("#slicer-viewport .scale.values input[name=\"z\"]").val())
                 self.fixZPosition(model);
+                self.stlViewPort.render();
             }
         };
 
@@ -271,6 +272,7 @@ $(function() {
                 $("#slicer-viewport .scale.values input[name=\"z\"]").val(model.scale.z.toFixed(3)).attr("min", '');
                 $("#slicer-viewport .scale.values input[type=\"checkbox\"]").checked = self.lockScale;
                 self.fixZPosition(model);
+                self.stlViewPort.render();
             }
 
             if (!self.stlViewPort.activeModel()) {
@@ -285,8 +287,7 @@ $(function() {
         self.arrangeModels = new ArrangeModels();
         self.arrange = function(margin, timeoutMilliseconds, forceStartOver = false) {
             var renderFn = function () {
-                self.updateTransformInputs();
-                self.render();
+                self.onModelChange();
             }
             var arrangeResult = self.arrangeModels.arrange(
                 self.stlFiles, self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM,
