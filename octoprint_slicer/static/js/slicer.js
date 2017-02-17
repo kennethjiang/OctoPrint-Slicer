@@ -105,6 +105,7 @@ $(function() {
             }
             self.drawBedFloor(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM);
             self.drawWalls(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM, self.BEDSIZE_Z_MM);
+            self.stlViewPort.render();
         }
 
         // Print bed size
@@ -426,16 +427,19 @@ $(function() {
             var textHeight = textGeometry.boundingBox.max.y - textGeometry.boundingBox.min.y;
             switch (text) {
                 case "Front":
-                    mesh.position.set(-textWidth/2.0, -depth/2.0, 1.0);
+                    mesh.position.set(-textWidth/2, -depth/2 - textHeight - 4, 1.0);
                     break;
                 case "Back":
-                    mesh.position.set(-textWidth/2.0, depth/2.0-textHeight, 1.0);
+                    mesh.position.set(textWidth/2, depth/2 + textHeight + 4, 1.0);
+                    mesh.rotation.set(0, 0, Math.PI);
                     break;
                 case "Left":
-                    mesh.position.set(-width/2.0, -textHeight/2, 1.0);
+                    mesh.position.set(-width/2 - textHeight - 4, textWidth/2, 1.0);
+                    mesh.rotation.set(0, 0, -Math.PI / 2);
                     break;
                 case "Right":
-                    mesh.position.set(width/2.0-textWidth, -textHeight/2, 1.0);
+                    mesh.position.set(width/2 + textHeight, -textWidth/2, 1.0);
+                    mesh.rotation.set(0, 0, Math.PI / 2);
                     break;
             }
             parentObj.add(mesh);
@@ -470,6 +474,7 @@ $(function() {
                 self.createText(font, "Back", width, depth, self.floor);
                 self.createText(font, "Left", width, depth, self.floor);
                 self.createText(font, "Right", width, depth, self.floor);
+                self.stlViewPort.render();
             } );
         };
 
