@@ -84,8 +84,6 @@ THREE.STLViewPort = function ( canvas, width, height, onChange ) {
         self.transformControls.addEventListener("change", self.onChange);
         self.scene.add(self.transformControls);
 
-        self.canvas.addEventListener("click", self.pickActiveModel);
-
         window.addEventListener( 'keydown', function ( event ) {
             switch ( event.keyCode ) {
                 case 17: // Ctrl
@@ -101,6 +99,11 @@ THREE.STLViewPort = function ( canvas, width, height, onChange ) {
                     break;
             }
         });
+
+        // Unforutnately built-in "click" event is fired when it's a drag. We need all these complexity to detect real click (no mousemoves between mousedown and mouseup)
+        self.canvas.addEventListener("mousedown", () => { self.lastMouseEvent = "mousedown" });
+        self.canvas.addEventListener("mousemove", () => { self.lastMouseEvent = "mousemove" });
+        self.canvas.addEventListener("mouseup", (e) => { if (self.lastMouseEvent == "mousedown") self.pickActiveModel(e); });
 
         self.render();
     };
