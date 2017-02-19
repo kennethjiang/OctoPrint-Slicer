@@ -10,7 +10,6 @@ $(function() {
     function SlicerViewModel(parameters) {
         var self = this;
         self.canvas = document.getElementById( 'slicer-canvas' );
-        self.stlFiles = [];
 
         //check if webGL is present. If not disable Slicer plugin
         if ( ! Detector.webgl ) {
@@ -24,19 +23,9 @@ $(function() {
         self.advancedOverridesViewModel = parameters[2];
         self.printerStateViewModel = parameters[3];
 
-        self.lockScale = true;
+        self.modelManager = new ModelManager(self.slicingViewModel);
 
-        // Returns the destination filename based on which models are loaded.
-        // The destination filename is without the final .gco on it because
-        // that will depend on the slicer.
-        self.computeDestinationFilename = function(inputFilenames) {
-            // TODO: For now, just use the first model's name.
-            var destinationFilename = inputFilenames[0].substr(0, inputFilenames[0].lastIndexOf("."));
-            if (destinationFilename.lastIndexOf("/") != 0) {
-                destinationFilename = destinationFilename.substr(destinationFilename.lastIndexOf("/") + 1);
-            }
-            return destinationFilename;
-        }
+        self.lockScale = true;
 
         // Override slicingViewModel.show to surpress default slicing behavior
         self.slicingViewModel.show = function(target, file, force) {
@@ -47,27 +36,14 @@ $(function() {
             mixpanel.track("Load STL");
 
             self.stlViewPort.loadSTL(BASEURL + "downloads/files/" + target + "/" + file, function(model) {
-                self.stlFiles.push({target: target, file: file, model: model});
+
+                self.modelManager.add(model, target, file);
+
                 self.fixZPosition(model);
                 self.stlViewPort.makeModelActive(model);
 
                 $('a[href="#tab_plugin_slicer"]').tab('show');
 
-                if (self.stlFiles.length == 1) {
-                    // This is the first model.
-                    self.slicingViewModel.requestData();
-                    self.slicingViewModel.target = target;
-                    self.slicingViewModel.file(file); // TODO: Do we need to fix this?
-                    self.slicingViewModel.printerProfile(self.slicingViewModel.printerProfiles.currentProfile());
-                    self.stlModified = false;
-                } else {
-                    self.stlModified = true;
-                }
-                self.slicingViewModel.destinationFilename(
-                    self.computeDestinationFilename(
-                        _.map(self.stlFiles, function(m) {
-                            return m.file;
-                        })));
             });
         };
 
@@ -198,10 +174,7 @@ $(function() {
             });
             $("#slicer-viewport button.remove").click(function(event) {
                 // Remove the currently selected object.
-                var model = self.stlViewPort.removeActiveModel();
-                _.remove(self.stlFiles, function(stlFile) {
-                    return stlFile.model == model;
-                });
+                self.modelManager.remove( self.stlViewPort.removeActiveModel() );
             });
 
             $("#slicer-viewport button.arrange").click(function(event) {
@@ -228,7 +201,6 @@ $(function() {
                 self.lockScale = input[0].checked;
             }
             else if(input[0].type == "number" && !isNaN(parseFloat(input.val()))) {
-                self.stlModified = true;
                 input.val(parseFloat(input.val()).toFixed(3));
                 var model = self.stlViewPort.activeModel();
 
@@ -260,7 +232,6 @@ $(function() {
 
         // callback function when models are changed by TransformControls
         self.onModelChange = function() {
-            self.stlModified = true
             var model = self.stlViewPort.activeModel();
             if (model) {
                 $("#slicer-viewport .translate.values input[name=\"x\"]").val(model.position.x.toFixed(3)).attr("min", '');
@@ -291,7 +262,7 @@ $(function() {
                 self.onModelChange();
             }
             var arrangeResult = self.arrangeModels.arrange(
-                self.stlFiles, self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM,
+                self.modelManager.models, self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM,
                 margin, timeoutMilliseconds, renderFn, forceStartOver);
         };
 
@@ -357,23 +328,17 @@ $(function() {
 
         self.slice = function() {
             mixpanel.track("Slice Model");
-            if (!self.stlModified) {
+            if (self.modelManager.onlyOneOriginalModel()) {
                 self.sendSliceCommand(self.slicingViewModel.file());
             } else {
                 var form = new FormData();
-                var extensionPosition = self.slicingViewModel.file().lastIndexOf(".")
-                var newFilename = self.computeDestinationFilename(
-                    _.map(self.stlFiles, function(m) {
-                        return m.file;
-                    })) +
-                    ".tmp." + (+ new Date()) +
-                    self.slicingViewModel.file().substring(extensionPosition);
                 var group = new THREE.Group();
-                _.forEach(self.stlFiles, function (stlFile) {
-                    var modelCopy = stlFile.model.clone(true);
-                    group.add(modelCopy);
+                _.forEach(self.modelManager.models, function (model) {
+                    group.add(model.clone(true));
                 });
-                form.append("file", self.blobFromModel(group), newFilename);
+
+                var tempFilename = self.modelManager.tempSTLFilename();
+                form.append("file", self.blobFromModel(group), tempFilename);
                 $.ajax({
                     url: API_BASEURL + "files/local",
                     type: "POST",
@@ -382,8 +347,8 @@ $(function() {
                     contentType: false,
                     // On success
                     success: function(data) {
-                        self.tempFiles[newFilename] = 1;
-                        self.sendSliceCommand(newFilename, group);
+                        self.tempFiles[tempFilename] = 1;
+                        self.sendSliceCommand(tempFilename, group);
                     },
                     error: function(jqXHR, textStatus) {
                         new PNotify({title: "Slicing failed", text: textStatus, type: "error", hide: false});
@@ -520,6 +485,72 @@ $(function() {
         // END: Helpers for drawing walls and floor
 
         self.init();
+    }
+
+    function ModelManager(slicingViewModel) {
+        var self = this;
+        self.slicingViewModel = slicingViewModel;
+        self.models = [];
+
+        self.add = function(model, target, filename) {
+            _.extend(model, {target, filename, destinationFilename: self.computeDestinationFilename(filename)});
+            self.models.push(model);
+            self.resetSlicingViewModel();
+        };
+
+        self.remove = function(model) {
+            _.remove(self.models, model);
+            self.resetSlicingViewModel();
+        };
+
+        // TODO: can we do this right before slicing?
+        self.resetSlicingViewModel = function() {
+            if (self.models.length == 0) {
+                self.slicingViewModel.requestData();
+                self.slicingViewModel.target = undefined;
+                self.slicingViewModel.file();
+                self.slicingViewModel.printerProfile(self.slicingViewModel.printerProfiles.currentProfile());
+                self.slicingViewModel.destinationFilename();
+            } else if (self.models.length == 1) {
+                var model = self.models[0];
+                self.slicingViewModel.requestData();
+                self.slicingViewModel.target = model.target;
+                self.slicingViewModel.file(model.filename);
+                self.slicingViewModel.printerProfile(self.slicingViewModel.printerProfiles.currentProfile());
+                self.slicingViewModel.destinationFilename(self.computeDestinationFilename(model.filename));
+            }
+        };
+
+        // Returns the destination filename based on which models are loaded.
+        // The destination filename is without the final .gco on it because
+        // that will depend on the slicer.
+        self.computeDestinationFilename = function(inputFilename) {
+            // TODO: For now, just use the first model's name.
+            var destinationFilename = inputFilename.substr(0, inputFilename.lastIndexOf("."));
+            if (destinationFilename.lastIndexOf("/") != 0) {
+                destinationFilename = destinationFilename.substr(destinationFilename.lastIndexOf("/") + 1);
+            }
+            return destinationFilename;
+        };
+
+        self.tempSTLFilename = function() {
+            var pos = self.slicingViewModel.file().lastIndexOf(".")
+            return [self.slicingViewModel.file().slice(0, pos),
+                ".tmp." + (+ new Date()),
+                self.slicingViewModel.file().slice(pos)].join('');
+        };
+
+        self.onlyOneOriginalModel = function() {
+            return self.models.length == 1  &&
+                self.models[0].position.x == 0.0 &&
+                self.models[0].position.y == 0.0 &&
+                self.models[0].rotation.x == 0.0 &&
+                self.models[0].rotation.y == 0.0 &&
+                self.models[0].rotation.z == 0.0 &&
+                self.models[0].scale.x == 1.0 &&
+                self.models[0].scale.y == 1.0 &&
+                self.models[0].scale.z == 1.0
+        };
     }
 
     // view model class, parameters for constructor, container to bind to
