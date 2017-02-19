@@ -1,0 +1,18 @@
+<div id="plugin-slicer-modal" class="modal hide fade modal-sm">
+    <div class="modal-header">
+        <a href="#" class="close" data-dismiss="modal" aria-hidden="true">&times;</a>
+        <h3>Printer bed not empty!</h3>
+    </div>
+    <div class="modal-body">
+                <div class="controls">
+        <button class="btn btn-block" data-bind="click: function() { $data.emptyBed(); $data.addSelectedSTL(); }">Empty the bed and add only this file.</button>
+        <button class="btn btn-block" data-bind="click: function() { $data.addSelectedSTL(); }">Add this file to existing ones.</button>
+<br />
+                    <label class="checkbox">
+                        <input type="checkbox" data-bind="checked: dontAskAgain"> Don't ask me again!
+                    </label>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

@@ -9,6 +9,7 @@
 $(function() {
     function SlicerViewModel(parameters) {
         var self = this;
+
         self.canvas = document.getElementById( 'slicer-canvas' );
 
         //check if webGL is present. If not disable Slicer plugin
@@ -27,14 +28,39 @@ $(function() {
 
         self.lockScale = true;
 
+        self.selectedSTL = undefined;
+        self.dontAskAgain = ko.observable(false);
+
+
         // Override slicingViewModel.show to surpress default slicing behavior
         self.slicingViewModel.show = function(target, file, force) {
             if (!self.slicingViewModel.enableSlicingDialog() && !force) {
                 return;
             }
-
             mixpanel.track("Load STL");
 
+            if (self.modelManager.models.length != 0) {
+                self.selectedSTL = {target: target, file: file};
+                $("#plugin-slicer-modal").modal("show");
+                return;
+            } else {
+                self.addSTL(target, file);
+            }
+        }
+
+        self.emptyBed = function() {
+            self.modelManager.removeAll();
+            self.stlViewPort.removeAllModels();
+            $("#plugin-slicer-modal").modal("hide");
+        }
+
+        self.addSelectedSTL = function() {
+            self.addSTL(self.selectedSTL.target, self.selectedSTL.file);
+            self.selectedSTL = undefined;
+            $("#plugin-slicer-modal").modal("hide");
+        }
+
+        self.addSTL = function(target, file) {
             self.stlViewPort.loadSTL(BASEURL + "downloads/files/" + target + "/" + file, function(model) {
 
                 self.modelManager.add(model, target, file);
@@ -500,6 +526,11 @@ $(function() {
 
         self.remove = function(model) {
             _.remove(self.models, model);
+            self.resetSlicingViewModel();
+        };
+
+        self.removeAll = function() {
+            self.models = [];
             self.resetSlicingViewModel();
         };
 

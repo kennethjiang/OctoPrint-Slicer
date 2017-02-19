@@ -224,6 +224,14 @@ THREE.STLViewPort = function ( canvas, width, height, onChange ) {
         }
     };
 
+    self.removeAllModels = function() {
+        for (var i = 0; i < self.models.length; i++) {
+            self.scene.remove(self.models[i]);
+        }
+        self.models = [];
+        self.makeModelActive(undefined);
+    }
+
     self.startTransform = function () {
         // Disable orbit controls
         self.orbitControls.enabled = false;
