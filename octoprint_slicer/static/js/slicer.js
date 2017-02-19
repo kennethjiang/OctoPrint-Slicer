@@ -29,7 +29,6 @@ $(function() {
         self.lockScale = true;
 
         self.selectedSTL = undefined;
-        self.dontAskAgain = ko.observable(false);
 
 
         // Override slicingViewModel.show to surpress default slicing behavior
