@@ -260,8 +260,9 @@
 }
 
 #slicer-viewport > div.report {
-    top: 10px;
-    left: 75%;
+    transform: translateX(0%);
+    top: 3px;
+    right: 2%;
     z-index: 5;
 }
 

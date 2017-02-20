@@ -1,7 +1,16 @@
 'use strict';
 
 var ArrangeModels = function () {
-    var self = this;
+    var models;
+    var curentPosition;
+    var rectangles;
+    var bestPackResult;
+    var previousModelPositions;
+
+    var bedsize_x_mm;
+    var bedsize_y_mm;
+
+
     // Get the bounding rectangles for all models.  Try rotating them a
     // bit to make the bounding boxes smaller.  If any lengths are very
     // similar (within 1%), round up the smaller (to save computation
@@ -10,8 +19,8 @@ var ArrangeModels = function () {
     var getSmallestRectangles = function (margin) {
         var rectangles = [];
         var dimensions = []; // A list of all the widths and heights that we've encountered.
-        for (var i = 0; i < stlFiles.length; i++ ) {
-            var model = stlFiles[i].model;
+        for (var i = 0; i < models.length; i++ ) {
+            var model = models[i];
             var smallestRectangle = {"name": i};
             // Try all rotations of the model from 0 to 90.  No need to try
             // beyond because the packer can already rotate by 90 degrees.
@@ -84,14 +93,14 @@ var ArrangeModels = function () {
 
     var applyPackResult = function(packResult) {
         // Apply the pack result to the models.
-        for (var i = 0; i < stlFiles.length; i++ ) {
-            var model = stlFiles[i].model;
+        for (var i = 0; i < models.length; i++ ) {
+            var model = models[i];
             var oldOrder = model.rotation.order;
             model.rotation.reorder("ZYX");
             model.rotation.z = rectangles[i].prerotation + THREE.Math.degToRad(packResult.placements[i].rotation);
             model.rotation.reorder(oldOrder);
             // i is the name in the placements and also the index in the
-            // stlFiles.  The RectanglePacker assumes the back left corner
+            // models.  The RectanglePacker assumes the back left corner
             // is 0,0 and y grows downward, which is opposite from the
             // printer so y needs to be negative.
             var width =  packResult.placements[i].rotation == 0 ? rectangles[i].width  : rectangles[i].height;
@@ -113,15 +122,15 @@ var ArrangeModels = function () {
             bedsize_y_mm_ != bedsize_y_mm) {
             return true;
         }
-        if (stlFiles.length != modelPositions.length) {
+        if (models.length != modelPositions.length) {
             return true;
         }
-        for (var i = 0; i < stlFiles.length; i++) {
-            stlFiles[i].model.children[0].geometry.computeBoundingBox();
-            if (!stlFiles[i].model.position.equals(modelPositions[i].position) ||
-                !stlFiles[i].model.rotation.equals(modelPositions[i].rotation) ||
-                !stlFiles[i].model.scale.equals(modelPositions[i].scale) ||
-                !stlFiles[i].model.children[0].geometry.boundingBox.equals(modelPositions[i].boundingBox)) {
+        for (var i = 0; i < models.length; i++) {
+            models[i].children[0].geometry.computeBoundingBox();
+            if (!models[i].position.equals(modelPositions[i].position) ||
+                !models[i].rotation.equals(modelPositions[i].rotation) ||
+                !models[i].scale.equals(modelPositions[i].scale) ||
+                !models[i].children[0].geometry.boundingBox.equals(modelPositions[i].boundingBox)) {
                 return true;
             }
         }
@@ -133,26 +142,17 @@ var ArrangeModels = function () {
         // This is compared when arranging starts to see if we can
         // continue where we left off or if we must start over.
         var modelPositions = [];
-        for (var i = 0; i < stlFiles.length; i++) {
-            stlFiles[i].model.children[0].geometry.computeBoundingBox();
+        for (var i = 0; i < models.length; i++) {
+            models[i].children[0].geometry.computeBoundingBox();
             modelPositions.push({
-                position: stlFiles[i].model.position.clone(),
-                rotation: stlFiles[i].model.rotation.clone(),
-                scale: stlFiles[i].model.scale.clone(),
-                boundingBox: stlFiles[i].model.children[0].geometry.boundingBox.clone()
+                position: models[i].position.clone(),
+                rotation: models[i].rotation.clone(),
+                scale: models[i].scale.clone(),
+                boundingBox: models[i].children[0].geometry.boundingBox.clone()
             });
         }
         return modelPositions;
     };
-
-    var curentPosition;
-    var rectangles;
-    var bestPackResult;
-    var previousModelPositions;
-
-    var stlFiles;
-    var bedsize_x_mm;
-    var bedsize_y_mm;
 
     // Arrange the models on the platform.  Leave at least margin around
     // each object.  Stops in timeout milliseconds or fewer.  If the
@@ -160,9 +160,9 @@ var ArrangeModels = function () {
     // false, arrange can be run again to continue attempts to arrange.
     // If the forceStartOver is set, will start all the possibilities
     // again.
-    self.arrange = function(stlFiles_, bedsize_x_mm_, bedsize_y_mm_,
+    this.arrange = function(models_, bedsize_x_mm_, bedsize_y_mm_,
         margin, timeoutMilliseconds, renderFn, forceStartOver = false) {
-        stlFiles = stlFiles_;
+        models = models_;
         if (forceStartOver || needStartOver(previousModelPositions,
             bedsize_x_mm_, bedsize_y_mm_)) {
             currentPosition = 0;

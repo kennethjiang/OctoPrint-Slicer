@@ -27,7 +27,6 @@ $(function() {
         self.modelManager = new ModelManager(self.slicingViewModel);
 
         self.lockScale = true;
-
         self.selectedSTL = undefined;
 
 
@@ -38,37 +37,37 @@ $(function() {
             }
             mixpanel.track("Load STL");
 
+            $('a[href="#tab_plugin_slicer"]').tab('show');
+
             if (self.modelManager.models.length != 0) {
                 self.selectedSTL = {target: target, file: file};
                 $("#plugin-slicer-modal").modal("show");
-                return;
             } else {
                 self.addSTL(target, file);
             }
-        }
+        };
 
         self.emptyBed = function() {
+            $("#plugin-slicer-modal").modal("hide");
+
             self.modelManager.removeAll();
             self.stlViewPort.removeAllModels();
-            $("#plugin-slicer-modal").modal("hide");
-        }
+        };
 
         self.addSelectedSTL = function() {
             self.addSTL(self.selectedSTL.target, self.selectedSTL.file);
             self.selectedSTL = undefined;
             $("#plugin-slicer-modal").modal("hide");
-        }
+        };
 
         self.addSTL = function(target, file) {
             self.stlViewPort.loadSTL(BASEURL + "downloads/files/" + target + "/" + file, function(model) {
-
                 self.modelManager.add(model, target, file);
-
-                self.fixZPosition(model);
                 self.stlViewPort.makeModelActive(model);
 
-                $('a[href="#tab_plugin_slicer"]').tab('show');
-
+                new ArrangeModels().arrange(self.modelManager.models, self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM,
+                    10 /* mm margin */, 5000 /* milliseconds max */, self.onModelChange, false);
+                self.fixZPosition(model);
             });
         };
 
@@ -137,7 +136,7 @@ $(function() {
 
             // Buttons on the canvas, and their behaviors.
             // TODO: it's not DRY. mix of prez code and logics. need to figure out a better way
-            $("#slicer-viewport").empty().append('<div class="report"><a target="_blank" href="https://github.com/kennethjiang/OctoPrint-Slicer/issues/new">Report a slicer problem</a></div>\
+            $("#slicer-viewport").empty().append('<div class="report"><span>Got issues or suggestions? <a target="_blank" href="https://github.com/kennethjiang/OctoPrint-Slicer/issues/new">Click here!</a></span></div>\
                   <div class="model">\
                     <button class="translate disabled" title="Move"><img src="'
                 + PLUGIN_BASEURL
@@ -151,9 +150,6 @@ $(function() {
                     <button class="remove disabled" title="Remove"><img src="'
                 + PLUGIN_BASEURL
                 + 'slicer/static/img/remove.png"></button>\
-                    <button class="arrange" title="Arrange"><img src="'
-                + PLUGIN_BASEURL
-                + 'slicer/static/img/arrange.png"></button>\
                 </div>\
                 <div class="values translate">\
                     <div>\
@@ -200,10 +196,6 @@ $(function() {
             $("#slicer-viewport button.remove").click(function(event) {
                 // Remove the currently selected object.
                 self.modelManager.remove( self.stlViewPort.removeActiveModel() );
-            });
-
-            $("#slicer-viewport button.arrange").click(function(event) {
-                self.arrange(10 /* mm margin */, 5000 /* milliseconds max */);
             });
             $("#slicer-viewport .values input").change(function() {
                 self.applyValueInputs($(this));
@@ -278,17 +270,6 @@ $(function() {
             } else {
                 $("#slicer-viewport button").removeClass("disabled");
             }
-        };
-
-
-        self.arrangeModels = new ArrangeModels();
-        self.arrange = function(margin, timeoutMilliseconds, forceStartOver = false) {
-            var renderFn = function () {
-                self.onModelChange();
-            }
-            var arrangeResult = self.arrangeModels.arrange(
-                self.modelManager.models, self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM,
-                margin, timeoutMilliseconds, renderFn, forceStartOver);
         };
 
         // Slicing
@@ -518,9 +499,8 @@ $(function() {
         self.models = [];
 
         self.add = function(model, target, filename) {
-            _.extend(model, {target, filename, destinationFilename: self.computeDestinationFilename(filename)});
             self.models.push(model);
-            self.resetSlicingViewModel();
+            self.setSlicingViewModel(target, filename);
         };
 
         self.remove = function(model) {
@@ -533,21 +513,22 @@ $(function() {
             self.resetSlicingViewModel();
         };
 
-        // TODO: can we do this right before slicing?
         self.resetSlicingViewModel = function() {
-            if (self.models.length == 0) {
+            if (self.models.length == 0 && self.slicingViewModel.destinationFilename()) { // Last model is removed from bed
                 self.slicingViewModel.requestData();
                 self.slicingViewModel.target = undefined;
-                self.slicingViewModel.file();
-                self.slicingViewModel.printerProfile(self.slicingViewModel.printerProfiles.currentProfile());
-                self.slicingViewModel.destinationFilename();
-            } else if (self.models.length == 1) {
-                var model = self.models[0];
+                self.slicingViewModel.file(undefined);
+                self.slicingViewModel.destinationFilename(undefined);
+            }
+        };
+
+        self.setSlicingViewModel = function(target, filename) {
+            if (!self.slicingViewModel.destinationFilename()) {  // A model is added to an empty bed
                 self.slicingViewModel.requestData();
-                self.slicingViewModel.target = model.target;
-                self.slicingViewModel.file(model.filename);
+                self.slicingViewModel.target = target;
+                self.slicingViewModel.file(filename);
+                self.slicingViewModel.destinationFilename(self.computeDestinationFilename(filename));
                 self.slicingViewModel.printerProfile(self.slicingViewModel.printerProfiles.currentProfile());
-                self.slicingViewModel.destinationFilename(self.computeDestinationFilename(model.filename));
             }
         };
 
