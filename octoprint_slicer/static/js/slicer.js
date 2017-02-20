@@ -6,6 +6,8 @@
  */
 
 'use strict';
+Raven.config('https://b50a97cd4f3e4f8ba9b188f59e5db6e4@sentry.io/140863').install()
+
 $(function() {
     function SlicerViewModel(parameters) {
         var self = this;
