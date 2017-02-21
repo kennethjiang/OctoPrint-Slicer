@@ -123,6 +123,8 @@ $(function() {
 
         self.init = function() {
 
+            self.slicingViewModel.requestData();
+
             self.stlViewPort = new THREE.STLViewPort(self.canvas, CANVAS_WIDTH, CANVAS_HEIGHT, self.onModelChange)
             self.stlViewPort.init();
 
@@ -517,7 +519,6 @@ $(function() {
 
         self.resetSlicingViewModel = function() {
             if (self.models.length == 0 && self.slicingViewModel.destinationFilename()) { // Last model is removed from bed
-                self.slicingViewModel.requestData();
                 self.slicingViewModel.target = undefined;
                 self.slicingViewModel.file(undefined);
                 self.slicingViewModel.destinationFilename(undefined);
@@ -526,7 +527,6 @@ $(function() {
 
         self.setSlicingViewModel = function(target, filename) {
             if (!self.slicingViewModel.destinationFilename()) {  // A model is added to an empty bed
-                self.slicingViewModel.requestData();
                 self.slicingViewModel.target = target;
                 self.slicingViewModel.file(filename);
                 self.slicingViewModel.destinationFilename(self.computeDestinationFilename(filename));
