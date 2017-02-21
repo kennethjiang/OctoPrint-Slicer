@@ -67,8 +67,10 @@ $(function() {
                 self.modelManager.add(model, target, file);
                 self.stlViewPort.makeModelActive(model);
 
-                new ArrangeModels().arrange(self.modelManager.models, self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM,
-                    10 /* mm margin */, 5000 /* milliseconds max */, self.onModelChange, false);
+                if (self.modelManager.models.length > 1) {
+                    new ArrangeModels().arrange(self.modelManager.models, self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM,
+                      10 /* mm margin */, 5000 /* milliseconds max */, self.onModelChange, false);
+                }
                 self.fixZPosition(model);
             });
         };
