@@ -6,7 +6,9 @@
  */
 
 'use strict';
-Raven.config('https://85bd9314656d40da9249aec5a32a2b52@sentry.io/141297').install()
+if (window.location.hostname != "localhost") {
+    Raven.config('https://85bd9314656d40da9249aec5a32a2b52@sentry.io/141297').install()
+}
 
 $(function() {
     function SlicerViewModel(parameters) {
@@ -22,9 +24,8 @@ $(function() {
 
         // assign the injected parameters, e.g.:
         self.slicingViewModel = parameters[0];
-        self.basicOverridesViewModel = parameters[1];
-        self.advancedOverridesViewModel = parameters[2];
-        self.printerStateViewModel = parameters[3];
+        self.overridesViewModel = parameters[1];
+        self.printerStateViewModel = parameters[2];
 
         self.modelManager = new ModelManager(self.slicingViewModel);
 
@@ -43,23 +44,24 @@ $(function() {
 
             if (self.modelManager.models.length != 0) {
                 self.selectedSTL = {target: target, file: file};
-                $("#plugin-slicer-modal").modal("show");
+                $("#plugin-slicer-load-model").modal("show");
             } else {
                 self.addSTL(target, file);
             }
         };
 
         self.emptyBed = function() {
-            $("#plugin-slicer-modal").modal("hide");
-
             self.modelManager.removeAll();
             self.stlViewPort.removeAllModels();
+
+            $("#plugin-slicer-load-model").modal("hide");
         };
 
         self.addSelectedSTL = function() {
             self.addSTL(self.selectedSTL.target, self.selectedSTL.file);
             self.selectedSTL = undefined;
-            $("#plugin-slicer-modal").modal("hide");
+
+            $("#plugin-slicer-load-model").modal("hide");
         };
 
         self.addSTL = function(target, file) {
@@ -318,8 +320,7 @@ $(function() {
                 position: { "x": self.ORIGIN_OFFSET_X_MM + groupCenter.x,
                     "y": self.ORIGIN_OFFSET_Y_MM + groupCenter.y}
             };
-            _.extend(data, self.basicOverridesViewModel.toJS());
-            _.extend(data, self.advancedOverridesViewModel.toJS());
+            _.extend(data, self.overridesViewModel.toJS());
 
             if (slicingVM.afterSlicing() == "print") {
                 data["print"] = true;
@@ -573,7 +574,7 @@ $(function() {
         SlicerViewModel,
 
         // e.g. loginStateViewModel, settingsViewModel, ...
-        [ "slicingViewModel", "basicOverridesViewModel", "advancedOverridesViewModel", "printerStateViewModel" ],
+        [ "slicingViewModel", "overridesViewModel", "printerStateViewModel" ],
 
         // e.g. #settings_plugin_slicer, #tab_plugin_slicer, ...
         [ "#slicer" ]
