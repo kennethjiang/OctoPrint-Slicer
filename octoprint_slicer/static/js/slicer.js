@@ -26,6 +26,7 @@ $(function() {
         self.slicingViewModel = parameters[0];
         self.overridesViewModel = parameters[1];
         self.printerStateViewModel = parameters[2];
+        self.printerProfilesViewModel = parameters[3];
 
         self.modelManager = new ModelManager(self.slicingViewModel);
 
@@ -77,31 +78,15 @@ $(function() {
             });
         };
 
-        self.updatePrinterProfile = function(printerProfile) {
-            if (! self.printerProfiles) {
-                $.ajax({
-                    url: API_BASEURL + "printerprofiles",
-                    type: "GET",
-                    dataType: "json",
-                    success: function(data) {
-                        self.printerProfiles = data;
-                        self.updatePrinterBed(printerProfile);
-                    }
-                });
-            } else {
-                self.updatePrinterBed(printerProfile);
-            }
-        }
+        self.updatePrinterBed = function(profileName) {
+            if ( profileName) {
+                var profile = self.printerProfilesViewModel.profiles.items().find(function(p) { return p.id == profileName })
 
-        self.slicingViewModel.printerProfile.subscribe( self.updatePrinterProfile );
-
-        self.updatePrinterBed = function(printerProfile) {
-            if ( self.printerProfiles && printerProfile ) {
-                var dim = self.printerProfiles.profiles[printerProfile].volume
+                var dim = profile.volume
                 self.BEDSIZE_X_MM = dim.width;
                 self.BEDSIZE_Y_MM = dim.depth;
                 self.BEDSIZE_Z_MM = dim.height;
-                if ( self.printerProfiles.profiles[printerProfile]["volume"]["origin"] == "lowerleft" ) {
+                if (dim.origin == "lowerleft" ) {
                     self.ORIGIN_OFFSET_X_MM = self.BEDSIZE_X_MM/2.0;
                     self.ORIGIN_OFFSET_Y_MM = self.BEDSIZE_Y_MM/2.0;
                 } else {
@@ -114,7 +99,8 @@ $(function() {
             self.stlViewPort.render();
         }
 
-        // Print bed size
+        self.slicingViewModel.printerProfile.subscribe( self.updatePrinterBed );
+
         self.BEDSIZE_X_MM = 200;
         self.BEDSIZE_Y_MM = 200;
         self.BEDSIZE_Z_MM = 200;
@@ -533,7 +519,6 @@ $(function() {
                 self.slicingViewModel.target = target;
                 self.slicingViewModel.file(filename);
                 self.slicingViewModel.destinationFilename(self.computeDestinationFilename(filename));
-                self.slicingViewModel.printerProfile(self.slicingViewModel.printerProfiles.currentProfile());
             }
         };
 
@@ -574,7 +559,7 @@ $(function() {
         SlicerViewModel,
 
         // e.g. loginStateViewModel, settingsViewModel, ...
-        [ "slicingViewModel", "overridesViewModel", "printerStateViewModel" ],
+        [ "slicingViewModel", "overridesViewModel", "printerStateViewModel", "printerProfilesViewModel" ],
 
         // e.g. #settings_plugin_slicer, #tab_plugin_slicer, ...
         [ "#slicer" ]
