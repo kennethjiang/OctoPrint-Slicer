@@ -31,7 +31,6 @@ $(function() {
         self.lockScale = true;
         self.selectedSTL = undefined;
 
-
         // Override slicingViewModel.show to surpress default slicing behavior
         self.slicingViewModel.show = function(target, file, force) {
             if (!self.slicingViewModel.enableSlicingDialog() && !force) {
@@ -95,20 +94,27 @@ $(function() {
 
         self.updatePrinterBed = function(printerProfile) {
             if ( self.printerProfiles && printerProfile ) {
-                var dim = self.printerProfiles.profiles[printerProfile].volume
-                self.BEDSIZE_X_MM = dim.width;
-                self.BEDSIZE_Y_MM = dim.depth;
-                self.BEDSIZE_Z_MM = dim.height;
-                if ( self.printerProfiles.profiles[printerProfile]["volume"]["origin"] == "lowerleft" ) {
+                var volume = self.printerProfiles.profiles[printerProfile].volume;
+                self.BEDSIZE_X_MM = volume.width;
+                self.BEDSIZE_Y_MM = volume.depth;
+                self.BEDSIZE_Z_MM = volume.height;
+                if ( volume.origin == "lowerleft" ) {
                     self.ORIGIN_OFFSET_X_MM = self.BEDSIZE_X_MM/2.0;
                     self.ORIGIN_OFFSET_Y_MM = self.BEDSIZE_Y_MM/2.0;
                 } else {
                     self.ORIGIN_OFFSET_X_MM = 0;
                     self.ORIGIN_OFFSET_Y_MM = 0;
                 }
+                if ( volume.formFactor == "rectangular" ) {
+                    self.drawCubeBuildArea();
+                }
+                if ( volume.formFactor == "circular" ) {
+                    self.drawCylinderBuildArea();
+                }
+            } else {
+                self.drawCubeBuildArea();
             }
-            self.drawBedFloor(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM);
-            self.drawWalls(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM, self.BEDSIZE_Z_MM);
+
             self.stlViewPort.render();
         }
 
@@ -424,36 +430,64 @@ $(function() {
             parentObj.add(mesh);
         };
 
+        self.drawCubeBuildArea = function() {
+            self.drawBedFloor(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM);
+            self.drawWalls(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM, self.BEDSIZE_Z_MM);
+        }
+
+        self.drawCylinderBuildArea = function() {
+            for(var i = self.floor.children.length - 1; i >= 0; i--) {
+                var obj = self.floor.children[i];
+                self.floor.remove(obj);
+            }
+            for(var i = self.walls.children.length - 1; i >= 0; i--) {
+                var obj = self.walls.children[i];
+                self.walls.remove(obj);
+            }
+
+            var segments = self.BEDSIZE_X_MM / 10;
+            var bedRadius = self.BEDSIZE_X_MM / 2;
+            var geometry = new THREE.CircleGeometry(bedRadius, 60);
+            var texture = new CheckerBoardTexture(0xccccfc, 0x444464, segments, segments);
+            var circle = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({ map: texture, transparent: true, opacity: 0.5, side: THREE.DoubleSide }));
+            self.floor.add(circle);
+
+            var cylGeometry = new THREE.CylinderGeometry(bedRadius, bedRadius, self.BEDSIZE_Z_MM, segments, self.BEDSIZE_Z_MM, true);
+            //This material will only make the inside of the cylinder walls visible while allowing the outside to be transparent.
+            var material = new THREE.MeshBasicMaterial({ color: 0x8888fc, side: THREE.BackSide, transparent: true, opacity: 0.5 });
+            // Move the walls up to the floor
+            cylGeometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, self.BEDSIZE_Z_MM / 2, 0));
+            var wall = new THREE.Mesh(cylGeometry, material);
+            //rotate the walls so they are upright
+            wall.rotation.x = Math.PI/2;
+            self.walls.add(wall);
+
+            //Add text to indicate front of print bed
+            (new THREE.FontLoader()).load( PLUGIN_BASEURL + "slicer/static/js/optimer_bold.typeface.json", function ( font ) {
+                self.createText(font, "Front", bedRadius * 2, bedRadius * 2, self.floor);
+            } );
+        }
+
         self.drawBedFloor = function ( width, depth, segments ) {
             for(var i = self.floor.children.length - 1; i >= 0; i--) {
                 var obj = self.floor.children[i];
                 self.floor.remove(obj);
             }
 
-            segments = segments || 20;
-            var geometry = new THREE.PlaneGeometry(width, depth, segments, segments);
-            var materialEven = new THREE.MeshBasicMaterial({color: 0xccccfc});
-            var materialOdd = new THREE.MeshBasicMaterial({color: 0x444464});
-            var materials = [materialEven, materialOdd];
-            for (var x = 0; x < segments; x++) {
-                for (var y = 0; y < segments; y++) {
-                    var i = x * segments + y;
-                    var j = 2 * i;
-                    geometry.faces[ j ].materialIndex = geometry.faces[ j + 1 ].materialIndex = (x + y) % 2;
-                }
-            }
-            var mesh = new THREE.Mesh(geometry, new THREE.MeshFaceMaterial(materials));
+            var xSegments = segments || self.BEDSIZE_X_MM / 10;
+            var ySegments = segments || self.BEDSIZE_Y_MM / 10;
+            var geometry = new THREE.PlaneGeometry(width, depth, xSegments, ySegments);
+            var texture = new CheckerBoardTexture(0xccccfc, 0x444464, xSegments, ySegments);
+            var mesh = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({ map: texture, transparent: true, opacity: 0.5, side: THREE.DoubleSide }));
             mesh.receiveShadow = true;
             self.floor.add(mesh);
 
             //Add text to indicate front/back of print bed
-            var loader = new THREE.FontLoader();
-            loader.load( PLUGIN_BASEURL + "slicer/static/js/optimer_bold.typeface.json", function ( font ) {
+            (new THREE.FontLoader()).load( PLUGIN_BASEURL + "slicer/static/js/optimer_bold.typeface.json", function ( font ) {
                 self.createText(font, "Front", width, depth, self.floor);
                 self.createText(font, "Back", width, depth, self.floor);
                 self.createText(font, "Left", width, depth, self.floor);
                 self.createText(font, "Right", width, depth, self.floor);
-                self.stlViewPort.render();
             } );
         };
 
@@ -463,22 +497,22 @@ $(function() {
                 self.walls.remove(obj);
             }
 
-            var wall1 = self.rectShape( width, height, 0x8888fc );
+            var wall1 = self.rectShape(width, height, 0x8888fc);
             wall1.rotation.x = Math.PI / 2;
             wall1.position.set(0, depth/2, height/2);
             self.walls.add(wall1);
 
-            var wall2 = self.rectShape( height, depth, 0x8888dc );
+            var wall2 = self.rectShape(height, depth, 0x8888dc);
             wall2.rotation.y = Math.PI / 2;
             wall2.position.set(-width/2, 0, height/2);
             self.walls.add(wall2);
 
-            var wall3 = self.rectShape( width, height, 0x8888fc );
+            var wall3 = self.rectShape(width, height, 0x8888fc);
             wall3.rotation.x = -Math.PI / 2;
             wall3.position.set(0, -depth/2, height/2);
             self.walls.add(wall3);
 
-            var wall4 = self.rectShape( height, depth, 0x8888dc );
+            var wall4 = self.rectShape(height, depth, 0x8888dc);
             wall4.rotation.y = -Math.PI / 2;
             wall4.position.set(width/2, 0, height/2);
             self.walls.add(wall4);
@@ -486,13 +520,13 @@ $(function() {
 
         self.rectShape = function ( rectLength, rectWidth, color ) {
             var rectShape = new THREE.Shape();
-            rectShape.moveTo( -rectLength/2,-rectWidth/2 );
-            rectShape.lineTo( -rectLength/2, rectWidth/2 );
-            rectShape.lineTo( rectLength/2, rectWidth/2 );
-            rectShape.lineTo( rectLength/2, -rectWidth/2 );
-            rectShape.lineTo( -rectLength/2, -rectWidth/2 );
-            var rectGeom = new THREE.ShapeGeometry( rectShape );
-            return new THREE.Mesh( rectGeom, new THREE.MeshBasicMaterial( { color: color } ) ) ;
+            rectShape.moveTo(-rectLength/2,-rectWidth/2);
+            rectShape.lineTo(-rectLength/2, rectWidth/2);
+            rectShape.lineTo(rectLength/2, rectWidth/2);
+            rectShape.lineTo(rectLength/2, -rectWidth/2);
+            rectShape.lineTo(-rectLength/2, -rectWidth/2);
+            var rectGeom = new THREE.ShapeGeometry(rectShape);
+            return new THREE.Mesh(rectGeom, new THREE.MeshBasicMaterial({ color: color }));
         };
         // END: Helpers for drawing walls and floor
 
@@ -567,6 +601,45 @@ $(function() {
                 self.models[0].scale.z == 1.0
         };
     }
+
+    // from : https://github.com/bunnybones1/threejs-texture-checkerboard/blob/master/index.js
+    function CheckerBoardTexture(color1, color2, rows, cols) {
+        color1 = color1 || new THREE.Color(0xafafaf);
+        color2 = color2 || new THREE.Color(0x3f3f3f);
+
+        if(!(color1 instanceof THREE.Color)) color1 = new THREE.Color(color1);
+        if(!(color2 instanceof THREE.Color)) color2 = new THREE.Color(color2);
+
+        rows = rows || 4;
+        cols = cols || 4;
+
+        cols = Math.max(cols, 1);
+        rows = Math.max(rows, 1);
+        var size = 16;
+        var pixelData = new Uint8Array( 3 * size );
+        for (var i = 0, len = size; i < len; i++) {
+            var i3 = i * 3;
+            var color = (~~(i/2) % 2 == 0) ? color1 : color2;
+            if(i >= 8) color = (color === color1) ? color2 : color1;
+            pixelData[i3] = ~~(255 * color.r);
+            pixelData[i3+1] = ~~(255 * color.g);
+            pixelData[i3+2] = ~~(255 * color.b);
+        };
+        var width = 4,
+            height = 4,
+            format = THREE.RGBFormat,
+            type = THREE.UnsignedByteType,
+            mapping = undefined,
+            wrapS = THREE.RepeatWrapping,
+            wrapT = THREE.RepeatWrapping,
+            magFilter = THREE.NearestFilter,
+            minFilter = THREE.NearestFilter;
+
+        THREE.DataTexture.call(this, pixelData, width, height, format, type, mapping, wrapS, wrapT, magFilter, minFilter);
+        this.repeat.set(rows * .5, cols * .5);
+        this.needsUpdate = true;
+    }
+    CheckerBoardTexture.prototype = Object.create(THREE.DataTexture.prototype);
 
     // view model class, parameters for constructor, container to bind to
     OCTOPRINT_VIEWMODELS.push([
