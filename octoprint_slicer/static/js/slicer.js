@@ -6,10 +6,14 @@
  */
 
 'use strict';
-Raven.config('https://85bd9314656d40da9249aec5a32a2b52@sentry.io/141297').install()
+if (window.location.hostname != "localhost") {
+    Raven.config('https://85bd9314656d40da9249aec5a32a2b52@sentry.io/141297', {release: '0.9.6'}).install()
+}
 
 $(function() {
     function SlicerViewModel(parameters) {
+        mixpanel.track("App Loaded");
+
         var self = this;
 
         self.canvas = document.getElementById( 'slicer-canvas' );
@@ -22,9 +26,9 @@ $(function() {
 
         // assign the injected parameters, e.g.:
         self.slicingViewModel = parameters[0];
-        self.basicOverridesViewModel = parameters[1];
-        self.advancedOverridesViewModel = parameters[2];
-        self.printerStateViewModel = parameters[3];
+        self.overridesViewModel = parameters[1];
+        self.printerStateViewModel = parameters[2];
+        self.printerProfilesViewModel = parameters[3];
 
         self.modelManager = new ModelManager(self.slicingViewModel);
 
@@ -42,23 +46,24 @@ $(function() {
 
             if (self.modelManager.models.length != 0) {
                 self.selectedSTL = {target: target, file: file};
-                $("#plugin-slicer-modal").modal("show");
+                $("#plugin-slicer-load-model").modal("show");
             } else {
                 self.addSTL(target, file);
             }
         };
 
         self.emptyBed = function() {
-            $("#plugin-slicer-modal").modal("hide");
-
             self.modelManager.removeAll();
             self.stlViewPort.removeAllModels();
+
+            $("#plugin-slicer-load-model").modal("hide");
         };
 
         self.addSelectedSTL = function() {
             self.addSTL(self.selectedSTL.target, self.selectedSTL.file);
             self.selectedSTL = undefined;
-            $("#plugin-slicer-modal").modal("hide");
+
+            $("#plugin-slicer-load-model").modal("hide");
         };
 
         self.addSTL = function(target, file) {
@@ -74,27 +79,10 @@ $(function() {
             });
         };
 
-        self.updatePrinterProfile = function(printerProfile) {
-            if (! self.printerProfiles) {
-                $.ajax({
-                    url: API_BASEURL + "printerprofiles",
-                    type: "GET",
-                    dataType: "json",
-                    success: function(data) {
-                        self.printerProfiles = data;
-                        self.updatePrinterBed(printerProfile);
-                    }
-                });
-            } else {
-                self.updatePrinterBed(printerProfile);
-            }
-        }
-
-        self.slicingViewModel.printerProfile.subscribe( self.updatePrinterProfile );
-
-        self.updatePrinterBed = function(printerProfile) {
-            if ( self.printerProfiles && printerProfile ) {
-                var volume = self.printerProfiles.profiles[printerProfile].volume;
+        self.updatePrinterBed = function(profileName) {
+            if ( profileName) {
+                var profile = self.printerProfilesViewModel.profiles.items().find(function(p) { return p.id == profileName })
+                var volume = profile.volume;
                 self.BEDSIZE_X_MM = volume.width;
                 self.BEDSIZE_Y_MM = volume.depth;
                 self.BEDSIZE_Z_MM = volume.height;
@@ -118,7 +106,8 @@ $(function() {
             self.stlViewPort.render();
         }
 
-        // Print bed size
+        self.slicingViewModel.printerProfile.subscribe( self.updatePrinterBed );
+
         self.BEDSIZE_X_MM = 200;
         self.BEDSIZE_Y_MM = 200;
         self.BEDSIZE_Z_MM = 200;
@@ -322,8 +311,7 @@ $(function() {
                 position: { "x": self.ORIGIN_OFFSET_X_MM + groupCenter.x,
                     "y": self.ORIGIN_OFFSET_Y_MM + groupCenter.y}
             };
-            _.extend(data, self.basicOverridesViewModel.toJS());
-            _.extend(data, self.advancedOverridesViewModel.toJS());
+            _.extend(data, self.overridesViewModel.toJS());
 
             if (slicingVM.afterSlicing() == "print") {
                 data["print"] = true;
@@ -569,7 +557,6 @@ $(function() {
                 self.slicingViewModel.target = target;
                 self.slicingViewModel.file(filename);
                 self.slicingViewModel.destinationFilename(self.computeDestinationFilename(filename));
-                self.slicingViewModel.printerProfile(self.slicingViewModel.printerProfiles.currentProfile());
             }
         };
 
@@ -610,7 +597,7 @@ $(function() {
         SlicerViewModel,
 
         // e.g. loginStateViewModel, settingsViewModel, ...
-        [ "slicingViewModel", "basicOverridesViewModel", "advancedOverridesViewModel", "printerStateViewModel" ],
+        [ "slicingViewModel", "overridesViewModel", "printerStateViewModel", "printerProfilesViewModel" ],
 
         // e.g. #settings_plugin_slicer, #tab_plugin_slicer, ...
         [ "#slicer" ]

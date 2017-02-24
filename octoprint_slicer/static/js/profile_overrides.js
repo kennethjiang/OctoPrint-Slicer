@@ -27,20 +27,63 @@ $(function() {
         var self = this;
         self.slicingViewModel = parameters[0];
 
-        var ARRAY_KEYS = (typeof array_keys === 'undefined') ? [] : array_keys,
-            ENUM_KEYS = (typeof enum_keys === 'undefined') ? {} : enum_keys,
-            ITEM_KEYS = (typeof item_keys === 'undefined') ? [] : item_keys,
-            BOOLEAN_KEYS = (typeof boolean_keys === 'undefined') ? [] : boolean_keys;
+        var ARRAY_KEYS = [
+            "print_temperature",
+            "start_gcode",
+            "end_gcode",
+            "filament_diameter"
+        ],
+        ENUM_KEYS = {
+            "support" : ko.observableArray(["none", "buildplate", "everywhere"]),
+            "platform_adhesion" : ko.observableArray(["none", "brim", "raft"])
+        },
+        ITEM_KEYS = [
+            "layer_height",
+                "temperature",
+                "bed_temperature",
+                "print_bed_temperature",
+                "fill_density",
+                "wall_thickness",
+                "print_speed",
+                "solid_layer_thickness",
+            "travel_speed",
+                "outer_shell_speed",
+                "inner_shell_speed",
+                "infill_speed",
+                "bottom_layer_speed",
+                "filament_flow",
+                "retraction_speed",
+                "retraction_amount",
+                "extrusion_multiplier",
+            ],
+            BOOLEAN_KEYS = [
+                "support_material",
+                "overhangs",
+            "retraction_enable",
+                "fan_enabled",
+                "cooling"
+            ];
         var ALL_KEYS = BOOLEAN_KEYS.concat(ITEM_KEYS).concat(ARRAY_KEYS).concat(Object.keys(ENUM_KEYS));
 
         // initialize all observables
         _.forEach(ALL_KEYS, function(k) { self["profile." + k] = ko.observable(); });
+        _.forEach(ALL_KEYS, function(k) { self["profile." + k].subscribe(
+            function() {
+                if (self.doneUpdateOverrides) {
+                    self.overridesChangedByUser = true;
+                }
+            })
+        });
 
         self.optionsForKey = function(key) {
             return ENUM_KEYS[key];
         };
 
         self.updateOverridesFromProfile = function(profile) {
+
+            self.overridesChangedByUser = false;
+            self.doneUpdateOverrides = false;
+
             // Some options are numeric but might have a percent sign after them.
             // Remove the percent and save it to replace later.
             self.endings = {};
@@ -92,28 +135,69 @@ $(function() {
                 } else {
                     self["profile." + k](profile[k]);
                 }});
+
+            self.doneUpdateOverrides = true;
         };
 
-        self.updateOverrides = function(newValue) {
+        // Profile: Determine if slicing parameters have changed and alert user before user reloads slicing profile
+        // It is an intricate mess because of the quirkiness of how KO handles events
+        // Do NOT change it unless you know what you are doing!
+        // TODO: This needs simplication. Or completely get rid of because it's probably over-engineering
+        //
+        $("#plugin-slicer-reset-overrides-confirm").unbind('click');
+        $("#plugin-slicer-reset-overrides-confirm").bind('click', function() {
+            self.fetchSlicingProfile( self.slicingViewModel.slicer(), self.slicingViewModel.profile() );
+            $("#plugin-slicer-reset-overrides").modal("hide");
+        });
+
+        $("#plugin-slicer-reset-overrides").unbind('hidden');
+        $("#plugin-slicer-reset-overrides").bind('hidden', function () {
+            // We don't have to handle the case when modal is hidden because user clicks "Confirm",
+            //  as at that point `self.previousSlicer` and `self.previousProfile` have already changed to new values
+            self.slicingViewModel.slicer(self.previousSlicer);
+            self.slicingViewModel.profile(self.previousProfile);
+        });
+
+        self.onProfileChange = function(newValue) {
+            if (newValue === undefined) {  // For some reason KO would fire event with newValue=undefined,
+                return;  // in which case we should ignore it otherwise things get messed up
+            }
+
             var slicing = self.slicingViewModel;
 
-            if ( slicing.profile() && slicing.slicer()
-                && (self.previousProfile != slicing.profile() || self.previousSlicer != slicing.slicer()) ) {
-                $.ajax({
-                    url: API_BASEURL + "slicing/" + slicing.slicer() + "/profiles/" + slicing.profile(),
-                    type: "GET",
-                    // On success
-                    success: function(data) {
-                        self.updateOverridesFromProfile(data.data);
-                    }
-                });
+            if( !self.previousProfile || !self.previousSlicer ) {
+                if( slicing.slicer() && slicing.profile() ) {
+                    self.fetchSlicingProfile( slicing.slicer(), slicing.profile() );
+                }
+                return;
             }
-            self.previousProfile = slicing.profile();
-            self.previousSlicer = slicing.slicer();
+
+            if (self.previousProfile == slicing.profile() && self.previousSlicer == slicing.slicer() ) {
+                return;
+            }
+
+            if (self.overridesChangedByUser) {
+                $("#plugin-slicer-reset-overrides").modal("show");
+            }
         };
 
-        self.slicingViewModel.profile.subscribe( self.updateOverrides );
-        self.slicingViewModel.slicer.subscribe( self.updateOverrides );
+        self.fetchSlicingProfile = function(slicer, profile) {
+            $.ajax({
+                url: API_BASEURL + "slicing/" + slicer + "/profiles/" + profile,
+                type: "GET",
+                // On success
+                success: function(data) {
+                    self.updateOverridesFromProfile(data.data);
+                }
+                });
+            self.previousProfile = profile;
+            self.previousSlicer = slicer;
+        };
+
+        self.slicingViewModel.profile.subscribe( self.onProfileChange );
+        //
+        //End of Profile-handling mess
+
 
         self.toJS = function() {
             var result = ko.mapping.toJS(self, {
@@ -154,53 +238,10 @@ $(function() {
         };
     }
 
-    function BasicOverridesViewModel(parameters) {
-        OverridesViewModel.call(this, parameters,
-            ["print_temperature"],
-            { "support" : ko.observableArray(["none", "buildplate", "everywhere"])},
-            ["layer_height",
-                "temperature",
-                "bed_temperature",
-                "print_bed_temperature",
-                "fill_density",
-                "wall_thickness",
-                "print_speed",
-                "solid_layer_thickness"],
-            ["support_material",
-                "overhangs"]);
-    }
-
-    function AdvancedOverridesViewModel(parameters) {
-        OverridesViewModel.call(this, parameters,
-            ["start_gcode",
-                "end_gcode",
-                "filament_diameter"],
-            { "platform_adhesion" : ko.observableArray(["none", "brim", "raft"])},
-            ["travel_speed",
-                "outer_shell_speed",
-                "inner_shell_speed",
-                "infill_speed",
-                "bottom_layer_speed",
-                "filament_flow",
-                "retraction_speed",
-                "retraction_amount",
-                "extrusion_multiplier",
-            ],
-            ["retraction_enable",
-                "fan_enabled",
-                "cooling"]);
-    }
-
-
     // view model class, parameters for constructor, container to bind to
     OCTOPRINT_VIEWMODELS.push([
-        BasicOverridesViewModel,
+        OverridesViewModel,
         [ "slicingViewModel" ],
-        [ "#basic_overrides" ]
-    ],
-        [
-            AdvancedOverridesViewModel,
-            [ "slicingViewModel" ],
-            [ "#advanced_overrides" ]
+        [ "#basic_overrides", "#advanced_overrides" ]
         ]);
 });
