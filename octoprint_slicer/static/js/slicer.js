@@ -142,8 +142,6 @@ $(function() {
             self.stlViewPort.scene.add(self.walls);
             self.stlViewPort.scene.add(self.floor);
 
-            self.updatePrinterBed();
-
             ko.applyBindings(self.slicingViewModel, $('#slicing-settings')[0]);
 
             // Buttons on the canvas, and their behaviors.
@@ -449,15 +447,17 @@ $(function() {
             var bedRadius = self.BEDSIZE_X_MM / 2;
             var geometry = new THREE.CircleGeometry(bedRadius, 60);
             var texture = new CheckerBoardTexture(0xccccfc, 0x444464, segments, segments);
-            var circle = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({ map: texture, transparent: true, opacity: 0.5, side: THREE.DoubleSide }));
+            var material = new THREE.MeshPhongMaterial({ map: texture, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
+            var circle = new THREE.Mesh(geometry, material);
+            circle.receiveShadow = true;
             self.floor.add(circle);
 
             var cylGeometry = new THREE.CylinderGeometry(bedRadius, bedRadius, self.BEDSIZE_Z_MM, segments, self.BEDSIZE_Z_MM, true);
             //This material will only make the inside of the cylinder walls visible while allowing the outside to be transparent.
-            var material = new THREE.MeshBasicMaterial({ color: 0x8888fc, side: THREE.BackSide, transparent: true, opacity: 0.5 });
+            var wallMaterial = new THREE.MeshBasicMaterial({ color: 0x8888fc, side: THREE.BackSide, transparent: true, opacity: 0.5 });
             // Move the walls up to the floor
             cylGeometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, self.BEDSIZE_Z_MM / 2, 0));
-            var wall = new THREE.Mesh(cylGeometry, material);
+            var wall = new THREE.Mesh(cylGeometry, wallMaterial);
             //rotate the walls so they are upright
             wall.rotation.x = Math.PI/2;
             self.walls.add(wall);
@@ -465,6 +465,7 @@ $(function() {
             //Add text to indicate front of print bed
             (new THREE.FontLoader()).load( PLUGIN_BASEURL + "slicer/static/js/optimer_bold.typeface.json", function ( font ) {
                 self.createText(font, "Front", bedRadius * 2, bedRadius * 2, self.floor);
+                self.stlViewPort.render();
             } );
         }
 
@@ -478,7 +479,8 @@ $(function() {
             var ySegments = segments || self.BEDSIZE_Y_MM / 10;
             var geometry = new THREE.PlaneGeometry(width, depth, xSegments, ySegments);
             var texture = new CheckerBoardTexture(0xccccfc, 0x444464, xSegments, ySegments);
-            var mesh = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({ map: texture, transparent: true, opacity: 0.5, side: THREE.DoubleSide }));
+            var material = new THREE.MeshPhongMaterial({ map: texture, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
+            var mesh = new THREE.Mesh(geometry, material);
             mesh.receiveShadow = true;
             self.floor.add(mesh);
 
@@ -488,6 +490,7 @@ $(function() {
                 self.createText(font, "Back", width, depth, self.floor);
                 self.createText(font, "Left", width, depth, self.floor);
                 self.createText(font, "Right", width, depth, self.floor);
+                self.stlViewPort.render();
             } );
         };
 
