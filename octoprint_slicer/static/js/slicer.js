@@ -7,11 +7,13 @@
 
 'use strict';
 if (window.location.hostname != "localhost") {
-    Raven.config('https://85bd9314656d40da9249aec5a32a2b52@sentry.io/141297').install()
+    Raven.config('https://85bd9314656d40da9249aec5a32a2b52@sentry.io/141297', {release: '0.9.6'}).install()
 }
 
 $(function() {
     function SlicerViewModel(parameters) {
+        mixpanel.track("App Loaded");
+
         var self = this;
 
         self.canvas = document.getElementById( 'slicer-canvas' );
@@ -26,6 +28,7 @@ $(function() {
         self.slicingViewModel = parameters[0];
         self.overridesViewModel = parameters[1];
         self.printerStateViewModel = parameters[2];
+        self.printerProfilesViewModel = parameters[3];
 
         self.modelManager = new ModelManager(self.slicingViewModel);
 
@@ -76,27 +79,10 @@ $(function() {
             });
         };
 
-        self.updatePrinterProfile = function(printerProfile) {
-            if (! self.printerProfiles) {
-                $.ajax({
-                    url: API_BASEURL + "printerprofiles",
-                    type: "GET",
-                    dataType: "json",
-                    success: function(data) {
-                        self.printerProfiles = data;
-                        self.updatePrinterBed(printerProfile);
-                    }
-                });
-            } else {
-                self.updatePrinterBed(printerProfile);
-            }
-        }
-
-        self.slicingViewModel.printerProfile.subscribe( self.updatePrinterProfile );
-
-        self.updatePrinterBed = function(printerProfile) {
-            if ( self.printerProfiles && printerProfile ) {
-                var volume = self.printerProfiles.profiles[printerProfile].volume;
+        self.updatePrinterBed = function(profileName) {
+            if ( profileName) {
+                var profile = self.printerProfilesViewModel.profiles.items().find(function(p) { return p.id == profileName })
+                var volume = profile.volume;
                 self.BEDSIZE_X_MM = volume.width;
                 self.BEDSIZE_Y_MM = volume.depth;
                 self.BEDSIZE_Z_MM = volume.height;
@@ -120,7 +106,8 @@ $(function() {
             self.stlViewPort.render();
         }
 
-        // Print bed size
+        self.slicingViewModel.printerProfile.subscribe( self.updatePrinterBed );
+
         self.BEDSIZE_X_MM = 200;
         self.BEDSIZE_Y_MM = 200;
         self.BEDSIZE_Z_MM = 200;
@@ -143,8 +130,6 @@ $(function() {
             self.floor = new THREE.Object3D();
             self.stlViewPort.scene.add(self.walls);
             self.stlViewPort.scene.add(self.floor);
-
-            self.updatePrinterBed();
 
             ko.applyBindings(self.slicingViewModel, $('#slicing-settings')[0]);
 
@@ -450,15 +435,17 @@ $(function() {
             var bedRadius = self.BEDSIZE_X_MM / 2;
             var geometry = new THREE.CircleGeometry(bedRadius, 60);
             var texture = new CheckerBoardTexture(0xccccfc, 0x444464, segments, segments);
-            var circle = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({ map: texture, transparent: true, opacity: 0.5, side: THREE.DoubleSide }));
+            var material = new THREE.MeshPhongMaterial({ map: texture, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
+            var circle = new THREE.Mesh(geometry, material);
+            circle.receiveShadow = true;
             self.floor.add(circle);
 
             var cylGeometry = new THREE.CylinderGeometry(bedRadius, bedRadius, self.BEDSIZE_Z_MM, segments, self.BEDSIZE_Z_MM, true);
             //This material will only make the inside of the cylinder walls visible while allowing the outside to be transparent.
-            var material = new THREE.MeshBasicMaterial({ color: 0x8888fc, side: THREE.BackSide, transparent: true, opacity: 0.5 });
+            var wallMaterial = new THREE.MeshBasicMaterial({ color: 0x8888fc, side: THREE.BackSide, transparent: true, opacity: 0.5 });
             // Move the walls up to the floor
             cylGeometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, self.BEDSIZE_Z_MM / 2, 0));
-            var wall = new THREE.Mesh(cylGeometry, material);
+            var wall = new THREE.Mesh(cylGeometry, wallMaterial);
             //rotate the walls so they are upright
             wall.rotation.x = Math.PI/2;
             self.walls.add(wall);
@@ -466,6 +453,7 @@ $(function() {
             //Add text to indicate front of print bed
             (new THREE.FontLoader()).load( PLUGIN_BASEURL + "slicer/static/js/optimer_bold.typeface.json", function ( font ) {
                 self.createText(font, "Front", bedRadius * 2, bedRadius * 2, self.floor);
+                self.stlViewPort.render();
             } );
         }
 
@@ -479,7 +467,8 @@ $(function() {
             var ySegments = segments || self.BEDSIZE_Y_MM / 10;
             var geometry = new THREE.PlaneGeometry(width, depth, xSegments, ySegments);
             var texture = new CheckerBoardTexture(0xccccfc, 0x444464, xSegments, ySegments);
-            var mesh = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({ map: texture, transparent: true, opacity: 0.5, side: THREE.DoubleSide }));
+            var material = new THREE.MeshPhongMaterial({ map: texture, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
+            var mesh = new THREE.Mesh(geometry, material);
             mesh.receiveShadow = true;
             self.floor.add(mesh);
 
@@ -489,6 +478,7 @@ $(function() {
                 self.createText(font, "Back", width, depth, self.floor);
                 self.createText(font, "Left", width, depth, self.floor);
                 self.createText(font, "Right", width, depth, self.floor);
+                self.stlViewPort.render();
             } );
         };
 
@@ -567,7 +557,6 @@ $(function() {
                 self.slicingViewModel.target = target;
                 self.slicingViewModel.file(filename);
                 self.slicingViewModel.destinationFilename(self.computeDestinationFilename(filename));
-                self.slicingViewModel.printerProfile(self.slicingViewModel.printerProfiles.currentProfile());
             }
         };
 
@@ -608,7 +597,7 @@ $(function() {
         SlicerViewModel,
 
         // e.g. loginStateViewModel, settingsViewModel, ...
-        [ "slicingViewModel", "overridesViewModel", "printerStateViewModel" ],
+        [ "slicingViewModel", "overridesViewModel", "printerStateViewModel", "printerProfilesViewModel" ],
 
         // e.g. #settings_plugin_slicer, #tab_plugin_slicer, ...
         [ "#slicer" ]
