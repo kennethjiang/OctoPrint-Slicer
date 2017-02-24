@@ -178,18 +178,27 @@ $(function() {
 
             if (self.overridesChangedByUser) {
                 $("#plugin-slicer-reset-overrides").modal("show");
+            } else {
+                self.fetchSlicingProfile( slicing.slicer(), slicing.profile() );
             }
         };
 
         self.fetchSlicingProfile = function(slicer, profile) {
-            $.ajax({
+
+            if (self.profileAjax) {
+                self.profileAjax.abort();
+                self.profileAjax = undefined;
+            }
+
+            self.profileAjax = $.ajax({
                 url: API_BASEURL + "slicing/" + slicer + "/profiles/" + profile,
                 type: "GET",
                 // On success
                 success: function(data) {
                     self.updateOverridesFromProfile(data.data);
                 }
-                });
+            });
+
             self.previousProfile = profile;
             self.previousSlicer = slicer;
         };
