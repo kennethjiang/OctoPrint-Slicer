@@ -12,6 +12,8 @@ if (window.location.hostname != "localhost") {
 
 $(function() {
     function SlicerViewModel(parameters) {
+        mixpanel.track("App Loaded");
+
         var self = this;
 
         self.canvas = document.getElementById( 'slicer-canvas' );
