@@ -141,6 +141,7 @@ $(function() {
 
         // Profile: Determine if slicing parameters have changed and alert user before user reloads slicing profile
         // It is an intricate mess because of the quirkiness of how KO handles events
+        // I tried to make everything idempotent but definitely missed a lot of use case scenarios
         // Do NOT change it unless you know what you are doing!
         // TODO: This needs simplication. Or completely get rid of because it's probably over-engineering
         //
@@ -154,8 +155,10 @@ $(function() {
         $("#plugin-slicer-reset-overrides").bind('hidden', function () {
             // We don't have to handle the case when modal is hidden because user clicks "Confirm",
             //  as at that point `self.previousSlicer` and `self.previousProfile` have already changed to new values
-            self.slicingViewModel.slicer(self.previousSlicer);
-            self.slicingViewModel.profile(self.previousProfile);
+            if (self.slicingViewModel.slicer() != self.previousSlicer || self.slicingViewModel.profile != self.previousProfile ) {
+                self.slicingViewModel.slicer(self.previousSlicer);
+                self.slicingViewModel.profile(self.previousProfile);
+            }
         });
 
         self.onProfileChange = function(newValue) {
@@ -177,13 +180,17 @@ $(function() {
             }
 
             if (self.overridesChangedByUser) {
-                $("#plugin-slicer-reset-overrides").modal("show");
+                if (! $("#plugin-slicer-reset-overrides").hasClass('in')) {
+                    $("#plugin-slicer-reset-overrides").modal("show");
+                }
             } else {
                 self.fetchSlicingProfile( slicing.slicer(), slicing.profile() );
             }
         };
 
         self.fetchSlicingProfile = function(slicer, profile) {
+            self.previousProfile = profile;
+            self.previousSlicer = slicer;
 
             if (self.profileAjax) {
                 self.profileAjax.abort();
@@ -198,9 +205,6 @@ $(function() {
                     self.updateOverridesFromProfile(data.data);
                 }
             });
-
-            self.previousProfile = profile;
-            self.previousSlicer = slicer;
         };
 
         self.slicingViewModel.profile.subscribe( self.onProfileChange );
