@@ -421,6 +421,24 @@ $(function() {
             self.drawWalls(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM, self.BEDSIZE_Z_MM);
         }
 
+
+        self.checkerBoardTexture = function(size, color1, color2, repeatX, repeatY) {
+        		var imageCanvas = document.createElement( "canvas" ),
+				context = imageCanvas.getContext( "2d" );
+				imageCanvas.width = imageCanvas.height = size;
+				context.fillStyle = color1;
+				context.fillRect( 0, 0, size, size );
+				context.fillStyle = color2;
+				context.fillRect( 0, 0, size/2, size/2);
+				context.fillRect( size/2, size/2, size/2, size/2 );
+				var textureCanvas = new THREE.CanvasTexture( imageCanvas );
+				textureCanvas.repeat.set( repeatX, repeatY );
+				textureCanvas.wrapS = THREE.RepeatWrapping;
+				textureCanvas.wrapT = THREE.RepeatWrapping;
+
+				return textureCanvas;
+        }
+
         self.drawCylinderBuildArea = function() {
             for(var i = self.floor.children.length - 1; i >= 0; i--) {
                 var obj = self.floor.children[i];
@@ -431,16 +449,16 @@ $(function() {
                 self.walls.remove(obj);
             }
 
-            var segments = self.BEDSIZE_X_MM / 10;
+            var segments = self.BEDSIZE_X_MM / 20;
             var bedRadius = self.BEDSIZE_X_MM / 2;
             var geometry = new THREE.CircleGeometry(bedRadius, 60);
-            var texture = new CheckerBoardTexture(0xccccfc, 0x444464, segments, segments);
-            var material = new THREE.MeshPhongMaterial({ map: texture, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
+            var texture = self.checkerBoardTexture(20, "#444", "#fff", segments, segments);
+            var material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
             var circle = new THREE.Mesh(geometry, material);
             circle.receiveShadow = true;
             self.floor.add(circle);
 
-            var cylGeometry = new THREE.CylinderGeometry(bedRadius, bedRadius, self.BEDSIZE_Z_MM, segments, self.BEDSIZE_Z_MM, true);
+            var cylGeometry = new THREE.CylinderGeometry(bedRadius, bedRadius, self.BEDSIZE_Z_MM, 60, self.BEDSIZE_Z_MM, true);
             //This material will only make the inside of the cylinder walls visible while allowing the outside to be transparent.
             var wallMaterial = new THREE.MeshBasicMaterial({ color: 0x8888fc, side: THREE.BackSide, transparent: true, opacity: 0.5 });
             // Move the walls up to the floor
@@ -462,12 +480,12 @@ $(function() {
                 var obj = self.floor.children[i];
                 self.floor.remove(obj);
             }
+            var xSegments = segments || self.BEDSIZE_X_MM / 20;
+            var ySegments = segments || self.BEDSIZE_Y_MM / 20;
 
-            var xSegments = segments || self.BEDSIZE_X_MM / 10;
-            var ySegments = segments || self.BEDSIZE_Y_MM / 10;
-            var geometry = new THREE.PlaneGeometry(width, depth, xSegments, ySegments);
-            var texture = new CheckerBoardTexture(0xccccfc, 0x444464, xSegments, ySegments);
-            var material = new THREE.MeshPhongMaterial({ map: texture, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
+            var geometry = new THREE.PlaneBufferGeometry(width, depth);
+            var texture = self.checkerBoardTexture(20, "#444", "#fff", xSegments, ySegments );
+            var material = new THREE.MeshBasicMaterial({map: texture, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
             var mesh = new THREE.Mesh(geometry, material);
             mesh.receiveShadow = true;
             self.floor.add(mesh);
