@@ -67,22 +67,12 @@ $(function() {
 
         // initialize all observables
         _.forEach(ALL_KEYS, function(k) { self["profile." + k] = ko.observable(); });
-        _.forEach(ALL_KEYS, function(k) { self["profile." + k].subscribe(
-            function() {
-                if (self.doneUpdateOverrides) {
-                    self.overridesChangedByUser = true;
-                }
-            })
-        });
 
         self.optionsForKey = function(key) {
             return ENUM_KEYS[key];
         };
 
         self.updateOverridesFromProfile = function(profile) {
-
-            self.overridesChangedByUser = false;
-            self.doneUpdateOverrides = false;
 
             // Some options are numeric but might have a percent sign after them.
             // Remove the percent and save it to replace later.
@@ -135,28 +125,8 @@ $(function() {
                 } else {
                     self["profile." + k](profile[k]);
                 }});
-
-            self.doneUpdateOverrides = true;
         };
 
-        // Profile: Determine if slicing parameters have changed and alert user before user reloads slicing profile
-        // It is an intricate mess because of the quirkiness of how KO handles events
-        // Do NOT change it unless you know what you are doing!
-        // TODO: This needs simplication. Or completely get rid of because it's probably over-engineering
-        //
-        $("#plugin-slicer-reset-overrides-confirm").unbind('click');
-        $("#plugin-slicer-reset-overrides-confirm").bind('click', function() {
-            self.fetchSlicingProfile( self.slicingViewModel.slicer(), self.slicingViewModel.profile() );
-            $("#plugin-slicer-reset-overrides").modal("hide");
-        });
-
-        $("#plugin-slicer-reset-overrides").unbind('hidden');
-        $("#plugin-slicer-reset-overrides").bind('hidden', function () {
-            // We don't have to handle the case when modal is hidden because user clicks "Confirm",
-            //  as at that point `self.previousSlicer` and `self.previousProfile` have already changed to new values
-            self.slicingViewModel.slicer(self.previousSlicer);
-            self.slicingViewModel.profile(self.previousProfile);
-        });
 
         self.onProfileChange = function(newValue) {
             if (newValue === undefined) {  // For some reason KO would fire event with newValue=undefined,
@@ -165,33 +135,27 @@ $(function() {
 
             var slicing = self.slicingViewModel;
 
-            if( !self.previousProfile || !self.previousSlicer ) {
-                if( slicing.slicer() && slicing.profile() ) {
-                    self.fetchSlicingProfile( slicing.slicer(), slicing.profile() );
-                }
+            if( !slicing.slicer() || !slicing.profile() ) {
                 return;
             }
 
-            if (self.previousProfile == slicing.profile() && self.previousSlicer == slicing.slicer() ) {
-                return;
-            }
-
-            if (self.overridesChangedByUser) {
-                $("#plugin-slicer-reset-overrides").modal("show");
-            }
+            self.fetchSlicingProfile( slicing.slicer(), slicing.profile() );
         };
 
         self.fetchSlicingProfile = function(slicer, profile) {
-            $.ajax({
+            if (self.profileAjax) {
+                self.profileAjax.abort();
+                self.profileAjax = undefined;
+            }
+
+            self.profileAjax = $.ajax({
                 url: API_BASEURL + "slicing/" + slicer + "/profiles/" + profile,
                 type: "GET",
                 // On success
                 success: function(data) {
                     self.updateOverridesFromProfile(data.data);
                 }
-                });
-            self.previousProfile = profile;
-            self.previousSlicer = slicer;
+            });
         };
 
         self.slicingViewModel.profile.subscribe( self.onProfileChange );
