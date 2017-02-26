@@ -458,14 +458,14 @@ $(function() {
             circle.receiveShadow = true;
             self.floor.add(circle);
 
-            var cylGeometry = new THREE.CylinderGeometry(bedRadius, bedRadius, self.BEDSIZE_Z_MM, 60, self.BEDSIZE_Z_MM, true);
+            var cylGeometry = new THREE.CylinderGeometry(bedRadius, bedRadius, self.BEDSIZE_Z_MM, 60, 1, true);
             //This material will only make the inside of the cylinder walls visible while allowing the outside to be transparent.
             var wallMaterial = new THREE.MeshBasicMaterial({ color: 0x8888fc, side: THREE.BackSide, transparent: true, opacity: 0.5 });
             // Move the walls up to the floor
             cylGeometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, self.BEDSIZE_Z_MM / 2, 0));
             var wall = new THREE.Mesh(cylGeometry, wallMaterial);
             //rotate the walls so they are upright
-            wall.rotation.x = Math.PI/2;
+            wall.rotation.x = Math.PI / 2;
             self.walls.add(wall);
 
             //Add text to indicate front of print bed
