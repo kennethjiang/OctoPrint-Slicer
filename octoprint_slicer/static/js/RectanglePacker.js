@@ -18,8 +18,11 @@ var RectanglePacker = {
     // found, returns one less than the the negative of where the element
     // could be inserted to maintain the sort order.
     var binarySearch =
-        function(ar, el,
-                 compareFn = function(a,b) { return a-b; }) {
+        function(ar, el, compareFn) {
+          if (compareFn === undefined) {
+              compareFn = function(a,b) { return a-b; };
+          }
+
           var m = 0;
           var n = ar.length - 1;
           while (m <= n) {
@@ -98,8 +101,11 @@ var RectanglePacker = {
     // as an object with keys.  The keys in the return value are the
     // output of keyFn on each rectangle.  keyFn should return a
     // string.
-    self.getRectangle = function(x, y, width, height,
-                                  keyFn = function(r) { return String(r); }) {
+    self.getRectangle = function(x, y, width, height, keyFn) {
+      if (keyFn === undefined) {
+          keyFn = function(r) { return String(r); };
+      }
+
       if (width == 0 || height == 0) {
         return {};
       }
@@ -184,8 +190,11 @@ var RectanglePacker = {
     // size.  The padding should be a series of spaces at least as
     // wide as the output of toStringFn.  toStringFn should convert
     // each rectange to a string.
-    self.gridToString = function(x, y, step, padding,
-                                 toStringFn = function (x) { return x; }) {
+    self.gridToString = function(x, y, step, padding, toStringFn) {
+      if (toStringFn === undefined) {
+          toStringFn = function (x) { return x; };
+      }
+
       var result = "";
       for (var j=0; j < y; j += step) {
         for (var i=0; i < x; i += step) {
@@ -269,10 +278,10 @@ var RectanglePacker = {
   // is a map from name to the input rectangle, x, and y.
   // minDeltaHeight is the minimum height to add to the boundary to
   // make a difference in this run.
-  packRectangles: function(rectangles,
-                           maxHeight = -1,
-                           maxWidth = -1
-                          ) {
+  packRectangles: function(rectangles, maxHeight, maxWidth) {
+    if (maxHeight === undefined) { maxHeight = -1; }
+    if (maxWidth === undefined) { maxWidth = -1; }
+
     var EMPTY = {name: "."};  // name must not be a number, will conflict
 
     var rectangleGrid = new RectanglePacker.RectangleGrid(EMPTY);
@@ -346,7 +355,9 @@ var RectanglePacker = {
   // It includes the count of duplicates even though those duplicates
   // didn't occur so that compareFn can be changed when rerunning
   // permute.
-  permute: function(inputs, traverseFn, start = 0, compareFn) {
+  permute: function(inputs, traverseFn, start, compareFn) {
+    if (start === undefined) { start = 0; }
+
     var inputsCopy = inputs.slice(0);
     var position = 0;
     var swap = function(a,b) {
@@ -362,7 +373,8 @@ var RectanglePacker = {
       }
       return result;
     };
-    var p = function(index = 0) {
+    var p = function(index) {
+      if (index === undefined) { index = 0; }
       if (index >= inputsCopy.length) {
         position++;
         return traverseFn(inputsCopy);
@@ -400,11 +412,14 @@ var RectanglePacker = {
   // Provide a function to memoize fn.  Optionally provide a function
   // that will convert arguments to fn to strings.  Returns a function
   // that can be run and will have answers memoized.
-  memoize: function(fn,
-                    toStringFn = function() {
-                      return JSON.stringify(
-                        Array.prototype.slice.call(arguments));
-                    }) {
+  memoize: function(fn, toStringFn) {
+    if (toStringFn === undefined) {
+      toStringFn = function() {
+        return JSON.stringify(
+          Array.prototype.slice.call(arguments));
+      };
+    }
+
     var results = {};
 
     return function() {
@@ -423,10 +438,12 @@ var RectanglePacker = {
   // modify its input.  start is the position at which to start.  the
   // result value is an object hasand a result and also a position for
   // continuing the combination.
-  combinations: function(inputs, traverseFn, start = 0) {
+  combinations: function(inputs, traverseFn, start) {
+    if (start === undefined) { start = 0; }
     var combination = [];
     var position = 0;
-    var c = function(index = 0) {
+    var c = function(index) {
+      if (index === undefined) { index = 0; }
       if (index >= inputs.length) {
         position++;
         return traverseFn(combination);
@@ -461,10 +478,12 @@ var RectanglePacker = {
   //
   // skipFn takes as input the current width and height and returns
   // them possibly modified.
-  packWithoutRotation: function(
-    rectangles, traverseFn,
-    skipFn = function(w,h) {
-      return {"width": w, "height": h};}) {
+  packWithoutRotation: function( rectangles, traverseFn, skipFn ) {
+    if (skipFn === undefined) {
+      skipFn = function(w,h) {
+          return {"width": w, "height": h};};
+    }
+
     var tallest = 0;
     var widest = 0;
     for (var i = 0; i < rectangles.length; i++) {
@@ -536,7 +555,8 @@ var RectanglePacker = {
    * or not rotating elements by 90 degrees, which might improve
    * packing. The result is the same as pack above but with an extra
    * member, rotation, alongside x and y in the placements.  */
-  packWithRotation: function(rectangles, traverseFn, start = 0, skipFn) {
+  packWithRotation: function(rectangles, traverseFn, start, skipFn) {
+    if (start === undefined) { start = 0; }
     var rotatedRectangles = RectanglePacker.rotateRectangles(rectangles);
     // Because the traverse is a side effect, memoizing essentially
     // means that we don't run the original traverse at all.
@@ -610,7 +630,8 @@ var RectanglePacker = {
   // input that can be given to a subsequent calls to pack to resume
   // trying rectangle packing from the previous spot.  If the result
   // is undefined then all possible packings have been tried.
-  pack: function(rectangles, traverseFn, start = 0) {
+  pack: function(rectangles, traverseFn, start) {
+    if (start === undefined) { start = 0; }
     var bestHW = {}
     return RectanglePacker.packWithRotation(
         rectangles, function(packResult) {

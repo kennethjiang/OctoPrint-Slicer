@@ -161,7 +161,8 @@ var ArrangeModels = function () {
     // If the forceStartOver is set, will start all the possibilities
     // again.
     this.arrange = function(models_, bedsize_x_mm_, bedsize_y_mm_,
-        margin, timeoutMilliseconds, renderFn, forceStartOver = false) {
+        margin, timeoutMilliseconds, renderFn, forceStartOver) {
+        if (forceStartOver=== undefined) { forceStartOver = false; }
         models = models_;
         if (forceStartOver || needStartOver(previousModelPositions,
             bedsize_x_mm_, bedsize_y_mm_)) {
