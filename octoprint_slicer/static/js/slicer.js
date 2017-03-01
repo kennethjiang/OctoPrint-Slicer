@@ -338,7 +338,7 @@ $(function() {
             if (self.modelManager.onlyOneOriginalModel()) {
 
                 sliceRequestData = self.sliceRequestData(self.slicingViewModel);
-                self.sendSliceRequest(self.slicingViewModel.target, self.slicingViewModel.file(), data);
+                self.sendSliceRequest(self.slicingViewModel.target, self.slicingViewModel.file(), sliceRequestData);
 
             } else {
 
