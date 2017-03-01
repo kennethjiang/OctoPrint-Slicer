@@ -75,16 +75,18 @@ $(function() {
         };
 
         self.addSTL = function(target, file) {
-            self.stlViewPort.loadSTL(BASEURL + "downloads/files/" + target + "/" + file, function(model) {
-                self.modelManager.add(model, target, file);
-                self.stlViewPort.makeModelActive(model);
+            self.stlViewPort.loadSTL(BASEURL + "downloads/files/" + target + "/" + file);
+        }
 
-                if (self.modelManager.models.length > 1) {
-                    new ArrangeModels().arrange(self.modelManager.models, self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM,
-                      10 /* mm margin */, 5000 /* milliseconds max */, self.onModelChange, false);
-                }
-                self.fixZPosition(model);
-            });
+        self.onModelAdd = function(model) {
+            self.modelManager.add(model, target, file);
+            self.stlViewPort.makeModelActive(model);
+
+            if (self.modelManager.models.length > 1) {
+                new ArrangeModels().arrange(self.modelManager.models, self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM,
+                    10 /* mm margin */, 5000 /* milliseconds max */, self.onModelChange, false);
+            }
+            self.fixZPosition(model);
         };
 
         self.updatePrinterBed = function(profileName) {
@@ -124,7 +126,7 @@ $(function() {
 
             self.slicingViewModel.requestData();
 
-            self.stlViewPort = new THREE.STLViewPort(self.canvas, CANVAS_WIDTH, CANVAS_HEIGHT, self.onModelChange)
+            self.stlViewPort = new THREE.STLViewPort(self.canvas, CANVAS_WIDTH, CANVAS_HEIGHT, self.onModelChange, self.onModelAdd)
             self.stlViewPort.init();
 
             //Walls and Floor
@@ -185,23 +187,22 @@ $(function() {
             $("#slicer-viewport").append(self.stlViewPort.renderer.domElement);
 
             $("#slicer-viewport button.translate").click(function(event) {
-                // Set selection mode to translate
                 self.stlViewPort.transformControls.setMode("translate");
                 self.toggleValueInputs($("#slicer-viewport .translate.values div"));
             });
             $("#slicer-viewport button.rotate").click(function(event) {
-                // Set selection mode to rotate
                 self.stlViewPort.transformControls.setMode("rotate");
                 self.toggleValueInputs($("#slicer-viewport .rotate.values div"));
             });
             $("#slicer-viewport button.scale").click(function(event) {
-                // Set selection mode to scale
                 self.stlViewPort.transformControls.setMode("scale");
                 self.toggleValueInputs($("#slicer-viewport .scale.values div"));
             });
             $("#slicer-viewport button.remove").click(function(event) {
-                // Remove the currently selected object.
                 self.modelManager.remove( self.stlViewPort.removeActiveModel() );
+            });
+            $("#slicer-viewport button.split").click(function(event) {
+                self.modelManager.remove( self.stlViewPort.splitActiveModel() );
             });
             $("#slicer-viewport .values input").change(function() {
                 self.applyValueInputs($(this));
