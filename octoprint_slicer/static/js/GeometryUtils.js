@@ -2,7 +2,7 @@
  * @author kennethjiang / https://github.com/kennethjiang
  *
  *
- * Description: A few utilities for STL model manipulations
+ * Description: A few utilities for process Geometries
  *
  */
 
@@ -109,7 +109,7 @@ VertexGraph = function( positions ) {
 }
 
 
-var STLUtils = {
+var GeometryUtils = {
 
 	split: function ( geometry ) {
 
@@ -124,6 +124,6 @@ var STLUtils = {
 // browserify support
 if ( typeof module === 'object' ) {
 
-	module.exports = STLUtils;
+	module.exports = GeometryUtils;
 
 }
