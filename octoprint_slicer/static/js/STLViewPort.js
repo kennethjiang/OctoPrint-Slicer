@@ -126,8 +126,6 @@ THREE.STLViewPort = function ( canvas, width, height, onChange ) {
 
             var stlModel = new THREE.Mesh( geometry, material );
 
-            STLUtils.split(geometry);
-
             // center model's origin
             var center = new THREE.Box3().setFromObject(stlModel).center();
             var model = new THREE.Object3D();
