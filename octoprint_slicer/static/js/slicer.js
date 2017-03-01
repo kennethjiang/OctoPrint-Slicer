@@ -7,7 +7,14 @@
 
 'use strict';
 if (window.location.hostname != "localhost") {
-    Raven.config('https://85bd9314656d40da9249aec5a32a2b52@sentry.io/141297', {release: '0.9.6'}).install()
+    Raven.config('https://85bd9314656d40da9249aec5a32a2b52@sentry.io/141297', {
+        release: '0.9.6',
+        ignoreErrors: [
+                "Failed to execute 'arc' on 'CanvasRenderingContext2D': The radius provided",
+                "Cannot read property 'highlightFill' of undefined",
+                "Argument 1 of SVGMatrix.translate is not a finite floating-point value",
+            ],
+    }).install();
 }
 
 $(function() {
