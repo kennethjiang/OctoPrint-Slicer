@@ -247,7 +247,19 @@ THREE.STLViewPort = function ( canvas, width, height, onChange, onNewModel ) {
                 self.addModelOfGeometry( geometry );
             });
         }
-    }
+    };
+
+    self.onlyOneOriginalModel = function() {
+        return self.models.length == 1  &&
+            self.models[0].position.x == 0.0 &&
+            self.models[0].position.y == 0.0 &&
+            self.models[0].rotation.x == 0.0 &&
+            self.models[0].rotation.y == 0.0 &&
+            self.models[0].rotation.z == 0.0 &&
+            self.models[0].scale.x == 1.0 &&
+            self.models[0].scale.y == 1.0 &&
+            self.models[0].scale.z == 1.0
+    };
 
     self.startTransform = function () {
         // Disable orbit controls

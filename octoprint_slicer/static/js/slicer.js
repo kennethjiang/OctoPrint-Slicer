@@ -37,10 +37,9 @@ $(function() {
         self.printerStateViewModel = parameters[2];
         self.printerProfilesViewModel = parameters[3];
 
-        self.modelManager = new ModelManager(self.slicingViewModel);
-
         self.lockScale = true;
         self.selectedSTL = undefined;
+        self.newPrint = true;
 
 
         // Override slicingViewModel.show to surpress default slicing behavior
@@ -52,41 +51,52 @@ $(function() {
 
             $('a[href="#tab_plugin_slicer"]').tab('show');
 
-            if (self.modelManager.models.length != 0) {
-                self.selectedSTL = {target: target, file: file};
-                $("#plugin-slicer-load-model").modal("show");
+            self.selectedSTL = {target: target, file: file};
+            if (self.newPrint) {
+                self.addToNewPrint();
             } else {
-                self.addSTL(target, file);
+                $("#plugin-slicer-load-model").modal("show");
             }
         };
 
-        self.emptyBed = function() {
-            self.modelManager.removeAll();
-            self.stlViewPort.removeAllModels();
-
-            $("#plugin-slicer-load-model").modal("hide");
+        self.addToNewPrint = function() {
+            self.clearPrint();
+            self.addToExistingPrint();
         };
 
-        self.addSelectedSTL = function() {
+        self.addToExistingPrint = function() {
+            self.setSlicingViewModel(self.selectedSTL.target, self.selectedSTL.file);
             self.addSTL(self.selectedSTL.target, self.selectedSTL.file);
             self.selectedSTL = undefined;
 
             $("#plugin-slicer-load-model").modal("hide");
         };
 
+        self.clearPrint = function() {
+            self.resetSlicingViewModel();
+            self.stlViewPort.removeAllModels();
+            self.newPrint = true;
+        }
+
         self.addSTL = function(target, file) {
+            self.newPrint = false;
             self.stlViewPort.loadSTL(BASEURL + "downloads/files/" + target + "/" + file);
         }
 
         self.onModelAdd = function(model) {
-            self.modelManager.add(model, target, file);
             self.stlViewPort.makeModelActive(model);
 
-            if (self.modelManager.models.length > 1) {
-                new ArrangeModels().arrange(self.modelManager.models, self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM,
+            if (self.stlViewPort.models.length > 1) {
+                new ArrangeModels().arrange(self.stlViewPort.models, self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM,
                     10 /* mm margin */, 5000 /* milliseconds max */, self.onModelChange, false);
             }
             self.fixZPosition(model);
+        };
+
+        self.onModelRemove = function(model) {
+            if (self.stlViewPort.models.length == 0) {
+                self.clearPrint();
+            }
         };
 
         self.updatePrinterBed = function(profileName) {
@@ -199,10 +209,10 @@ $(function() {
                 self.toggleValueInputs($("#slicer-viewport .scale.values div"));
             });
             $("#slicer-viewport button.remove").click(function(event) {
-                self.modelManager.remove( self.stlViewPort.removeActiveModel() );
+                self.onModelRemove( self.stlViewPort.removeActiveModel() );
             });
             $("#slicer-viewport button.split").click(function(event) {
-                self.modelManager.remove( self.stlViewPort.splitActiveModel() );
+                self.onModelRemove( self.stlViewPort.splitActiveModel() );
             });
             $("#slicer-viewport .values input").change(function() {
                 self.applyValueInputs($(this));
@@ -346,7 +356,7 @@ $(function() {
             var target = self.slicingViewModel.target;
             var sliceRequestData;
 
-            if (self.modelManager.onlyOneOriginalModel()) {
+            if (self.stlViewPort.onlyOneOriginalModel()) {
 
                 sliceRequestData = self.sliceRequestData(self.slicingViewModel);
                 self.sendSliceRequest(self.slicingViewModel.target, self.slicingViewModel.file(), sliceRequestData);
@@ -355,13 +365,13 @@ $(function() {
 
                 var form = new FormData();
                 var group = new THREE.Group();
-                _.forEach(self.modelManager.models, function (model) {
+                _.forEach(self.stlViewPort.models, function (model) {
                     group.add(model.clone(true));
                 });
 
                 sliceRequestData = self.sliceRequestData(self.slicingViewModel, group);
 
-                var tempFilename = self.modelManager.tempSTLFilename();
+                var tempFilename = self.tempSTLFilename();
                 form.append("file", self.blobFromModel(group), tempFilename);
                 $.ajax({
                     url: API_BASEURL + "files/local",
@@ -509,35 +519,10 @@ $(function() {
         };
         // END: Helpers for drawing walls and floor
 
-        self.init();
-    }
-
-    function ModelManager(slicingViewModel) {
-        var self = this;
-        self.slicingViewModel = slicingViewModel;
-        self.models = [];
-
-        self.add = function(model, target, filename) {
-            self.models.push(model);
-            self.setSlicingViewModel(target, filename);
-        };
-
-        self.remove = function(model) {
-            _.remove(self.models, model);
-            self.resetSlicingViewModel();
-        };
-
-        self.removeAll = function() {
-            self.models = [];
-            self.resetSlicingViewModel();
-        };
-
         self.resetSlicingViewModel = function() {
-            if (self.models.length == 0 && self.slicingViewModel.destinationFilename()) { // Last model is removed from bed
-                self.slicingViewModel.target = undefined;
-                self.slicingViewModel.file(undefined);
-                self.slicingViewModel.destinationFilename(undefined);
-            }
+            self.slicingViewModel.target = undefined;
+            self.slicingViewModel.file(undefined);
+            self.slicingViewModel.destinationFilename(undefined);
         };
 
         self.setSlicingViewModel = function(target, filename) {
@@ -567,18 +552,9 @@ $(function() {
                 self.slicingViewModel.file().slice(pos)].join('');
         };
 
-        self.onlyOneOriginalModel = function() {
-            return self.models.length == 1  &&
-                self.models[0].position.x == 0.0 &&
-                self.models[0].position.y == 0.0 &&
-                self.models[0].rotation.x == 0.0 &&
-                self.models[0].rotation.y == 0.0 &&
-                self.models[0].rotation.z == 0.0 &&
-                self.models[0].scale.x == 1.0 &&
-                self.models[0].scale.y == 1.0 &&
-                self.models[0].scale.z == 1.0
-        };
+        self.init();
     }
+
 
     // view model class, parameters for constructor, container to bind to
     OCTOPRINT_VIEWMODELS.push([
