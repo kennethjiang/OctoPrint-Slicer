@@ -421,24 +421,6 @@ $(function() {
             self.drawWalls(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM, self.BEDSIZE_Z_MM);
         }
 
-
-        self.checkerBoardTexture = function(size, color1, color2, repeatX, repeatY) {
-        		var imageCanvas = document.createElement( "canvas" ),
-				context = imageCanvas.getContext( "2d" );
-				imageCanvas.width = imageCanvas.height = size;
-				context.fillStyle = color1;
-				context.fillRect( 0, 0, size, size );
-				context.fillStyle = color2;
-				context.fillRect( 0, 0, size/2, size/2);
-				context.fillRect( size/2, size/2, size/2, size/2 );
-				var textureCanvas = new THREE.CanvasTexture( imageCanvas );
-				textureCanvas.repeat.set( repeatX, repeatY );
-				textureCanvas.wrapS = THREE.RepeatWrapping;
-				textureCanvas.wrapT = THREE.RepeatWrapping;
-
-				return textureCanvas;
-        }
-
         self.drawCylinderBuildArea = function() {
             for(var i = self.floor.children.length - 1; i >= 0; i--) {
                 var obj = self.floor.children[i];
@@ -452,8 +434,7 @@ $(function() {
             var segments = self.BEDSIZE_X_MM / 20;
             var bedRadius = self.BEDSIZE_X_MM / 2;
             var geometry = new THREE.CircleGeometry(bedRadius, 60);
-            var texture = self.checkerBoardTexture(20, "#444", "#fff", segments, segments);
-            var material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
+            var material = new CheckerboardMaterial(segments, segments, null, function() { self.stlViewPort.render(); });
             var circle = new THREE.Mesh(geometry, material);
             circle.receiveShadow = true;
             self.floor.add(circle);
@@ -484,8 +465,7 @@ $(function() {
             var ySegments = segments || self.BEDSIZE_Y_MM / 20;
 
             var geometry = new THREE.PlaneBufferGeometry(width, depth);
-            var texture = self.checkerBoardTexture(20, "#444", "#fff", xSegments, ySegments );
-            var material = new THREE.MeshBasicMaterial({map: texture, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
+            var material = new CheckerboardMaterial(xSegments, ySegments, null, function() { self.stlViewPort.render(); });
             var mesh = new THREE.Mesh(geometry, material);
             mesh.receiveShadow = true;
             self.floor.add(mesh);
