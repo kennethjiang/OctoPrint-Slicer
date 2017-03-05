@@ -176,6 +176,7 @@ $(function() {
                </div>');
 
             $("#slicer-viewport").append(self.stlViewPort.renderer.domElement);
+            $("#slicer-viewport").append(self.stlViewPort.stats.dom);
 
             $("#slicer-viewport button.translate").click(function(event) {
                 // Set selection mode to translate
