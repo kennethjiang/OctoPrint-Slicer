@@ -89,12 +89,12 @@ $(function() {
 
             models.forEach( function( model ) {
                 self.fixZPosition(model);
-                self.stlViewPort.render();
             });
 
             if (self.stlViewPort.models.length > 1) {
                 ModelArranger.arrange(self.stlViewPort.models);
             }
+            self.stlViewPort.render();
 
             $('#tab_plugin_slicer > div.translucent-blocker').hide();
 
