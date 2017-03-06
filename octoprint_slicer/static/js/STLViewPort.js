@@ -122,7 +122,7 @@ THREE.STLViewPort = function ( canvas, width, height, onChange, onNewModel ) {
         });
     };
 
-    self.addModelOfGeometry = function( geometry ) {
+    self.addModelOfGeometry = function( geometry, modelToCopyTransformFrom ) {
         var material = new THREE.MeshStandardMaterial({
             color: self.effectController.modelInactiveColor,  // We'll mark it active below.
             shading: THREE.SmoothShading,
@@ -137,6 +137,10 @@ THREE.STLViewPort = function ( canvas, width, height, onChange, onNewModel ) {
         var model = new THREE.Object3D();
         model.add(stlModel);
         stlModel.position.copy(center.negate());
+        if (modelToCopyTransformFrom) {
+            model.rotation.copy(modelToCopyTransformFrom.rotation);
+            model.scale.copy(modelToCopyTransformFrom.scale);
+        }
 
         self.scene.add(model);
         self.render();
@@ -241,10 +245,11 @@ THREE.STLViewPort = function ( canvas, width, height, onChange, onNewModel ) {
         if (!self.activeModel()) {
             return;
         } else {
-            var geometry = self.removeActiveModel().children[0].geometry;
+            var originalModel = self.removeActiveModel()
+            var geometry = originalModel.children[0].geometry;
             var newGeometries = GeometryUtils.split(geometry);
             newGeometries.forEach( function(geometry) {
-                self.addModelOfGeometry( geometry );
+                self.addModelOfGeometry( geometry, originalModel );
             });
         }
     };
