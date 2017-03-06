@@ -80,10 +80,10 @@ $(function() {
                 self.stlViewPort.makeModelActive(model);
 
                 if (self.modelManager.models.length > 1) {
-                    new ArrangeModels().arrange(self.modelManager.models, self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM,
-                      10 /* mm margin */, 5000 /* milliseconds max */, self.onModelChange, false);
+                    ModelArranger.arrange(self.modelManager.models);
                 }
                 self.fixZPosition(model);
+                self.stlViewPort.render();
             });
         };
 

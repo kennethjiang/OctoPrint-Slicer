@@ -60,7 +60,7 @@ class SlicerPlugin(octoprint.plugin.SettingsPlugin,
 		# Define your plugin's asset files to automatically include in the
 		# core UI here.
 		return dict(
-			js=["js/profile_overrides.js", "js/slicer.js", "js/three.min.js", "js/STLLoader.js", "js/OrbitControls.js", "js/TransformControls.js", "js/Detector.js", "js/OrbitControls.js", "js/TransformControls.js", "js/STLBinaryExporter.js", "js/STLViewPort.js", "js/RectanglePacker.js", "js/ArrangeModels.js"],
+			js=["js/profile_overrides.js", "js/slicer.js", "js/three.min.js", "js/STLLoader.js", "js/OrbitControls.js", "js/TransformControls.js", "js/Detector.js", "js/OrbitControls.js", "js/TransformControls.js", "js/STLBinaryExporter.js", "js/ModelArranger.js", "js/STLViewPort.js", "js/packer.growing.js"],
 			css=["css/slicer.css"],
 			less=["less/slicer.less"]
 		)
