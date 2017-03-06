@@ -84,6 +84,9 @@ $(function() {
         }
 
         self.onModelAdd = function(model) {
+
+            $('#tab_plugin_slicer > div.translucent-blocker').hide();
+
             self.stlViewPort.makeModelActive(model);
 
             if (self.stlViewPort.models.length > 1) {
@@ -133,6 +136,8 @@ $(function() {
 
 
         self.init = function() {
+
+            $('#tab_plugin_slicer > div.translucent-blocker').hide();
 
             self.slicingViewModel.requestData();
 
@@ -212,7 +217,10 @@ $(function() {
                 self.onModelRemove( self.stlViewPort.removeActiveModel() );
             });
             $("#slicer-viewport button.split").click(function(event) {
-                self.onModelRemove( self.stlViewPort.splitActiveModel() );
+                $('#tab_plugin_slicer > div.translucent-blocker').show();
+                setTimeout( function() {
+                    self.onModelRemove( self.stlViewPort.splitActiveModel() );
+                    }, 1);
             });
             $("#slicer-viewport .values input").change(function() {
                 self.applyValueInputs($(this));
