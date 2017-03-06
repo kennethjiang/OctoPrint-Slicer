@@ -13,6 +13,7 @@ if (window.location.hostname != "localhost") {
                 "Failed to execute 'arc' on 'CanvasRenderingContext2D': The radius provided",
                 "Cannot read property 'highlightFill' of undefined",
                 "Argument 1 of SVGMatrix.translate is not a finite floating-point value",
+                /_jp.*is not a function/,
             ],
     }).install();
 }

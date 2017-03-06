@@ -9,9 +9,7 @@ var ModelArranger = {
 
     projectedRectOnXY: function( model ) {
         var margin = 10.0;
-        var modelClone = model.clone(true);
-        modelClone.rotation.reorder("ZYX");
-        var modelBox = new THREE.Box3().setFromObject(modelClone);
+        var modelBox = new THREE.Box3().setFromObject(model);
         var width = modelBox.max.x - modelBox.min.x + margin;
         var height = modelBox.max.y - modelBox.min.y + margin;
         return { w: width, h: height, area: width*height, model: model };
@@ -22,6 +20,7 @@ var ModelArranger = {
             return map.set(model, ModelArranger.projectedRectOnXY(model));
         }, new Map());
 
+        // loop through all sorting criteria, and pick the best one (with smalles overall area)
         var criteria = ['w', 'h', 'a', 'max', 'min', 'height', 'width', 'area', 'maxside'];
         var allPackers = criteria.map( function( crit ) {
 
