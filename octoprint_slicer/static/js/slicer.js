@@ -142,8 +142,6 @@ $(function() {
 
         self.init = function() {
 
-            $('#tab_plugin_slicer > div.translucent-blocker').hide();
-
             self.slicingViewModel.requestData();
 
             self.stlViewPort = new THREE.STLViewPort(self.canvas, CANVAS_WIDTH, CANVAS_HEIGHT, self.onModelChange, self.onModelAdd)
@@ -225,10 +223,7 @@ $(function() {
                 self.onModelRemove( self.stlViewPort.removeActiveModel() );
             });
             $("#slicer-viewport button.split").click(function(event) {
-                $('#tab_plugin_slicer > div.translucent-blocker').show();
-                setTimeout( function() {
-                    self.onModelRemove( self.stlViewPort.splitActiveModel() );
-                    }, 1);
+                self.onModelRemove( self.stlViewPort.splitActiveModel() );
             });
             $("#slicer-viewport .values input").change(function() {
                 self.applyValueInputs($(this));
