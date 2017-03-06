@@ -75,7 +75,6 @@ THREE.STLViewPort = function ( canvas, width, height, onChange, onNewModel ) {
 
         self.transformControls = new THREE.TransformControls(self.camera, self.renderer.domElement);
 
-        self.transformControls.space = "world";
         self.transformControls.setAllowedTranslation("XY");
         self.transformControls.setRotationDisableE(true);
         self.transformControls.setRotationSnap( THREE.Math.degToRad( 15 ) )

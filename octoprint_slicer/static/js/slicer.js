@@ -208,14 +208,17 @@ $(function() {
 
             $("#slicer-viewport button.translate").click(function(event) {
                 self.stlViewPort.transformControls.setMode("translate");
+                self.stlViewPort.transformControls.space = "world";
                 self.toggleValueInputs($("#slicer-viewport .translate.values div"));
             });
             $("#slicer-viewport button.rotate").click(function(event) {
                 self.stlViewPort.transformControls.setMode("rotate");
+                self.stlViewPort.transformControls.space = "world";
                 self.toggleValueInputs($("#slicer-viewport .rotate.values div"));
             });
             $("#slicer-viewport button.scale").click(function(event) {
                 self.stlViewPort.transformControls.setMode("scale");
+                self.stlViewPort.transformControls.space = "local";
                 self.toggleValueInputs($("#slicer-viewport .scale.values div"));
             });
             $("#slicer-viewport button.remove").click(function(event) {
