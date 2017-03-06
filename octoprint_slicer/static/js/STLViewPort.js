@@ -118,7 +118,9 @@ THREE.STLViewPort = function ( canvas, width, height, onChange, onNewModel ) {
 
     self.loadSTL = function ( url, onLoad ) {
         new THREE.STLLoader().load(url, function ( geometry ) {
-            self.addModelOfGeometry(geometry);
+            self.onNewModel([
+                self.addModelOfGeometry(geometry)
+            ]);
         });
     };
 
@@ -146,7 +148,7 @@ THREE.STLViewPort = function ( canvas, width, height, onChange, onNewModel ) {
         self.render();
 
         self.models.push(model);
-        self.onNewModel(model);
+        return model;
     };
 
     self.activeModel = function() {
@@ -248,9 +250,11 @@ THREE.STLViewPort = function ( canvas, width, height, onChange, onNewModel ) {
             var originalModel = self.removeActiveModel()
             var geometry = originalModel.children[0].geometry;
             var newGeometries = GeometryUtils.split(geometry);
-            newGeometries.forEach( function(geometry) {
-                self.addModelOfGeometry( geometry, originalModel );
-            });
+            self.onNewModel(
+                newGeometries.map( function(geometry) {
+                    return self.addModelOfGeometry( geometry, originalModel );
+                })
+            );
         }
     };
 

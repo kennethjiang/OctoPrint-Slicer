@@ -83,17 +83,21 @@ $(function() {
             self.stlViewPort.loadSTL(BASEURL + "downloads/files/" + target + "/" + file);
         }
 
-        self.onModelAdd = function(model) {
+        self.onModelAdd = function(models) {
 
-            $('#tab_plugin_slicer > div.translucent-blocker').hide();
+            self.stlViewPort.makeModelActive(models[0]);
 
-            self.stlViewPort.makeModelActive(model);
+            models.forEach( function( model ) {
+                self.fixZPosition(model);
+            });
 
             if (self.stlViewPort.models.length > 1) {
                 new ArrangeModels().arrange(self.stlViewPort.models, self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM,
-                    10 /* mm margin */, 5000 /* milliseconds max */, self.onModelChange, false);
+                10 /* mm margin */, 5000 /* milliseconds max */, self.onModelChange, false);
             }
-            self.fixZPosition(model);
+
+            $('#tab_plugin_slicer > div.translucent-blocker').hide();
+
         };
 
         self.onModelRemove = function(model) {
