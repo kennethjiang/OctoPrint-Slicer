@@ -18,11 +18,14 @@ var ModelArranger = {
     },
 
     arrange: function(models) {
+        var modelRectMap = models.reduce( function( map, model ) {
+            return map.set(model, ModelArranger.projectedRectOnXY(model));
+        }, new Map());
 
         var criteria = ['w', 'h', 'a', 'max', 'min', 'height', 'width', 'area', 'maxside'];
         var allPackers = criteria.map( function( crit ) {
 
-            var rects = models.map( ModelArranger.projectedRectOnXY );
+            var rects = models.map( function(model) { return modelRectMap.get(model); });
             rects.sort( ModelArranger.sort[crit] );
 
             var packer = new GrowingPacker();
