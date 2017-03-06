@@ -17,7 +17,7 @@
  *
  */
 
-THREE.STLViewPort = function ( canvas, width, height, onChange ) {
+THREE.STLViewPort = function ( canvas, width, height, onChange, onNewModel ) {
 
     var self = this;
 
@@ -25,6 +25,7 @@ THREE.STLViewPort = function ( canvas, width, height, onChange ) {
     self.canvasWidth = width;
     self.canvasHeight = height;
     self.onChange = onChange;
+    self.onNewModel = onNewModel;
 
     self.models = [];
 
@@ -117,27 +118,37 @@ THREE.STLViewPort = function ( canvas, width, height, onChange ) {
 
     self.loadSTL = function ( url, onLoad ) {
         new THREE.STLLoader().load(url, function ( geometry ) {
-            var material = new THREE.MeshStandardMaterial({
-                color: self.effectController.modelInactiveColor,  // We'll mark it active below.
-                shading: THREE.SmoothShading,
-                side: THREE.DoubleSide,
-                metalness: self.effectController.metalness,
-                roughness: self.effectController.roughness });
-
-            var stlModel = new THREE.Mesh( geometry, material );
-
-            // center model's origin
-            var center = new THREE.Box3().setFromObject(stlModel).center();
-            var model = new THREE.Object3D();
-            model.add(stlModel);
-            stlModel.position.copy(center.negate());
-
-            self.scene.add(model);
-            self.render();
-
-            self.models.push(model);
-            onLoad(model);
+            self.onNewModel([
+                self.addModelOfGeometry(geometry)
+            ]);
         });
+    };
+
+    self.addModelOfGeometry = function( geometry, modelToCopyTransformFrom ) {
+        var material = new THREE.MeshStandardMaterial({
+            color: self.effectController.modelInactiveColor,  // We'll mark it active below.
+            shading: THREE.SmoothShading,
+            side: THREE.DoubleSide,
+            metalness: self.effectController.metalness,
+            roughness: self.effectController.roughness });
+
+        var stlModel = new THREE.Mesh( geometry, material );
+
+        // center model's origin
+        var center = new THREE.Box3().setFromObject(stlModel).center();
+        var model = new THREE.Object3D();
+        model.add(stlModel);
+        stlModel.position.copy(center.negate());
+        if (modelToCopyTransformFrom) {
+            model.rotation.copy(modelToCopyTransformFrom.rotation);
+            model.scale.copy(modelToCopyTransformFrom.scale);
+        }
+
+        self.scene.add(model);
+        self.render();
+
+        self.models.push(model);
+        return model;
     };
 
     self.activeModel = function() {
@@ -231,6 +242,33 @@ THREE.STLViewPort = function ( canvas, width, height, onChange ) {
         self.models = [];
         self.makeModelActive(undefined);
     }
+
+    self.splitActiveModel = function() {
+        if (!self.activeModel()) {
+            return;
+        } else {
+            var originalModel = self.removeActiveModel()
+            var geometry = originalModel.children[0].geometry;
+            var newGeometries = GeometryUtils.split(geometry);
+            self.onNewModel(
+                newGeometries.map( function(geometry) {
+                    return self.addModelOfGeometry( geometry, originalModel );
+                })
+            );
+        }
+    };
+
+    self.onlyOneOriginalModel = function() {
+        return self.models.length == 1  &&
+            self.models[0].position.x == 0.0 &&
+            self.models[0].position.y == 0.0 &&
+            self.models[0].rotation.x == 0.0 &&
+            self.models[0].rotation.y == 0.0 &&
+            self.models[0].rotation.z == 0.0 &&
+            self.models[0].scale.x == 1.0 &&
+            self.models[0].scale.y == 1.0 &&
+            self.models[0].scale.z == 1.0
+    };
 
     self.startTransform = function () {
         // Disable orbit controls
