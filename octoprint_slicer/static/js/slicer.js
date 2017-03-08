@@ -7,7 +7,14 @@
 
 'use strict';
 if (window.location.hostname != "localhost") {
-    Raven.config('https://85bd9314656d40da9249aec5a32a2b52@sentry.io/141297', {release: '0.9.6'}).install()
+    Raven.config('https://85bd9314656d40da9249aec5a32a2b52@sentry.io/141297', {
+        release: '0.9.6',
+        ignoreErrors: [
+                "Failed to execute 'arc' on 'CanvasRenderingContext2D': The radius provided",
+                "Cannot read property 'highlightFill' of undefined",
+                "Argument 1 of SVGMatrix.translate is not a finite floating-point value",
+            ],
+    }).install();
 }
 
 $(function() {
@@ -72,10 +79,10 @@ $(function() {
                 self.stlViewPort.makeModelActive(model);
 
                 if (self.modelManager.models.length > 1) {
-                    new ArrangeModels().arrange(self.modelManager.models, self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM,
-                      10 /* mm margin */, 5000 /* milliseconds max */, self.onModelChange, false);
+                    ModelArranger.arrange(self.modelManager.models);
                 }
                 self.fixZPosition(model);
+                self.stlViewPort.render();
             });
         };
 
@@ -286,9 +293,7 @@ $(function() {
 
         OctoPrint.socket.onMessage("event", self.removeTempFilesAfterSlicing);
 
-        self.sendSliceCommand = function(filename, group) {
-            var slicingVM = self.slicingViewModel;
-
+        self.sliceRequestData = function(slicingVM, group) {
             var destinationFilename = slicingVM._sanitize(slicingVM.destinationFilename());
 
             var destinationExtensions = slicingVM.data[slicingVM.slicer()] && slicingVM.data[slicingVM.slicer()].extensions && slicingVM.data[slicingVM.slicer()].extensions.destination
@@ -319,8 +324,12 @@ $(function() {
             } else if (slicingVM.afterSlicing() == "select") {
                 data["select"] = true;
             }
+            return data;
+        };
+
+        self.sendSliceRequest = function(target, filename, data) {
             $.ajax({
-                url: API_BASEURL + "files/" + slicingVM.target + "/" + filename,
+                url: API_BASEURL + "files/" + target + "/" + filename,
                 type: "POST",
                 dataType: "json",
                 contentType: "application/json; charset=UTF-8",
@@ -333,14 +342,24 @@ $(function() {
 
         self.slice = function() {
             mixpanel.track("Slice Model");
+
+            var target = self.slicingViewModel.target;
+            var sliceRequestData;
+
             if (self.modelManager.onlyOneOriginalModel()) {
-                self.sendSliceCommand(self.slicingViewModel.file());
+
+                sliceRequestData = self.sliceRequestData(self.slicingViewModel);
+                self.sendSliceRequest(self.slicingViewModel.target, self.slicingViewModel.file(), sliceRequestData);
+
             } else {
+
                 var form = new FormData();
                 var group = new THREE.Group();
                 _.forEach(self.modelManager.models, function (model) {
                     group.add(model.clone(true));
                 });
+
+                sliceRequestData = self.sliceRequestData(self.slicingViewModel, group);
 
                 var tempFilename = self.modelManager.tempSTLFilename();
                 form.append("file", self.blobFromModel(group), tempFilename);
@@ -351,14 +370,15 @@ $(function() {
                     processData: false,
                     contentType: false,
                     // On success
-                    success: function(data) {
+                    success: function(_) {
                         self.tempFiles[tempFilename] = 1;
-                        self.sendSliceCommand(tempFilename, group);
+                        self.sendSliceRequest(target, tempFilename, sliceRequestData);
                     },
                     error: function(jqXHR, textStatus) {
                         new PNotify({title: "Slicing failed", text: textStatus, type: "error", hide: false});
                     }
                 });
+
             }
         };
 

@@ -101,9 +101,9 @@ THREE.STLViewPort = function ( canvas, width, height, onChange ) {
         });
 
         // Unforutnately built-in "click" event is fired when it's a drag. We need all these complexity to detect real click (no mousemoves between mousedown and mouseup)
-        self.canvas.addEventListener("mousedown", () => { self.lastMouseEvent = "mousedown" });
-        self.canvas.addEventListener("mousemove", () => { self.lastMouseEvent = "mousemove" });
-        self.canvas.addEventListener("mouseup", (e) => { if (self.lastMouseEvent == "mousedown") self.pickActiveModel(e); });
+        self.canvas.addEventListener("mousedown", function() { self.lastMouseEvent = "mousedown" });
+        self.canvas.addEventListener("mousemove", function() { self.lastMouseEvent = "mousemove" });
+        self.canvas.addEventListener("mouseup", function(e) { if (self.lastMouseEvent == "mousedown") self.pickActiveModel(e); });
 
         self.stats = new Stats();
         self.stats.showPanel( 1 );
