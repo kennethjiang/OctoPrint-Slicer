@@ -73,7 +73,7 @@ THREE.STLViewPort = function ( canvas, width, height, onChange, onNewModel ) {
         self.orbitControls.enablePan = false;
         self.orbitControls.addEventListener("change", self.render);
 
-        self.transformControls = new THREE.TransformControls(self.camera, self.renderer.domElement);
+        self.transformControls = new THREE.TransformControls2(self.camera, self.renderer.domElement);
 
         self.transformControls.setAllowedTranslation("XY");
         self.transformControls.setRotationDisableE(true);
