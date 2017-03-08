@@ -25,7 +25,7 @@ THREE.STLViewPort = function ( canvas, width, height, onChange ) {
     self.canvasWidth = width;
     self.canvasHeight = height;
     self.onChange = onChange;
-
+    self.stats = undefined;
     self.models = [];
 
     self.effectController = {
@@ -105,6 +105,8 @@ THREE.STLViewPort = function ( canvas, width, height, onChange ) {
         self.canvas.addEventListener("mousemove", function() { self.lastMouseEvent = "mousemove" });
         self.canvas.addEventListener("mouseup", function(e) { if (self.lastMouseEvent == "mousedown") self.pickActiveModel(e); });
 
+        self.stats = new Stats();
+        self.stats.showPanel( 1 );
         self.render();
     };
 
@@ -112,6 +114,7 @@ THREE.STLViewPort = function ( canvas, width, height, onChange ) {
         self.orbitControls.update();
         self.transformControls.update();
         self.renderer.render( self.scene, self.camera );
+        self.stats.update();
     };
 
 
