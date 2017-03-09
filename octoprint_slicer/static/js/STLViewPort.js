@@ -75,8 +75,8 @@ THREE.STLViewPort = function ( canvas, width, height, onChange, onNewModel ) {
 
         self.transformControls = new THREE.TransformControls2(self.camera, self.renderer.domElement);
 
-        self.transformControls.setAllowedTranslation("XY");
-        self.transformControls.setRotationDisableE(true);
+        //        self.transformControls.setAllowedTranslation("XY");
+        //        self.transformControls.setRotationDisableE(true);
         self.transformControls.setRotationSnap( THREE.Math.degToRad( 15 ) )
         self.transformControls.addEventListener("change", self.render);
         self.transformControls.addEventListener("mouseDown", self.startTransform);
