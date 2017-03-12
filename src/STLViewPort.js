@@ -17,7 +17,12 @@
  *
  */
 
-THREE.STLViewPort = function ( canvas, width, height, onChange, onNewModel ) {
+
+'use strict';
+
+import * as THREETK from '3tk';
+
+export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
 
     var self = this;
 
@@ -73,10 +78,8 @@ THREE.STLViewPort = function ( canvas, width, height, onChange, onNewModel ) {
         self.orbitControls.enablePan = false;
         self.orbitControls.addEventListener("change", self.render);
 
-        self.transformControls = new THREE.TransformControls2(self.camera, self.renderer.domElement);
+        self.transformControls = new THREETK.TransformControls(self.camera, self.renderer.domElement);
 
-        //        self.transformControls.setAllowedTranslation("XY");
-        //        self.transformControls.setRotationDisableE(true);
         self.transformControls.setRotationSnap( THREE.Math.degToRad( 15 ) )
         self.transformControls.addEventListener("change", self.render);
         self.transformControls.addEventListener("mouseDown", self.startTransform);
@@ -279,4 +282,4 @@ THREE.STLViewPort = function ( canvas, width, height, onChange, onNewModel ) {
         self.orbitControls.enabled = true;
     };
 
-};
+}

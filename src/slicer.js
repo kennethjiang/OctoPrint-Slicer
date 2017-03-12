@@ -6,6 +6,9 @@
  */
 
 'use strict';
+
+import { STLViewPort } from './STLViewPort';
+
 if (window.location.hostname != "localhost") {
     Raven.config('https://85bd9314656d40da9249aec5a32a2b52@sentry.io/141297', {
         release: '0.9.6',
@@ -18,7 +21,6 @@ if (window.location.hostname != "localhost") {
     }).install();
 }
 
-$(function() {
     function SlicerViewModel(parameters) {
         mixpanel.track("App Loaded");
 
@@ -144,7 +146,7 @@ $(function() {
 
             self.slicingViewModel.requestData();
 
-            self.stlViewPort = new THREE.STLViewPort(self.canvas, CANVAS_WIDTH, CANVAS_HEIGHT, self.onModelChange, self.onModelAdd)
+            self.stlViewPort = new STLViewPort(self.canvas, CANVAS_WIDTH, CANVAS_HEIGHT, self.onModelChange, self.onModelAdd)
             self.stlViewPort.init();
 
             //Walls and Floor
@@ -577,4 +579,3 @@ $(function() {
         // e.g. #settings_plugin_slicer, #tab_plugin_slicer, ...
         [ "#slicer" ]
     ]);
-});
