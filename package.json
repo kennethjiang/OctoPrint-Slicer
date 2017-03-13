@@ -9,7 +9,7 @@
     "watch": "rollup -c -w"
   },
   "dependencies": {
-    "3tk": "^0.1.0",
+    "3tk": "file:lib/3tk",
     "three": "^0.84.0"
   },
   "devDependencies": {
