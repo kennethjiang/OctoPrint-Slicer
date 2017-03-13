@@ -173,9 +173,6 @@ $(function() {
                     <button class="remove disabled" title="Remove"><img src="'
                 + PLUGIN_BASEURL
                 + 'slicer/static/img/remove.png"></button>\
-                    <button class="split disabled" title="Split"><img src="'
-                + PLUGIN_BASEURL
-                + 'slicer/static/img/split.png"></button>\
                 </div>\
                 <div class="values translate">\
                     <div>\
