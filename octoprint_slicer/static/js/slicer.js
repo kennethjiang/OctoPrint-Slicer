@@ -8,7 +8,7 @@
 'use strict';
 if (window.location.hostname != "localhost") {
     Raven.config('https://85bd9314656d40da9249aec5a32a2b52@sentry.io/141297', {
-        release: '0.9.6',
+        release: '1.0.1',
         ignoreErrors: [
                 "Failed to execute 'arc' on 'CanvasRenderingContext2D': The radius provided",
                 "Cannot read property 'highlightFill' of undefined",
