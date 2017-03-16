@@ -8,7 +8,7 @@
 'use strict';
 if (window.location.hostname != "localhost") {
     Raven.config('https://85bd9314656d40da9249aec5a32a2b52@sentry.io/141297', {
-        release: '1.0.1',
+        release: '1.0.2',
         ignoreErrors: [
                 "Failed to execute 'arc' on 'CanvasRenderingContext2D': The radius provided",
                 "Cannot read property 'highlightFill' of undefined",
@@ -173,9 +173,6 @@ $(function() {
                     <button class="remove disabled" title="Remove"><img src="'
                 + PLUGIN_BASEURL
                 + 'slicer/static/img/remove.png"></button>\
-                    <button class="split disabled" title="Split"><img src="'
-                + PLUGIN_BASEURL
-                + 'slicer/static/img/split.png"></button>\
                 </div>\
                 <div class="values translate">\
                     <div>\
