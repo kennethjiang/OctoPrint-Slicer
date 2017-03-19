@@ -1,6 +1,6 @@
 'use strict';
 
-import * as THREE from 'three';
+import { Box3 } from 'three';
 
 export function ModelArranger() {
 
@@ -38,7 +38,7 @@ export function ModelArranger() {
 
     function projectedRectOnXY( model ) {
         var margin = 10.0;
-        var modelBox = new THREE.Box3().setFromObject(model);
+        var modelBox = new Box3().setFromObject(model);
         var width = modelBox.max.x - modelBox.min.x + margin;
         var height = modelBox.max.y - modelBox.min.y + margin;
         return { w: width, h: height, area: width*height, model: model };

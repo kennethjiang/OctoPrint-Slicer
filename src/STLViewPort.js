@@ -20,7 +20,7 @@
 
 'use strict';
 
-import * as THREETK from '3tk';
+import { OrbitControls, TransformControls, STLLoader } from '3tk';
 
 export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
 
@@ -71,14 +71,14 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
         self.renderer.gammaInput = true;
         self.renderer.gammaOutput = true;
 
-        self.orbitControls = new THREETK.OrbitControls(self.camera, self.renderer.domElement);
+        self.orbitControls = new OrbitControls(self.camera, self.renderer.domElement);
 
         self.orbitControls.enableDamping = true;
         self.orbitControls.dampingFactor = 0.25;
         self.orbitControls.enablePan = false;
         self.orbitControls.addEventListener("change", self.render);
 
-        self.transformControls = new THREETK.TransformControls(self.camera, self.renderer.domElement);
+        self.transformControls = new TransformControls(self.camera, self.renderer.domElement);
 
         self.transformControls.setRotationSnap( THREE.Math.degToRad( 15 ) )
         self.transformControls.addEventListener("change", self.render);
@@ -119,7 +119,7 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
 
 
     self.loadSTL = function ( url, onLoad ) {
-        new THREETK.STLLoader().load(url, function ( geometry ) {
+        new STLLoader().load(url, function ( geometry ) {
             self.onNewModel([
                 self.addModelOfGeometry(geometry)
             ]);
