@@ -7,6 +7,7 @@
 
 'use strict';
 
+import * as THREETK from '3tk';
 import { STLViewPort } from './STLViewPort';
 import { OverridesViewModel } from './profile_overrides';
 
@@ -30,7 +31,7 @@ function SlicerViewModel(parameters) {
     self.canvas = document.getElementById( 'slicer-canvas' );
 
     //check if webGL is present. If not disable Slicer plugin
-    if ( ! Detector.webgl ) {
+    if ( ! THREETK.Detector.webgl ) {
         $('#tab_plugin_slicer').empty().append("<h3>Slicer Plugin is disabled because your browser doesn't support WebGL</h3>");
         return;
     }
@@ -407,7 +408,7 @@ function SlicerViewModel(parameters) {
     };
 
     self.blobFromModel = function( model ) {
-        var exporter = new THREE.STLBinaryExporter();
+        var exporter = new THREETK.STLBinaryExporter();
         return new Blob([exporter.parse(model)], {type: "text/plain"});
     };
 

@@ -71,7 +71,7 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
         self.renderer.gammaInput = true;
         self.renderer.gammaOutput = true;
 
-        self.orbitControls = new THREE.OrbitControls(self.camera, self.renderer.domElement);
+        self.orbitControls = new THREETK.OrbitControls(self.camera, self.renderer.domElement);
 
         self.orbitControls.enableDamping = true;
         self.orbitControls.dampingFactor = 0.25;
@@ -119,7 +119,7 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
 
 
     self.loadSTL = function ( url, onLoad ) {
-        new THREE.STLLoader().load(url, function ( geometry ) {
+        new THREETK.STLLoader().load(url, function ( geometry ) {
             self.onNewModel([
                 self.addModelOfGeometry(geometry)
             ]);
