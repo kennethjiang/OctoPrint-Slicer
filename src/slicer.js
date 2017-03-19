@@ -10,6 +10,7 @@
 import * as THREETK from '3tk';
 import { STLViewPort } from './STLViewPort';
 import { OverridesViewModel } from './profile_overrides';
+import { ModelArranger } from './ModelArranger';
 
 if (window.location.hostname != "localhost") {
     Raven.config('https://85bd9314656d40da9249aec5a32a2b52@sentry.io/141297', {
@@ -97,7 +98,7 @@ function SlicerViewModel(parameters) {
         });
 
         if (self.stlViewPort.models.length > 1) {
-            ModelArranger.arrange(self.stlViewPort.models);
+            new ModelArranger().arrange(self.stlViewPort.models);
         }
         self.stlViewPort.render();
 
