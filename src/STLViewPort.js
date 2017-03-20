@@ -115,6 +115,11 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
         self.renderer.render( self.scene, self.camera );
     };
 
+    self.refresh = function() {
+        self.transformControls.update();
+        self.orbitControls.update();
+        self.render();
+    }
 
     self.loadSTL = function ( url, onLoad ) {
         new STLLoader().load(url, function ( geometry ) {
