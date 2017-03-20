@@ -18,5 +18,5 @@ export default {
   globals: { three: 'THREE' },
   dest: pkg.main,
   format: 'iife',
-  sourceMap: true
+  sourceMap: false
 };

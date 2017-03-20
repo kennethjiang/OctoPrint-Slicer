@@ -112,8 +112,6 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
     };
 
     self.render = function() {
-        self.orbitControls.update();
-        self.transformControls.update();
         self.renderer.render( self.scene, self.camera );
     };
 
