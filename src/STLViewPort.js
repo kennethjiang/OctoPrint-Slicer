@@ -17,7 +17,12 @@
  *
  */
 
-THREE.STLViewPort = function ( canvas, width, height, onChange, onNewModel ) {
+
+'use strict';
+
+import { OrbitControls, TransformControls, STLLoader } from '3tk';
+
+export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
 
     var self = this;
 
@@ -66,17 +71,15 @@ THREE.STLViewPort = function ( canvas, width, height, onChange, onNewModel ) {
         self.renderer.gammaInput = true;
         self.renderer.gammaOutput = true;
 
-        self.orbitControls = new THREE.OrbitControls(self.camera, self.renderer.domElement);
+        self.orbitControls = new OrbitControls(self.camera, self.renderer.domElement);
 
         self.orbitControls.enableDamping = true;
         self.orbitControls.dampingFactor = 0.25;
         self.orbitControls.enablePan = false;
         self.orbitControls.addEventListener("change", self.render);
 
-        self.transformControls = new THREE.TransformControls(self.camera, self.renderer.domElement);
+        self.transformControls = new TransformControls(self.camera, self.renderer.domElement);
 
-        self.transformControls.setAllowedTranslation("XY");
-        self.transformControls.setRotationDisableE(true);
         self.transformControls.setRotationSnap( THREE.Math.degToRad( 15 ) )
         self.transformControls.addEventListener("change", self.render);
         self.transformControls.addEventListener("mouseDown", self.startTransform);
@@ -109,14 +112,17 @@ THREE.STLViewPort = function ( canvas, width, height, onChange, onNewModel ) {
     };
 
     self.render = function() {
-        self.orbitControls.update();
-        self.transformControls.update();
         self.renderer.render( self.scene, self.camera );
     };
 
+    self.refresh = function() {
+        self.transformControls.update();
+        self.orbitControls.update();
+        self.render();
+    }
 
     self.loadSTL = function ( url, onLoad ) {
-        new THREE.STLLoader().load(url, function ( geometry ) {
+        new STLLoader().load(url, function ( geometry ) {
             self.onNewModel([
                 self.addModelOfGeometry(geometry)
             ]);
@@ -279,4 +285,4 @@ THREE.STLViewPort = function ( canvas, width, height, onChange, onNewModel ) {
         self.orbitControls.enabled = true;
     };
 
-};
+}

@@ -1,0 +1,3 @@
+[submodule "lib/3tk"]
+	path = lib/3tk
+	url = git@github.com:kennethjiang/3tk.git
