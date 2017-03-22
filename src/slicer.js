@@ -197,6 +197,7 @@ function SlicerViewModel(parameters) {
                </div>');
 
         $("#slicer-viewport").append(self.stlViewPort.renderer.domElement);
+        $("#slicer-viewport").append(self.stlViewPort.stats.dom);
 
         $("#slicer-viewport button.rotate").click(function(event) {
             if (self.stlViewPort.transformControls.getMode() != "rotate") {

@@ -60,7 +60,7 @@ class SlicerPlugin(octoprint.plugin.SettingsPlugin,
 		# Define your plugin's asset files to automatically include in the
 		# core UI here.
 		return dict(
-			js=["js/packer.growing.js", "js/octoprint_slicer.min.js"],
+			js=["js/stats.min.js", "js/packer.growing.js", "js/octoprint_slicer.min.js"],
 			css=["css/slicer.css"],
 			less=["less/slicer.less"]
 		)

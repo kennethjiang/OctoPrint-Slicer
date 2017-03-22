@@ -21,7 +21,6 @@
 'use strict';
 
 import { OrbitControls, TransformControls, STLLoader, PointerInteractions } from '3tk';
-
 import * as THREE from 'three';
 
 export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
@@ -71,6 +70,9 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
         self.renderer.gammaInput = true;
         self.renderer.gammaOutput = true;
 
+        self.stats = new Stats();
+        self.stats.showPanel( 1 );
+
         self.pointerInteractions = new PointerInteractions( self.renderer.domElement, self.camera, true ); // Need to use "recursive" as the intersection will be with the mesh, not the top level objects that are nothing but holder
         self.pointerInteractions.addEventListener("click", self.selectionChanged);
         self.pointerInteractions.addEventListener("hover", self.hoverChanged);
@@ -116,6 +118,7 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
 
     self.render = function() {
         self.renderer.render( self.scene, self.camera );
+        self.stats.update();
     };
 
     self.update = function() {
