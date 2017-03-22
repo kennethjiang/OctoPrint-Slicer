@@ -13,7 +13,11 @@ import { STLViewPort } from './STLViewPort';
 import { OverridesViewModel } from './profile_overrides';
 import { ModelArranger } from './ModelArranger';
 
-if (window.location.hostname != "localhost") {
+function isDev() {
+    return window.location.hostname == "localhost";
+}
+
+if ( ! isDev() ) {
     Raven.config('https://85bd9314656d40da9249aec5a32a2b52@sentry.io/141297', {
         release: '1.0.3',
         ignoreErrors: [
@@ -102,7 +106,6 @@ function SlicerViewModel(parameters) {
         if (self.stlViewPort.models().length > 1) {
             new ModelArranger().arrange(self.stlViewPort.models());
         }
-        self.stlViewPort.update();
 
         $('#tab_plugin_slicer > div.translucent-blocker').hide();
 
@@ -132,7 +135,6 @@ function SlicerViewModel(parameters) {
         }
         self.drawBedFloor(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM);
         self.drawWalls(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM, self.BEDSIZE_Z_MM);
-        self.stlViewPort.update();
     }
 
     self.slicingViewModel.printerProfile.subscribe( self.updatePrinterBed );
@@ -197,7 +199,9 @@ function SlicerViewModel(parameters) {
                </div>');
 
         $("#slicer-viewport").append(self.stlViewPort.renderer.domElement);
-        $("#slicer-viewport").append(self.stlViewPort.stats.dom);
+        if ( isDev() ) {
+            $("#slicer-viewport").append(self.stlViewPort.stats.dom);
+        }
 
         $("#slicer-viewport button.rotate").click(function(event) {
             if (self.stlViewPort.transformControls.getMode() != "rotate") {
@@ -269,7 +273,6 @@ function SlicerViewModel(parameters) {
             model.scale.y =  parseFloat($("#slicer-viewport .scale.values input[name=\"y\"]").val())
             model.scale.z =  parseFloat($("#slicer-viewport .scale.values input[name=\"z\"]").val())
             self.fixZPosition(model);
-            self.stlViewPort.update();
         }
     };
 
@@ -295,7 +298,6 @@ function SlicerViewModel(parameters) {
             $("#slicer-viewport .scale.values input[name=\"z\"]").val(model.scale.z.toFixed(3)).attr("min", '');
             $("#slicer-viewport .scale.values input[type=\"checkbox\"]").checked = self.lockScale;
             self.fixZPosition(model);
-            self.stlViewPort.update();
         }
 
         if (!self.stlViewPort.activeModel()) {
@@ -493,7 +495,6 @@ function SlicerViewModel(parameters) {
             self.createText(font, "Back", width, depth, self.floor);
             self.createText(font, "Left", width, depth, self.floor);
             self.createText(font, "Right", width, depth, self.floor);
-            self.stlViewPort.update();
         } );
     };
 

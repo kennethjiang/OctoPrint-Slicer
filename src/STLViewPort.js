@@ -113,19 +113,22 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
             }
         });
 
+        self.animate();
+    };
+
+    self.animate = function() {
+        requestAnimationFrame( self.animate );
+
+        self.transformControls.update();
+        self.orbitControls.update();
+        self.stats.update();
+
         self.render();
     };
 
     self.render = function() {
         self.renderer.render( self.scene, self.camera );
-        self.stats.update();
     };
-
-    self.update = function() {
-        self.transformControls.update();
-        self.orbitControls.update();
-        self.render();
-    }
 
     self.loadSTL = function ( url, onLoad ) {
         new STLLoader().load(url, function ( geometry ) {
