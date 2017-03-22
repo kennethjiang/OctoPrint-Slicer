@@ -7,6 +7,7 @@
 
 'use strict';
 
+import * as THREE from 'three';
 import * as THREETK from '3tk';
 import { STLViewPort } from './STLViewPort';
 import { OverridesViewModel } from './profile_overrides';
@@ -98,8 +99,8 @@ function SlicerViewModel(parameters) {
             self.fixZPosition(model);
         });
 
-        if (self.stlViewPort.models.length > 1) {
-            new ModelArranger().arrange(self.stlViewPort.models);
+        if (self.stlViewPort.models().length > 1) {
+            new ModelArranger().arrange(self.stlViewPort.models());
         }
         self.stlViewPort.refresh();
 
@@ -108,7 +109,7 @@ function SlicerViewModel(parameters) {
     };
 
     self.onModelRemove = function(model) {
-        if (self.stlViewPort.models.length == 0) {
+        if (self.stlViewPort.models().length == 0) {
             self.clearPrint();
         }
     };
@@ -167,9 +168,6 @@ function SlicerViewModel(parameters) {
         // TODO: it's not DRY. mix of prez code and logics. need to figure out a better way
         $("#slicer-viewport").empty().append('<div class="report"><span>Got issues or suggestions? <a target="_blank" href="https://github.com/kennethjiang/OctoPrint-Slicer/issues/new">Click here!</a></span></div>\
                   <div class="model">\
-                    <button class="translate disabled" title="Move"><img src="'
-            + PLUGIN_BASEURL
-            + 'slicer/static/img/translate.png"></button>\
                     <button class="rotate disabled" title="Rotate"><img src="'
             + PLUGIN_BASEURL
             + 'slicer/static/img/rotate.png"></button>\
@@ -180,13 +178,6 @@ function SlicerViewModel(parameters) {
             + PLUGIN_BASEURL
             + 'slicer/static/img/remove.png"></button>\
                 </div>\
-                <div class="values translate">\
-                    <div>\
-                        <p><span class="axis x">X</span><input type="number" step="any" name="x"><span title="">mm</span></p>\
-                        <p><span class="axis y">Y</span><input type="number" step="any" name="y"><span title="">mm</span></p>\
-                        <span></span>\
-                    </div>\
-               </div>\
                 <div class="values rotate">\
                     <div>\
                         <p><span class="axis x">X</span><input type="number" step="any" name="x"><span title="">°</span></p>\
@@ -207,21 +198,32 @@ function SlicerViewModel(parameters) {
 
         $("#slicer-viewport").append(self.stlViewPort.renderer.domElement);
 
-        $("#slicer-viewport button.translate").click(function(event) {
-            self.stlViewPort.transformControls.setMode("translate");
-            self.stlViewPort.transformControls.space = "world";
-            self.toggleValueInputs($("#slicer-viewport .translate.values div"));
-        });
         $("#slicer-viewport button.rotate").click(function(event) {
-            self.stlViewPort.transformControls.setMode("rotate");
-            self.stlViewPort.transformControls.space = "world";
+            if (self.stlViewPort.transformControls.getMode() != "rotate") {
+                self.stlViewPort.transformControls.setMode("rotate");
+                self.stlViewPort.transformControls.space = "world";
+            } else {
+                self.stlViewPort.transformControls.setMode("translate");
+                self.stlViewPort.transformControls.space = "world";
+                self.stlViewPort.transformControls.axis = "XY";
+            }
+
             self.toggleValueInputs($("#slicer-viewport .rotate.values div"));
         });
+
         $("#slicer-viewport button.scale").click(function(event) {
-            self.stlViewPort.transformControls.setMode("scale");
-            self.stlViewPort.transformControls.space = "local";
+            if (self.stlViewPort.transformControls.getMode() != "scale") {
+                self.stlViewPort.transformControls.setMode("scale");
+                self.stlViewPort.transformControls.space = "local";
+            } else {
+                self.stlViewPort.transformControls.setMode("translate");
+                self.stlViewPort.transformControls.space = "world";
+                self.stlViewPort.transformControls.axis = "XY";
+            }
+
             self.toggleValueInputs($("#slicer-viewport .scale.values div"));
         });
+
         $("#slicer-viewport button.remove").click(function(event) {
             self.onModelRemove( self.stlViewPort.removeActiveModel() );
         });
@@ -379,7 +381,7 @@ function SlicerViewModel(parameters) {
 
             var form = new FormData();
             var group = new THREE.Group();
-            _.forEach(self.stlViewPort.models, function (model) {
+            _.forEach(self.stlViewPort.models(), function (model) {
                 group.add(model.clone(true));
             });
 

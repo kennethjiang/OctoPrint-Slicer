@@ -14,8 +14,6 @@ export default {
              browser: true,
     }),
   ],
-  external: [ 'three' ],
-  globals: { three: 'THREE' },
   dest: pkg.main,
   format: 'iife',
   sourceMap: false

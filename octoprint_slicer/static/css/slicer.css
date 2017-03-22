@@ -75,21 +75,17 @@
     transition: top 0.3s ease-out;
 }
 
-#slicer-viewport > div.values.translate {
+#slicer-viewport > div.values.rotate {
     top: 34px;
 }
 
-#slicer-viewport > div.values.rotate {
+#slicer-viewport > div.values.scale{
     top: calc(34px + 44px);
-}
-
-#slicer-viewport > div.values.scale {
-    top: calc(34px + 2*44px);
 }
 
 #slicer-viewport > div.cutShape {
     left: 60px;
-    top: calc(50% + 148px);
+    top: calc(34px + 2*44px);
     transform: translateY(-50%);
     display: none;
 }

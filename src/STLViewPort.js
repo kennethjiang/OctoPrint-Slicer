@@ -20,7 +20,9 @@
 
 'use strict';
 
-import { OrbitControls, TransformControls, STLLoader } from '3tk';
+import { OrbitControls, TransformControls, STLLoader, PointerInteractions } from '3tk';
+
+import * as THREE from 'three';
 
 export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
 
@@ -31,8 +33,6 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
     self.canvasHeight = height;
     self.onChange = onChange;
     self.onNewModel = onNewModel;
-
-    self.models = [];
 
     self.effectController = {
         metalness: 0.5,
@@ -71,6 +71,10 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
         self.renderer.gammaInput = true;
         self.renderer.gammaOutput = true;
 
+        self.pointerInteractions = new PointerInteractions( self.renderer.domElement, self.camera, true ); // Need to use "recursive" as the intersection will be with the mesh, not the top level objects that are nothing but holder
+        self.pointerInteractions.addEventListener("click", self.selectionChanged);
+        self.pointerInteractions.addEventListener("hover", self.hoverChanged);
+
         self.orbitControls = new OrbitControls(self.camera, self.renderer.domElement);
 
         self.orbitControls.enableDamping = true;
@@ -85,6 +89,10 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
         self.transformControls.addEventListener("mouseDown", self.startTransform);
         self.transformControls.addEventListener("mouseUp", self.endTransform);
         self.transformControls.addEventListener("change", self.onChange);
+        self.transformControls.setHandles( 'translate', null );
+        self.transformControls.setMode("translate");
+        self.transformControls.space = "world";
+        self.transformControls.axis = "XY";
         self.scene.add(self.transformControls);
 
         window.addEventListener( 'keydown', function ( event ) {
@@ -103,11 +111,6 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
             }
         });
 
-        // Unforutnately built-in "click" event is fired when it's a drag. We need all these complexity to detect real click (no mousemoves between mousedown and mouseup)
-        self.canvas.addEventListener("mousedown", function() { self.lastMouseEvent = "mousedown" });
-        self.canvas.addEventListener("mousemove", function() { self.lastMouseEvent = "mousemove" });
-        self.canvas.addEventListener("mouseup", function(e) { if (self.lastMouseEvent == "mousedown") self.pickActiveModel(e); });
-
         self.render();
     };
 
@@ -123,9 +126,9 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
 
     self.loadSTL = function ( url, onLoad ) {
         new STLLoader().load(url, function ( geometry ) {
-            self.onNewModel([
-                self.addModelOfGeometry(geometry)
-            ]);
+            var newModel = self.addModelOfGeometry(geometry);
+            self.makeModelActive( newModel );
+            self.onNewModel([ newModel ]);
         });
     };
 
@@ -152,50 +155,29 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
         self.scene.add(model);
         self.render();
 
-        self.models.push(model);
+        self.pointerInteractions.objects.push(model);
+        self.pointerInteractions.update();
         return model;
     };
+
+    self.models = function() {
+        return self.pointerInteractions.objects;
+    }
 
     self.activeModel = function() {
         return self.transformControls.object;
     }
 
-    self.pickActiveModel = function( event ) {
-        var rect = self.canvas.getBoundingClientRect();
-        var x = (event.clientX - rect.left) / rect.width;
-        var y = (event.clientY - rect.top) / rect.height;
-
-        var pointerVector = new THREE.Vector2();
-        pointerVector.set((x*2) - 1, -(y*2) + 1);
-        var ray = new THREE.Raycaster();
-        ray.setFromCamera(pointerVector, self.camera);
-
-        // Clicking should cycle through the stlFiles if there are multiple under the cursor.
-        var foundActiveModel = false;
-        var nextPointedModel = undefined;
-        var firstPointedModel = undefined;
-        for (var i = 0; i < self.models.length; i++) {
-            var model = self.models[i];
-            var intersections = ray.intersectObjects( model.children, true ); // Not sure why ray will intersect the children but not the model itself.
-            if (!intersections[0]) {
-                continue;
-            }
-            if (!firstPointedModel) {
-                firstPointedModel = model;
-            }
-            if (foundActiveModel && !nextPointedModel) {
-                nextPointedModel = model;
-            }
-            if (self.activeModel() == model) {
-                foundActiveModel = true;
-            }
-        }
-        if (nextPointedModel) {
-            self.makeModelActive(nextPointedModel);
-        } else if (firstPointedModel) {
-            self.makeModelActive(firstPointedModel);
+    self.selectionChanged = function( event ) {
+        if (event.current) {
+            self.makeModelActive( event.current.parent );
+        } else {
+            self.makeModelActive( null );
         }
     };
+
+    self.hoverChanged = function( event ) {
+    }
 
     /**
      * params:
@@ -210,8 +192,8 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
             self.transformControls.detach();
         }
 
-        for (var i = 0; i < self.models.length; i++) {
-            var model = self.models[i];
+        for (var i = 0; i < self.pointerInteractions.objects.length; i++) {
+            var model = self.pointerInteractions.objects[i];
             if (model == self.activeModel()) {
                 model.children[0].material.color.copy(self.effectController.modelActiveColor);
             } else {
@@ -225,14 +207,15 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
 
     self.removeActiveModel = function() {
         if (!self.activeModel()) {
-            return undefined;
+            return null;
         } else {
             var model = self.activeModel();
 
-            var index = self.models.indexOf(model);
+            var index = self.pointerInteractions.objects.indexOf(model);
             if (index > -1) {
-                self.models.splice(index, 1);
+                self.pointerInteractions.objects.splice(index, 1);
             }
+            self.pointerInteractions.update();
 
             self.scene.remove(model);
             self.makeModelActive(undefined);
@@ -241,11 +224,11 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
     };
 
     self.removeAllModels = function() {
-        for (var i = 0; i < self.models.length; i++) {
-            self.scene.remove(self.models[i]);
+        for (var i = 0; i < self.pointerInteractions.objects.length; i++) {
+            self.scene.remove(self.pointerInteractions.objects[i]);
         }
-        self.models = [];
-        self.makeModelActive(undefined);
+        self.pointerInteractions.objects = [];
+        self.pointerInteractions.update();
     }
 
     self.splitActiveModel = function() {
@@ -264,15 +247,16 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
     };
 
     self.onlyOneOriginalModel = function() {
-        return self.models.length == 1  &&
-            self.models[0].position.x == 0.0 &&
-            self.models[0].position.y == 0.0 &&
-            self.models[0].rotation.x == 0.0 &&
-            self.models[0].rotation.y == 0.0 &&
-            self.models[0].rotation.z == 0.0 &&
-            self.models[0].scale.x == 1.0 &&
-            self.models[0].scale.y == 1.0 &&
-            self.models[0].scale.z == 1.0
+        var models = self.pointerInteractions.objects;
+        return models.length == 1  &&
+            models[0].position.x == 0.0 &&
+            models[0].position.y == 0.0 &&
+            models[0].rotation.x == 0.0 &&
+            models[0].rotation.y == 0.0 &&
+            models[0].rotation.z == 0.0 &&
+            models[0].scale.x == 1.0 &&
+            models[0].scale.y == 1.0 &&
+            models[0].scale.z == 1.0
     };
 
     self.startTransform = function () {
