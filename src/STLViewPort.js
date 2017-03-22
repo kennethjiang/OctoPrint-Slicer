@@ -88,7 +88,7 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
         self.transformControls.addEventListener("change", self.render);
         self.transformControls.addEventListener("mouseDown", self.startTransform);
         self.transformControls.addEventListener("mouseUp", self.endTransform);
-        self.transformControls.addEventListener("change", self.onChange);
+        self.transformControls.addEventListener("objectChange", self.onChange);
         self.transformControls.setHandles( 'translate', null );
         self.transformControls.setMode("translate");
         self.transformControls.space = "world";
@@ -118,7 +118,7 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
         self.renderer.render( self.scene, self.camera );
     };
 
-    self.refresh = function() {
+    self.update = function() {
         self.transformControls.update();
         self.orbitControls.update();
         self.render();
