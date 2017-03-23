@@ -24,15 +24,13 @@ import { forEach } from 'lodash-es';
 import * as THREE from 'three';
 import { OrbitControls, TransformControls, STLLoader, PointerInteractions } from '3tk';
 
-export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
+export function STLViewPort( canvas, width, height ) {
 
     var self = this;
 
     self.canvas = canvas;
     self.canvasWidth = width;
     self.canvasHeight = height;
-    self.onChange = onChange;
-    self.onNewModel = onNewModel;
 
     self.effectController = {
         metalness: 0.5,
@@ -43,6 +41,8 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
         ambientLightColor: new THREE.Color("#2b2b2b"),
         directionalLightColor: new THREE.Color("#ffffff"),
     };
+
+    var eventType = { change: "change", add: "add", delete: "delete" };
 
     self.init = function() {
 
@@ -72,12 +72,8 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
         self.renderer.gammaInput = true;
         self.renderer.gammaOutput = true;
 
-        self.stats = new Stats();
-        self.stats.showPanel( 1 );
-
         self.pointerInteractions = new PointerInteractions( self.renderer.domElement, self.camera, true ); // Need to use "recursive" as the intersection will be with the mesh, not the top level objects that are nothing but holder
         self.pointerInteractions.addEventListener("click", self.selectionChanged);
-        self.pointerInteractions.addEventListener("hover", self.hoverChanged);
 
         self.orbitControls = new OrbitControls(self.camera, self.renderer.domElement);
 
@@ -100,24 +96,28 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
         self.transformControls.setHandles( 'scale', null );
         self.scene.add(self.transformControls);
 
-        window.addEventListener( 'keydown', function ( event ) {
-            switch ( event.keyCode ) {
-                case 17: // Ctrl
-                    self.transformControls.setRotationSnap(null);
-                    break;
-            }
-        });
+        self.renderer.domElement.addEventListener( "mousedown", self.onPointerDown, false );
+        self.renderer.domElement.addEventListener( "touchstart", self.onPointerDown, false );
 
-        window.addEventListener( 'keyup', function ( event ) {
-            switch ( event.keyCode ) {
-                case 17: // Ctrl
-                    self.transformControls.setRotationSnap( THREE.Math.degToRad( 15 ) );
-                    break;
-            }
-        });
+        window.addEventListener( 'keydown', self.onKeydown );
+        window.addEventListener( 'keyup', self.onKeyup );
 
         self.animate();
     };
+
+    self.dispose = function() {
+
+        self.orbitControls.removeEventListener("change", self.render);
+        self.transformControls.removeEventListener("change", self.render);
+        self.transformControls.removeEventListener("mouseDown", self.startTransform);
+        self.transformControls.removeEventListener("mouseUp", self.endTransform);
+        self.transformControls.removeEventListener("objectChange", self.onChange);
+        self.renderer.domElement.removeEventListener( "mousedown", self.onPointerDown, false );
+        self.renderer.domElement.removeEventListener( "touchstart", self.onPointerDown, false );
+        window.removeEventListener( 'keydown', self.onKeydown );
+        window.removeEventListener( 'keyup', self.onKeyup );
+
+    }
 
     self.animate = function() {
         requestAnimationFrame( self.animate );
@@ -125,7 +125,7 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
         self.update();
         self.transformControls.update();
         self.orbitControls.update();
-        self.stats.update();
+        if (self.stats) self.stats.update();
 
         self.render();
     };
@@ -136,7 +136,9 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
             if (model == self.selectedModel()) {
                 model.children[0].material.color.copy(self.effectController.modelActiveColor);
             } else if ( self.pointerInteractions.hoveredObject && model == self.pointerInteractions.hoveredObject.parent ) {
-                model.children[0].material.color.copy(self.effectController.modelHoverColor);
+                if ( self.transformControls.getMode() == "translate" ) {
+                    model.children[0].material.color.copy(self.effectController.modelHoverColor);
+                }
             } else {
                 model.children[0].material.color.copy(self.effectController.modelInactiveColor);
             }
@@ -151,7 +153,7 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
     self.loadSTL = function ( url, onLoad ) {
         new STLLoader().load(url, function ( geometry ) {
             var newModel = self.addModelOfGeometry(geometry);
-            self.onNewModel([ newModel ]);
+            self.dispatchEvent( { type: eventType.add, models: [ newModel ] } );
         });
     };
 
@@ -183,14 +185,19 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
         return model;
     };
 
+    // self.pointerInteractions is used to keep the source of truth for all models
     self.models = function() {
         return self.pointerInteractions.objects;
     }
 
+    // self.transformControls is used to keep the source of truth for what model is currently selected
     self.selectedModel = function() {
-        return self.pointerInteractions.clickedObject ? self.pointerInteractions.clickedObject.parent : null;
+        return self.transformControls.object;
     }
 
+    /////////////////
+    // EVENTS   /////
+    // /////////////
     self.selectionChanged = function( event ) {
         if (event.current) {
             self.selectModel( event.current.parent );
@@ -199,58 +206,84 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
         }
     };
 
-    self.hoverChanged = function( event ) {
-        if ( event.current && self.transformControls.getMode() == 'translate' ) {
-            self.transformControls.attach( event.current.parent );
+    self.onPointerDown = function( event ) {
+
+        if ( self.pointerInteractions.hoveredObject && self.transformControls.getMode() == 'translate' ) {
+            event.preventDefault();
+            event.stopPropagation();
+            self.transformControls.attach( self.pointerInteractions.hoveredObject.parent, event );
         }
+
+    }
+
+    self.onKeydown= function( event ) {
+        switch ( event.keyCode ) {
+            case 17: // Ctrl
+                self.transformControls.setRotationSnap(null);
+                break;
+            case 46: // DEL key
+            case 8: // backsapce key
+                //       self.removeSelectedModel();
+                break;
+        }
+    }
+
+    self.onKeyup = function( event ) {
+        switch ( event.keyCode ) {
+            case 17: // Ctrl
+                self.transformControls.setRotationSnap( THREE.Math.degToRad( 15 ) );
+                break;
+        }
+    }
+
+    self.onChange = function() {
+        self.dispatchEvent( { type: eventType.change } );
     }
 
     /**
      * params:
      *    m: model to make active. Clear active model if m is undefined
-     *
      */
     self.selectModel = function(m) {
 
         // Sets one file active and inactivates all the others.
         if (m) {
-            self.pointerInteractions.clickedObject = m.children[0];
-            self.pointerInteractions.update();
             self.transformControls.attach(m);
         } else {
-            self.pointerInteractions.clickedObject = null;
-            self.pointerInteractions.update();
             self.transformControls.detach();
         }
 
         self.onChange();
     };
 
-    self.removeSelectedModel = function() {
-        if (!self.selectedModel()) {
-            return null;
-        } else {
-            var model = self.selectedModel();
+    self.removeModel = function( model ) {
+        if ( ! model )  return;
 
-            var index = self.pointerInteractions.objects.indexOf(model);
-            if (index > -1) {
-                self.pointerInteractions.objects.splice(index, 1);
-            }
-            self.pointerInteractions.update();
-
-            self.scene.remove(model);
-            self.selectModel(null);
-            return model;
+        var index = self.pointerInteractions.objects.indexOf(model);
+        if (index > -1) {
+            self.pointerInteractions.objects.splice(index, 1);
         }
+        self.pointerInteractions.update();
+
+        self.scene.remove(model);
+        if ( model === self.selectedModel()) {
+            self.selectModel(null);
+        }
+        self.dispatchEvent( { type: eventType.delete, model: model } );
+    };
+
+    self.removeSelectedModel = function() {
+        var model = self.selectedModel();
+        self.removeModel( model );
+        return model;
     };
 
     self.removeAllModels = function() {
-        for (var i = 0; i < self.pointerInteractions.objects.length; i++) {
-            self.scene.remove(self.pointerInteractions.objects[i]);
-        }
-        self.pointerInteractions.objects = [];
-        self.pointerInteractions.update();
-    }
+        var arrayCopy = self.pointerInteractions.objects.slice(); // Removing element while iterating the array will cause trouble in JS
+        forEach( arrayCopy, function( model ) {
+            self.removeModel( model );
+        });
+    };
 
     self.splitSelectedModel = function() {
         if (!self.selectedModel()) {
@@ -259,11 +292,10 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
             var originalModel = self.removeSelectedModel()
             var geometry = originalModel.children[0].geometry;
             var newGeometries = GeometryUtils.split(geometry);
-            self.onNewModel(
-                newGeometries.map( function(geometry) {
+            var newModels = newGeometries.map( function(geometry) {
                     return self.addModelOfGeometry( geometry, originalModel );
-                })
-            );
+                });
+            self.dispatchEvent( { type: eventType.add, models: newModels } );
         }
     };
 
@@ -283,11 +315,6 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
     self.startTransform = function () {
         // Disable orbit controls
         self.orbitControls.enabled = false;
-
-        if ( self.selectedModel() !== self.transformControls.object ) {
-            self.selectModel( self.transformControls.object );
-        }
-
     };
 
     self.endTransform = function () {
@@ -296,3 +323,5 @@ export function STLViewPort( canvas, width, height, onChange, onNewModel ) {
     };
 
 }
+STLViewPort.prototype = Object.create( THREE.EventDispatcher.prototype );
+STLViewPort.prototype.constructor = STLViewPort;

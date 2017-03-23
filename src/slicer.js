@@ -12,6 +12,7 @@ import * as THREETK from '3tk';
 import { STLViewPort } from './STLViewPort';
 import { OverridesViewModel } from './profile_overrides';
 import { ModelArranger } from './ModelArranger';
+import { forEach, endsWith, some, extend } from 'lodash-es';
 
 function isDev() {
     return window.location.hostname == "localhost";
@@ -19,7 +20,7 @@ function isDev() {
 
 if ( ! isDev() ) {
     Raven.config('https://85bd9314656d40da9249aec5a32a2b52@sentry.io/141297', {
-        release: '1.0.3',
+        release: '1.1.0',
         ignoreErrors: [
             "Failed to execute 'arc' on 'CanvasRenderingContext2D': The radius provided",
             "Cannot read property 'highlightFill' of undefined",
@@ -51,7 +52,7 @@ function SlicerViewModel(parameters) {
 
     self.lockScale = true;
     self.selectedSTL = undefined;
-    self.newPrint = true;
+    self.newSession = true;
 
 
     // Override slicingViewModel.show to surpress default slicing behavior
@@ -64,19 +65,20 @@ function SlicerViewModel(parameters) {
         $('a[href="#tab_plugin_slicer"]').tab('show');
 
         self.selectedSTL = {target: target, file: file};
-        if (self.newPrint) {
-            self.addToNewPrint();
+        if (self.newSession) {
+            self.addToNewSession();
         } else {
             $("#plugin-slicer-load-model").modal("show");
         }
     };
 
-    self.addToNewPrint = function() {
-        self.clearPrint();
-        self.addToExistingPrint();
+    self.addToNewSession = function() {
+        self.stlViewPort.removeAllModels();
+        self.resetToDefault();
+        self.addToExistingSession();
     };
 
-    self.addToExistingPrint = function() {
+    self.addToExistingSession = function() {
         self.setSlicingViewModel(self.selectedSTL.target, self.selectedSTL.file);
         self.addSTL(self.selectedSTL.target, self.selectedSTL.file);
         self.selectedSTL = undefined;
@@ -84,22 +86,22 @@ function SlicerViewModel(parameters) {
         $("#plugin-slicer-load-model").modal("hide");
     };
 
-    self.clearPrint = function() {
+    self.resetToDefault = function() {
         self.resetSlicingViewModel();
-        self.stlViewPort.removeAllModels();
-        self.newPrint = true;
+        self.newSession = true;
     }
 
     self.addSTL = function(target, file) {
-        self.newPrint = false;
+        self.newSession = false;
         self.stlViewPort.loadSTL(BASEURL + "downloads/files/" + target + "/" + file);
     }
 
-    self.onModelAdd = function(models) {
+    self.onModelAdd = function(event) {
 
+        var models = event.models;
         self.stlViewPort.selectModel(models[0]);
 
-        models.forEach( function( model ) {
+        forEach( models, function( model ) {
             self.fixZPosition(model);
         });
 
@@ -111,9 +113,9 @@ function SlicerViewModel(parameters) {
 
     };
 
-    self.onModelRemove = function(model) {
+    self.onModelDelete = function() {
         if (self.stlViewPort.models().length == 0) {
-            self.clearPrint();
+            self.resetToDefault();
         }
     };
 
@@ -153,7 +155,10 @@ function SlicerViewModel(parameters) {
 
         self.slicingViewModel.requestData();
 
-        self.stlViewPort = new STLViewPort(self.canvas, CANVAS_WIDTH, CANVAS_HEIGHT, self.onModelChange, self.onModelAdd)
+        self.stlViewPort = new STLViewPort(self.canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
+        self.stlViewPort.addEventListener( "change", self.onModelChange );
+        self.stlViewPort.addEventListener( "add", self.onModelAdd );
+        self.stlViewPort.addEventListener( "delete", self.onModelDelete );
         self.stlViewPort.init();
 
         //Walls and Floor
@@ -199,7 +204,10 @@ function SlicerViewModel(parameters) {
                </div>');
 
         $("#slicer-viewport").append(self.stlViewPort.renderer.domElement);
+
         if ( isDev() ) {
+            self.stlViewPort.stats = new Stats();
+            self.stlViewPort.stats.showPanel( 1 );
             $("#slicer-viewport").append(self.stlViewPort.stats.dom);
         }
 
@@ -220,6 +228,7 @@ function SlicerViewModel(parameters) {
             if (self.stlViewPort.transformControls.getMode() != "scale") {
                 self.stlViewPort.transformControls.setMode("scale");
                 self.stlViewPort.transformControls.space = "local";
+                self.stlViewPort.transformControls.axis = null;
             } else {
                 self.stlViewPort.transformControls.setMode("translate");
                 self.stlViewPort.transformControls.space = "world";
@@ -230,10 +239,10 @@ function SlicerViewModel(parameters) {
         });
 
         $("#slicer-viewport button.remove").click(function(event) {
-            self.onModelRemove( self.stlViewPort.removeSelectedModel() );
+            self.stlViewPort.removeSelectedModel();
         });
         $("#slicer-viewport button.split").click(function(event) {
-            self.onModelRemove( self.stlViewPort.splitSelectedModel() );
+            self.stlViewPort.splitSelectedModel();
         });
         $("#slicer-viewport .values input").change(function() {
             self.applyValueInputs($(this));
@@ -324,8 +333,8 @@ function SlicerViewModel(parameters) {
         var destinationExtensions = slicingVM.data[slicingVM.slicer()] && slicingVM.data[slicingVM.slicer()].extensions && slicingVM.data[slicingVM.slicer()].extensions.destination
             ? slicingVM.data[slicingVM.slicer()].extensions.destination
             : ["???"];
-        if (!_.any(destinationExtensions, function(extension) {
-            return _.endsWith(destinationFilename.toLowerCase(), "." + extension.toLowerCase());
+        if (!some(destinationExtensions, function(extension) {
+            return endsWith(destinationFilename.toLowerCase(), "." + extension.toLowerCase());
         })) {
             destinationFilename = destinationFilename + "." + destinationExtensions[0];
         }
@@ -342,7 +351,7 @@ function SlicerViewModel(parameters) {
             position: { "x": self.ORIGIN_OFFSET_X_MM + groupCenter.x,
                 "y": self.ORIGIN_OFFSET_Y_MM + groupCenter.y}
         };
-        _.extend(data, self.overridesViewModel.toJS());
+        extend(data, self.overridesViewModel.toJS());
 
         if (slicingVM.afterSlicing() == "print") {
             data["print"] = true;
@@ -380,7 +389,7 @@ function SlicerViewModel(parameters) {
 
             var form = new FormData();
             var group = new THREE.Group();
-            _.forEach(self.stlViewPort.models(), function (model) {
+            forEach(self.stlViewPort.models(), function (model) {
                 group.add(model.clone(true));
             });
 

@@ -9,7 +9,7 @@
     "watch": "rollup -c -w"
   },
   "dependencies": {
-    "3tk": "^0.3.7",
+    "3tk": "^0.3.8",
     "lodash-es": "^4.17.4",
     "three": "^0.84.0"
   },
