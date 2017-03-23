@@ -97,7 +97,7 @@ function SlicerViewModel(parameters) {
 
     self.onModelAdd = function(models) {
 
-        self.stlViewPort.makeModelActive(models[0]);
+        self.stlViewPort.selectModel(models[0]);
 
         models.forEach( function( model ) {
             self.fixZPosition(model);
@@ -230,10 +230,10 @@ function SlicerViewModel(parameters) {
         });
 
         $("#slicer-viewport button.remove").click(function(event) {
-            self.onModelRemove( self.stlViewPort.removeActiveModel() );
+            self.onModelRemove( self.stlViewPort.removeSelectedModel() );
         });
         $("#slicer-viewport button.split").click(function(event) {
-            self.onModelRemove( self.stlViewPort.splitActiveModel() );
+            self.onModelRemove( self.stlViewPort.splitSelectedModel() );
         });
         $("#slicer-viewport .values input").change(function() {
             self.applyValueInputs($(this));
@@ -244,7 +244,7 @@ function SlicerViewModel(parameters) {
     self.toggleValueInputs = function(parentDiv) {
         if ( parentDiv.hasClass("show") ) {
             parentDiv.removeClass("show").children('p').removeClass("show");
-        } else if (self.stlViewPort.activeModel()) {
+        } else if (self.stlViewPort.selectedModel()) {
             $("#slicer-viewport .values div").removeClass("show");
             parentDiv.addClass("show").children('p').addClass("show");
         }
@@ -257,15 +257,13 @@ function SlicerViewModel(parameters) {
         }
         else if(input[0].type == "number" && !isNaN(parseFloat(input.val()))) {
             input.val(parseFloat(input.val()).toFixed(3));
-            var model = self.stlViewPort.activeModel();
+            var model = self.stlViewPort.selectedModel();
 
             if (input.closest(".values").hasClass("scale") && self.lockScale) {
                 $("#slicer-viewport .scale.values input").val(input.val());
                 console.log($("#slicer-viewport .scale.values input[name=\"x\"]").val());
             }
 
-            model.position.x =  parseFloat($("#slicer-viewport .translate.values input[name=\"x\"]").val())
-            model.position.y =  parseFloat($("#slicer-viewport .translate.values input[name=\"y\"]").val())
             model.rotation.x =  THREE.Math.degToRad($("#slicer-viewport .rotate.values input[name=\"x\"]").val());
             model.rotation.y =  THREE.Math.degToRad($("#slicer-viewport .rotate.values input[name=\"y\"]").val());
             model.rotation.z =  THREE.Math.degToRad($("#slicer-viewport .rotate.values input[name=\"z\"]").val());
@@ -286,10 +284,8 @@ function SlicerViewModel(parameters) {
 
     // callback function when models are changed by TransformControls
     self.onModelChange = function() {
-        var model = self.stlViewPort.activeModel();
+        var model = self.stlViewPort.selectedModel();
         if (model) {
-            $("#slicer-viewport .translate.values input[name=\"x\"]").val(model.position.x.toFixed(3)).attr("min", '');
-            $("#slicer-viewport .translate.values input[name=\"y\"]").val(model.position.y.toFixed(3)).attr("min", '');
             $("#slicer-viewport .rotate.values input[name=\"x\"]").val((model.rotation.x * 180 / Math.PI).toFixed(3)).attr("min", '');
             $("#slicer-viewport .rotate.values input[name=\"y\"]").val((model.rotation.y * 180 / Math.PI).toFixed(3)).attr("min", '');
             $("#slicer-viewport .rotate.values input[name=\"z\"]").val((model.rotation.z * 180 / Math.PI).toFixed(3)).attr("min", '');
@@ -300,7 +296,7 @@ function SlicerViewModel(parameters) {
             self.fixZPosition(model);
         }
 
-        if (!self.stlViewPort.activeModel()) {
+        if (!self.stlViewPort.selectedModel()) {
             $("#slicer-viewport .values div").removeClass("show")
             $("#slicer-viewport button").addClass("disabled");
         } else {
