@@ -1,6 +1,7 @@
 'use strict';
 
 import { Box3 } from 'three';
+import { GrowingPacker } from 'bin-packing-es';
 
 export function ModelArranger() {
 
