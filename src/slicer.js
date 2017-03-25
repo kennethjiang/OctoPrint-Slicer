@@ -12,16 +12,23 @@ import * as THREETK from '3tk';
 import { STLViewPort } from './STLViewPort';
 import { OverridesViewModel } from './profile_overrides';
 import { ModelArranger } from './ModelArranger';
-import { find, forEach, endsWith, some, extend } from 'lodash-es';
+import { forEach, endsWith, some, extend } from 'lodash-es';
 
 function isDev() {
     return window.location.hostname == "localhost";
 }
 
 if ( ! isDev() ) {
-    window._errLyticsConfig = {
-        apiKey: 'HyugwlN_bvTKllw4v_JoAm7qGHlQQ9ykD_kOwerzlnI'
-    }
+    Raven.config('https://85bd9314656d40da9249aec5a32a2b52@sentry.io/141297', {
+        release: '1.1.0',
+        ignoreErrors: [
+            "Failed to execute 'arc' on 'CanvasRenderingContext2D': The radius provided",
+            "Cannot read property 'highlightFill' of undefined",
+            "Argument 1 of SVGMatrix.translate is not a finite floating-point value",
+            /_jp.*is not a function/,
+            "chrome is not defined",
+        ],
+    }).install();
 }
 
 function SlicerViewModel(parameters) {
