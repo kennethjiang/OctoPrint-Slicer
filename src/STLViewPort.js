@@ -37,7 +37,7 @@ export function STLViewPort( canvas, width, height ) {
         roughness: 0.5,
         modelInactiveColor: new THREE.Color("#60715b"),
         modelActiveColor: new THREE.Color("#34bf0d"),
-        modelHoverColor: new THREE.Color("#89ef64"),
+        modelHoverColor: new THREE.Color("#84f25c"),
         ambientLightColor: new THREE.Color("#2b2b2b"),
         directionalLightColor: new THREE.Color("#ffffff"),
     };
@@ -74,6 +74,7 @@ export function STLViewPort( canvas, width, height ) {
 
         self.pointerInteractions = new PointerInteractions( self.renderer.domElement, self.camera, true ); // Need to use "recursive" as the intersection will be with the mesh, not the top level objects that are nothing but holder
         self.pointerInteractions.addEventListener("click", self.selectionChanged);
+        self.pointerInteractions.addEventListener("hover", self.hoverChanged);
 
         self.orbitControls = new OrbitControls(self.camera, self.renderer.domElement);
 
@@ -206,6 +207,17 @@ export function STLViewPort( canvas, width, height ) {
         }
     };
 
+    self.hoverChanged = function( event ) {
+
+        if (self.transformControls.getMode() == "translate" && event.current ) {
+            self.originalCursor = $("#slicer-viewport").css("cursor");
+            $("#slicer-viewport").css("cursor", "move");
+        } else {
+            $("#slicer-viewport").css("cursor", self.originalCursor == 'undefined' ? "inherit" : self.originalCursor);
+        }
+
+    };
+
     self.onPointerDown = function( event ) {
 
         if ( self.pointerInteractions.hoveredObject && self.transformControls.getMode() == 'translate' ) {
@@ -214,7 +226,7 @@ export function STLViewPort( canvas, width, height ) {
             self.transformControls.attach( self.pointerInteractions.hoveredObject.parent, event );
         }
 
-    }
+    };
 
     self.onKeydown= function( event ) {
         switch ( event.keyCode ) {
@@ -226,7 +238,7 @@ export function STLViewPort( canvas, width, height ) {
                 //       self.removeSelectedModel();
                 break;
         }
-    }
+    };
 
     self.onKeyup = function( event ) {
         switch ( event.keyCode ) {
@@ -234,11 +246,11 @@ export function STLViewPort( canvas, width, height ) {
                 self.transformControls.setRotationSnap( THREE.Math.degToRad( 15 ) );
                 break;
         }
-    }
+    };
 
     self.onChange = function() {
         self.dispatchEvent( { type: eventType.change } );
-    }
+    };
 
     /**
      * params:

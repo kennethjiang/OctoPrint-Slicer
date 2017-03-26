@@ -207,8 +207,8 @@ function SlicerViewModel(parameters) {
                </div>\
                <div class="values more">\
                    <div>\
-                       <p><button class="btn"><i class="icon-trash" /><span>&nbsp;Clear bed</span></button></p>\
-                       <p><button class="btn"><i class="icon-cut" /><span>&nbsp;Split into parts</span></button></p>\
+                       <p><button id="clear" class="btn"><i class="icon-trash" /><span>&nbsp;Clear bed</span></button></p>\
+                       <p><button id="split" class="btn"><i class="icon-cut" /><span>&nbsp;Split into parts</span></button></p>\
                        <span></span>\
                    </div>\
                </div>');
@@ -250,9 +250,21 @@ function SlicerViewModel(parameters) {
         $("#slicer-viewport button.remove").click(function(event) {
             self.stlViewPort.removeSelectedModel();
         });
+
         $("#slicer-viewport button.more").click(function(event) {
             self.toggleValueInputs($("#slicer-viewport .more.values div"));
         });
+
+        $("#slicer-viewport button#clear").click(function(event) {
+            self.stlViewPort.removeAllModels();
+            self.resetToDefault();
+        });
+
+        $("#slicer-viewport button#split").click(function(event) {
+            self.stlViewPort.removeAllModels();
+            self.resetToDefault();
+        });
+
         $("#slicer-viewport .values input").change(function() {
             self.applyValueInputs($(this));
         });
