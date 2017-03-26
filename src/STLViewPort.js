@@ -22,7 +22,7 @@
 
 import { forEach } from 'lodash-es';
 import * as THREE from 'three';
-import { OrbitControls, TransformControls, STLLoader, PointerInteractions } from '3tk';
+import { IslandSeparator, OrbitControls, TransformControls, STLLoader, PointerInteractions } from '3tk';
 
 export function STLViewPort( canvas, width, height ) {
 
@@ -42,7 +42,7 @@ export function STLViewPort( canvas, width, height ) {
         directionalLightColor: new THREE.Color("#ffffff"),
     };
 
-    var eventType = { change: "change", add: "add", delete: "delete" };
+    var eventType = { change: "change", add: "add", delete: "delete", split: "split" };
 
     self.init = function() {
 
@@ -210,10 +210,9 @@ export function STLViewPort( canvas, width, height ) {
     self.hoverChanged = function( event ) {
 
         if (self.transformControls.getMode() == "translate" && event.current ) {
-            self.originalCursor = $("#slicer-viewport").css("cursor");
             $("#slicer-viewport").css("cursor", "move");
         } else {
-            $("#slicer-viewport").css("cursor", self.originalCursor == 'undefined' ? "inherit" : self.originalCursor);
+            $("#slicer-viewport").css("cursor", "auto");
         }
 
     };
@@ -281,13 +280,12 @@ export function STLViewPort( canvas, width, height ) {
         if ( model === self.selectedModel()) {
             self.selectModel(null);
         }
-        self.dispatchEvent( { type: eventType.delete, model: model } );
     };
 
     self.removeSelectedModel = function() {
         var model = self.selectedModel();
         self.removeModel( model );
-        return model;
+        self.dispatchEvent( { type: eventType.delete, models: [model] } );
     };
 
     self.removeAllModels = function() {
@@ -295,19 +293,21 @@ export function STLViewPort( canvas, width, height ) {
         forEach( arrayCopy, function( model ) {
             self.removeModel( model );
         });
+        self.dispatchEvent( { type: eventType.delete, models: arrayCopy} );
     };
 
     self.splitSelectedModel = function() {
         if (!self.selectedModel()) {
             return;
         } else {
-            var originalModel = self.removeSelectedModel()
+            var originalModel = self.selectedModel()
             var geometry = originalModel.children[0].geometry;
-            var newGeometries = GeometryUtils.split(geometry);
+            var newGeometries = new IslandSeparator().separate(geometry);
             var newModels = newGeometries.map( function(geometry) {
                     return self.addModelOfGeometry( geometry, originalModel );
                 });
-            self.dispatchEvent( { type: eventType.add, models: newModels } );
+            self.removeModel( originalModel );
+            self.dispatchEvent( { type: eventType.split, from: originalModel, to: newModels } );
         }
     };
 
