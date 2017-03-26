@@ -37,7 +37,7 @@ export function STLViewPort( canvas, width, height ) {
         roughness: 0.5,
         modelInactiveColor: new THREE.Color("#60715b"),
         modelActiveColor: new THREE.Color("#34bf0d"),
-        modelHoverColor: new THREE.Color("#579764"),
+        modelHoverColor: new THREE.Color("#89ef64"),
         ambientLightColor: new THREE.Color("#2b2b2b"),
         directionalLightColor: new THREE.Color("#ffffff"),
     };
