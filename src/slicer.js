@@ -12,7 +12,7 @@ import * as THREETK from '3tk';
 import { STLViewPort } from './STLViewPort';
 import { OverridesViewModel } from './profile_overrides';
 import { ModelArranger } from './ModelArranger';
-import { forEach, endsWith, some, extend } from 'lodash-es';
+import { find, forEach, endsWith, some, extend } from 'lodash-es';
 
 function isDev() {
     return window.location.hostname == "localhost";
@@ -176,14 +176,17 @@ function SlicerViewModel(parameters) {
         $("#slicer-viewport").empty().append('<div class="report"><span>Got issues or suggestions? <a target="_blank" href="https://github.com/kennethjiang/OctoPrint-Slicer/issues/new">Click here!</a></span></div>\
                   <div class="model">\
                     <button class="rotate disabled" title="Rotate"><img src="'
-            + PLUGIN_BASEURL
-            + 'slicer/static/img/rotate.png"></button>\
+                        + PLUGIN_BASEURL
+                        + 'slicer/static/img/rotate.png"></button>\
                     <button class="scale disabled" title="Scale"><img src="'
-            + PLUGIN_BASEURL
-            + 'slicer/static/img/scale.png"></button>\
+                        + PLUGIN_BASEURL
+                        + 'slicer/static/img/scale.png"></button>\
                     <button class="remove disabled" title="Remove"><img src="'
-            + PLUGIN_BASEURL
-            + 'slicer/static/img/remove.png"></button>\
+                        + PLUGIN_BASEURL
+                        + 'slicer/static/img/remove.png"></button>\
+                    <button class="more disabled" title="More..."><img src="'
+                        + PLUGIN_BASEURL
+                        + 'slicer/static/img/more.png"></button>\
                 </div>\
                 <div class="values rotate">\
                     <div>\
@@ -201,8 +204,14 @@ function SlicerViewModel(parameters) {
                         <p class="checkbox"><label><input type="checkbox" checked>Lock</label></p>\
                         <span></span>\
                     </div>\
+               </div>\
+               <div class="values more">\
+                   <div>\
+                       <p><button class="btn"><i class="icon-trash" /><span>&nbsp;Clear bed</span></button></p>\
+                       <p><button class="btn"><i class="icon-cut" /><span>&nbsp;Split into parts</span></button></p>\
+                       <span></span>\
+                   </div>\
                </div>');
-
         $("#slicer-viewport").append(self.stlViewPort.renderer.domElement);
 
         if ( isDev() ) {
@@ -241,8 +250,8 @@ function SlicerViewModel(parameters) {
         $("#slicer-viewport button.remove").click(function(event) {
             self.stlViewPort.removeSelectedModel();
         });
-        $("#slicer-viewport button.split").click(function(event) {
-            self.stlViewPort.splitSelectedModel();
+        $("#slicer-viewport button.more").click(function(event) {
+            self.toggleValueInputs($("#slicer-viewport .more.values div"));
         });
         $("#slicer-viewport .values input").change(function() {
             self.applyValueInputs($(this));

@@ -90,6 +90,10 @@
     display: none;
 }
 
+#slicer-viewport > div.values.more{
+    top: calc(34px + 3*44px);
+}
+
 #slicer-viewport > div.cutShape.show {
     display: block;
 }
@@ -200,6 +204,13 @@
     width: 15px;
     cursor: pointer;
     text-align: center;
+}
+
+#slicer-viewport > div > div > p > button {
+    width: 136px;
+    height: 28px;
+    text-align: left;
+    padding: 0px 10px;
 }
 
 #slicer-viewport > div button {
