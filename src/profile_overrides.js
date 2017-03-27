@@ -4,6 +4,7 @@
  * Author: Kenneth Jiang
  * License: AGPLv3
  */
+import { endsWith } from 'lodash-es';
 ko.bindingHandlers.numericValue = {
     init : function(element, valueAccessor, allBindings, data, context) {
         var interceptor = ko.computed({
@@ -77,7 +78,7 @@ export function OverridesViewModel(parameters, array_keys, enum_keys, item_keys,
         // Remove the percent and save it to replace later.
         self.endings = {};
         var stripEndings = function(m, k) {
-            if (_.isString(m[k]) && m[k].endsWith("%")) {
+            if (_.isString(m[k]) && endsWith(m[k], "%")) {
                 self.endings[k] = "%";
                 return m[k].slice(0,-1);
             } else {
