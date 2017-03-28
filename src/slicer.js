@@ -12,6 +12,7 @@ import * as THREETK from '3tk';
 import { STLViewPort } from './STLViewPort';
 import { OverridesViewModel } from './profile_overrides';
 import { ModelArranger } from './ModelArranger';
+import { CheckerboardMaterial } from './CheckerboardMaterial';
 import { find, forEach, endsWith, some, extend } from 'lodash-es';
 
 function isDev() {
@@ -20,7 +21,7 @@ function isDev() {
 
 if ( ! isDev() ) {
     Raven.config('https://85bd9314656d40da9249aec5a32a2b52@sentry.io/141297', {
-        release: '1.1.1',
+        release: '1.1.2',
         ignoreErrors: [
             "Failed to execute 'arc' on 'CanvasRenderingContext2D': The radius provided",
             "Cannot read property 'highlightFill' of undefined",
@@ -512,19 +513,10 @@ function SlicerViewModel(parameters) {
             self.floor.remove(obj);
         }
 
-        segments = segments || 20;
-        var geometry = new THREE.PlaneGeometry(width, depth, segments, segments);
-        var materialEven = new THREE.MeshBasicMaterial({color: 0xccccfc});
-        var materialOdd = new THREE.MeshBasicMaterial({color: 0x444464});
-        var materials = [materialEven, materialOdd];
-        for (var x = 0; x < segments; x++) {
-            for (var y = 0; y < segments; y++) {
-                var i = x * segments + y;
-                var j = 2 * i;
-                geometry.faces[ j ].materialIndex = geometry.faces[ j + 1 ].materialIndex = (x + y) % 2;
-            }
-        }
-        var mesh = new THREE.Mesh(geometry, new THREE.MeshFaceMaterial(materials));
+        var geometry = new THREE.PlaneBufferGeometry(width, depth);
+        var material = new CheckerboardMaterial(10, 10, null, function() { self.stlViewPort.render(); });
+        var mesh = new THREE.Mesh(geometry, material);
+
         mesh.receiveShadow = true;
         self.floor.add(mesh);
 
