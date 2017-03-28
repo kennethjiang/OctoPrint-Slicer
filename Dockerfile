@@ -1,4 +1,4 @@
-FROM kennethjiang/octoprint-with-slicers
+FROM kennethjiang/octoprint-with-slicers:1.3.2
 
 ADD . /app
 WORKDIR /app

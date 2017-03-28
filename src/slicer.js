@@ -51,7 +51,7 @@ function SlicerViewModel(parameters) {
     self.printerProfilesViewModel = parameters[3];
 
     self.lockScale = true;
-    self.selectedSTL = undefined;
+    self.selectedSTLs = new Map();
     self.newSession = true;
 
 
@@ -64,10 +64,10 @@ function SlicerViewModel(parameters) {
 
         $('a[href="#tab_plugin_slicer"]').tab('show');
 
-        self.selectedSTL = {target: target, file: file};
+        self.selectedSTLs.set(file, target);
         if (self.newSession) {
             self.addToNewSession();
-        } else {
+        } else if (self.selectedSTLs.size == 1) {
             $("#plugin-slicer-load-model").modal("show");
         }
     };
@@ -79,9 +79,11 @@ function SlicerViewModel(parameters) {
     };
 
     self.addToExistingSession = function() {
-        self.setSlicingViewModel(self.selectedSTL.target, self.selectedSTL.file);
-        self.addSTL(self.selectedSTL.target, self.selectedSTL.file);
-        self.selectedSTL = undefined;
+        self.selectedSTLs.forEach( function(target, file) {
+            self.setSlicingViewModel(target, file);
+            self.addSTL(target, file);
+            self.selectedSTLs.delete(file);
+        });
 
         $("#plugin-slicer-load-model").modal("hide");
     };
