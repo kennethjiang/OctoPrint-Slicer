@@ -514,7 +514,7 @@ function SlicerViewModel(parameters) {
         }
 
         var geometry = new THREE.PlaneBufferGeometry(width, depth);
-        var material = new CheckerboardMaterial(10, 10, null, function() { self.stlViewPort.render(); });
+        var material = new CheckerboardMaterial(width/20, depth/20, null, function() { self.stlViewPort.render(); });  // 20mm/checker box
         var mesh = new THREE.Mesh(geometry, material);
 
         mesh.receiveShadow = true;
