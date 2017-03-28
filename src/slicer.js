@@ -543,50 +543,39 @@ function SlicerViewModel(parameters) {
             self.walls.remove(obj);
         }
 
+        //This material will only make the inside of the cylinder walls visible while allowing the outside to be transparent.
+        var wallMaterial = new THREE.MeshBasicMaterial({ color: 0x8888fc, side: THREE.BackSide, transparent: true, opacity: 0.8 });
+        var invisibleMaterial = new THREE.MeshBasicMaterial({ visible: false, transparent: false });
+
         if (formFactor == "circular") {
+
             var cylGeometry = new THREE.CylinderGeometry(width/2, width/2, self.BEDSIZE_Z_MM, 60, 1, true);
-             //This material will only make the inside of the cylinder walls visible while allowing the outside to be transparent.
-             var wallMaterial = new THREE.MeshBasicMaterial({ color: 0x8888fc, side: THREE.BackSide, transparent: true, opacity: 0.5 });
-             // Move the walls up to the floor
-             cylGeometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, self.BEDSIZE_Z_MM / 2, 0));
-             var wall = new THREE.Mesh(cylGeometry, wallMaterial);
-             //rotate the walls so they are upright
-             wall.rotation.x = Math.PI / 2;
+            // Move the walls up to the floor
+            cylGeometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, self.BEDSIZE_Z_MM / 2, 0));
+            var wall = new THREE.Mesh(cylGeometry, wallMaterial);
+            //rotate the walls so they are upright
+            wall.rotation.x = Math.PI / 2;
             self.walls.add(wall);
 
         } else  {
-        var wall1 = self.rectShape( width, height, 0x8888fc );
-        wall1.rotation.x = Math.PI / 2;
-        wall1.position.set(0, depth/2, height/2);
-        self.walls.add(wall1);
 
-        var wall2 = self.rectShape( height, depth, 0x8888dc );
-        wall2.rotation.y = Math.PI / 2;
-        wall2.position.set(-width/2, 0, height/2);
-        self.walls.add(wall2);
+            var cubeGeometry = new THREE.BoxBufferGeometry( width, height, depth );
+            var materials = [
+                    wallMaterial,
+                    wallMaterial,
+                    wallMaterial,
+                    wallMaterial,
+                    invisibleMaterial,
+                    invisibleMaterial,
+            ];
+            var cubeSidesMaterial = new THREE.MultiMaterial( materials );
+            var wall = new THREE.Mesh( cubeGeometry, cubeSidesMaterial );
+            wall.position.z = height/2;
+            self.walls.add(wall);
 
-        var wall3 = self.rectShape( width, height, 0x8888fc );
-        wall3.rotation.x = -Math.PI / 2;
-        wall3.position.set(0, -depth/2, height/2);
-        self.walls.add(wall3);
-
-        var wall4 = self.rectShape( height, depth, 0x8888dc );
-        wall4.rotation.y = -Math.PI / 2;
-        wall4.position.set(width/2, 0, height/2);
-        self.walls.add(wall4);
         }
     };
 
-    self.rectShape = function ( rectLength, rectWidth, color ) {
-        var rectShape = new THREE.Shape();
-        rectShape.moveTo( -rectLength/2,-rectWidth/2 );
-        rectShape.lineTo( -rectLength/2, rectWidth/2 );
-        rectShape.lineTo( rectLength/2, rectWidth/2 );
-        rectShape.lineTo( rectLength/2, -rectWidth/2 );
-        rectShape.lineTo( -rectLength/2, -rectWidth/2 );
-        var rectGeom = new THREE.ShapeGeometry( rectShape );
-        return new THREE.Mesh( rectGeom, new THREE.MeshBasicMaterial( { color: color } ) ) ;
-    };
     // END: Helpers for drawing walls and floor
 
     self.resetSlicingViewModel = function() {
