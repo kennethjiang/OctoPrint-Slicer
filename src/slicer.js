@@ -142,6 +142,7 @@ function SlicerViewModel(parameters) {
             self.BEDSIZE_X_MM = Math.max(dim.width, 0.1); // Safari will error if rectShape has dimensions being 0
             self.BEDSIZE_Y_MM = Math.max(dim.depth, 0.1);
             self.BEDSIZE_Z_MM = Math.max(dim.height, 0.1);
+            self.BED_FORM_FACTOR = dim.formFactor;
             if (dim.origin == "lowerleft" ) {
                 self.ORIGIN_OFFSET_X_MM = self.BEDSIZE_X_MM/2.0;
                 self.ORIGIN_OFFSET_Y_MM = self.BEDSIZE_Y_MM/2.0;
@@ -150,8 +151,8 @@ function SlicerViewModel(parameters) {
                 self.ORIGIN_OFFSET_Y_MM = 0;
             }
         }
-        self.drawBedFloor(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM);
-        self.drawWalls(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM, self.BEDSIZE_Z_MM);
+        self.drawBedFloor(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM, self.BED_FORM_FACTOR);
+        self.drawWalls(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM, self.BEDSIZE_Z_MM, self.BED_FORM_FACTOR);
     }
 
     self.slicingViewModel.printerProfile.subscribe( self.updatePrinterBed );
@@ -159,6 +160,7 @@ function SlicerViewModel(parameters) {
     self.BEDSIZE_X_MM = 200;
     self.BEDSIZE_Y_MM = 200;
     self.BEDSIZE_Z_MM = 200;
+    self.BED_FORM_FACTOR = "rectangular";
     self.ORIGIN_OFFSET_X_MM = 0;
     self.ORIGIN_OFFSET_Y_MM = 0;
 
@@ -507,13 +509,18 @@ function SlicerViewModel(parameters) {
         parentObj.add(mesh);
     };
 
-    self.drawBedFloor = function ( width, depth, segments ) {
+    self.drawBedFloor = function ( width, depth, formFactor) {
+        var geometry;
         for(var i = self.floor.children.length - 1; i >= 0; i--) {
             var obj = self.floor.children[i];
             self.floor.remove(obj);
         }
 
-        var geometry = new THREE.PlaneBufferGeometry(width, depth);
+        if (formFactor == "circular") {
+            geometry = new THREE.CircleGeometry(width/2, 60);
+        } else {
+            geometry = new THREE.PlaneBufferGeometry(width, depth);
+        }
         var material = new CheckerboardMaterial(width/20, depth/20, null, function() { self.stlViewPort.render(); });  // 20mm/checker box
         var mesh = new THREE.Mesh(geometry, material);
 
@@ -530,12 +537,24 @@ function SlicerViewModel(parameters) {
         } );
     };
 
-    self.drawWalls = function ( width, depth, height ) {
+    self.drawWalls = function ( width, depth, height, formFactor ) {
         for(var i = self.walls.children.length - 1; i >= 0; i--) {
             var obj = self.walls.children[i];
             self.walls.remove(obj);
         }
 
+        if (formFactor == "circular") {
+            var cylGeometry = new THREE.CylinderGeometry(width/2, width/2, self.BEDSIZE_Z_MM, 60, 1, true);
+             //This material will only make the inside of the cylinder walls visible while allowing the outside to be transparent.
+             var wallMaterial = new THREE.MeshBasicMaterial({ color: 0x8888fc, side: THREE.BackSide, transparent: true, opacity: 0.5 });
+             // Move the walls up to the floor
+             cylGeometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, self.BEDSIZE_Z_MM / 2, 0));
+             var wall = new THREE.Mesh(cylGeometry, wallMaterial);
+             //rotate the walls so they are upright
+             wall.rotation.x = Math.PI / 2;
+            self.walls.add(wall);
+
+        } else  {
         var wall1 = self.rectShape( width, height, 0x8888fc );
         wall1.rotation.x = Math.PI / 2;
         wall1.position.set(0, depth/2, height/2);
@@ -555,6 +574,7 @@ function SlicerViewModel(parameters) {
         wall4.rotation.y = -Math.PI / 2;
         wall4.position.set(width/2, 0, height/2);
         self.walls.add(wall4);
+        }
     };
 
     self.rectShape = function ( rectLength, rectWidth, color ) {
