@@ -155,40 +155,44 @@ $(function() {
     }
 
     function BasicOverridesViewModel(parameters) {
-        OverridesViewModel.call(this, parameters,
-            ["print_temperature"],
-            { "support" : ko.observableArray(["none", "buildplate", "everywhere"])},
-            ["layer_height",
-                "temperature",
-                "bed_temperature",
-                "print_bed_temperature",
-                "fill_density",
-                "wall_thickness",
-                "print_speed",
-                "solid_layer_thickness"],
-            ["support_material",
-                "overhangs"]);
+      OverridesViewModel.call(
+          this, parameters,
+          ["print_temperature"],
+          { "support" : ko.observableArray(["none", "buildplate", "everywhere"])},
+          ["layer_height",
+           "temperature",
+           "bed_temperature",
+           "print_bed_temperature",
+           "fill_density",
+           "wall_thickness",
+           "print_speed",
+           "solid_layer_thickness"],
+          ["support_material",
+           "overhangs"]);
     }
 
     function AdvancedOverridesViewModel(parameters) {
-        OverridesViewModel.call(this, parameters,
-            ["start_gcode",
-                "end_gcode",
-                "filament_diameter"],
-            { "platform_adhesion" : ko.observableArray(["none", "brim", "raft"])},
-            ["travel_speed",
-                "outer_shell_speed",
-                "inner_shell_speed",
-                "infill_speed",
-                "bottom_layer_speed",
-                "filament_flow",
-                "retraction_speed",
-                "retraction_amount",
-                "extrusion_multiplier",
-            ],
-            ["retraction_enable",
-                "fan_enabled",
-                "cooling"]);
+      OverridesViewModel.call(
+          this, parameters,
+          ["start_gcode",
+           "end_gcode",
+           "filament_diameter"],
+          { "platform_adhesion" : ko.observableArray(["none", "brim", "raft"])},
+          ["travel_speed",
+           "outer_shell_speed",
+           "inner_shell_speed",
+           "infill_speed",
+           "bottom_layer_speed",
+           "filament_flow",
+           "retraction_speed",
+           "retraction_amount",
+           "extrusion_multiplier",
+          ],
+          ["retraction_enable",
+           "fan_enabled",
+           "cooling",
+           "fan_always_on",
+          ]);
     }
 
 

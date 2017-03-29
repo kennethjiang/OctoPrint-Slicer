@@ -246,10 +246,16 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
                               <input data-bind="numericValue: $data['profile.extrusion_multiplier']" type="number" tabindex="-1" min="0" max="2" step="0.001"></input>
                           </div>
                       </div>
-                      <div title="Cooling" class="input-append" data-bind="visible: !_.isUndefined($data['profile.cooling']())">
+                      <div title="Enable auto cooling" class="input-append" data-bind="visible: !_.isUndefined($data['profile.cooling']())">
                           <label class="control-label">Cooling</label>
                           <div class="controls checkbox">
                               <input type="checkbox" data-bind="checked: $data['profile.cooling']"></input>
+                          </div>
+                      </div>
+                      <div title="Keep fan always on" class="input-append" data-bind="visible: !_.isUndefined($data['profile.fan_always_on']())">
+                          <label class="control-label">Fan always on</label>
+                          <div class="controls checkbox">
+                              <input type="checkbox" data-bind="checked: $data['profile.fan_always_on']"></input>
                           </div>
                       </div>
                   </div>
