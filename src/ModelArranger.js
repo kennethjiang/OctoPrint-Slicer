@@ -46,17 +46,16 @@ export function ModelArranger() {
     };
 
     self.arrange = function(models) {
-        var modelRectMap = models.reduce( function( map, model ) {
-            return map.set(model, projectedRectOnXY(model));
-        }, new Map());
+        var rects = models.reduce( function( array, model ) {
+            array.push(projectedRectOnXY(model));
+            return array;
+        }, []);
 
         // loop through all sorting criteria, and pick the best one (with smalles overall area)
         var criteria = ['w', 'h', 'a', 'max', 'min', 'height', 'width', 'area', 'maxside'];
         var allPackers = criteria.map( function( crit ) {
 
-            var rects = models.map( function(model) { return modelRectMap.get(model); });
             rects.sort( sort[crit] );
-
             var packer = new GrowingPacker();
             packer.fit(rects);
 
