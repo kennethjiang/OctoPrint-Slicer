@@ -28,6 +28,7 @@ if ( ! isDev() ) {
             "Argument 1 of SVGMatrix.translate is not a finite floating-point value",
             /_jp.*is not a function/,
             "chrome is not defined",
+            "You cannot apply bindings multiple times to the same element.",
         ],
     }).install();
 }
@@ -52,7 +53,7 @@ function SlicerViewModel(parameters) {
     self.printerProfilesViewModel = parameters[3];
 
     self.lockScale = true;
-    self.selectedSTLs = new Map();
+    self.selectedSTLs = {};
     self.newSession = true;
 
 
@@ -65,10 +66,10 @@ function SlicerViewModel(parameters) {
 
         $('a[href="#tab_plugin_slicer"]').tab('show');
 
-        self.selectedSTLs.set(file, target);
+        self.selectedSTLs[file] = target;
         if (self.newSession) {
             self.addToNewSession();
-        } else if (self.selectedSTLs.size == 1) {
+        } else if (Object.getOwnPropertyNames(self.selectedSTLs).length == 1) {
             $("#plugin-slicer-load-model").modal("show");
         }
     };
@@ -80,10 +81,11 @@ function SlicerViewModel(parameters) {
     };
 
     self.addToExistingSession = function() {
-        self.selectedSTLs.forEach( function(target, file) {
+        forEach( Object.getOwnPropertyNames(self.selectedSTLs), function(file) {
+            var target = self.selectedSTLs[file];
             self.setSlicingViewModel(target, file);
             self.addSTL(target, file);
-            self.selectedSTLs.delete(file);
+            delete self.selectedSTLs[file];
         });
 
         $("#plugin-slicer-load-model").modal("hide");
