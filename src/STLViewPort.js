@@ -20,7 +20,6 @@
 
 'use strict';
 
-import "babel-polyfill";
 import { forEach } from 'lodash-es';
 import * as THREE from 'three';
 import { BufferGeometryAnalyzer, OrbitControls, TransformControls, STLLoader, PointerInteractions } from '3tk';
