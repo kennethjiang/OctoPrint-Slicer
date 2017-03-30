@@ -305,7 +305,10 @@ function SlicerViewModel(parameters) {
         });
 
         $("#slicer-viewport button#split").click(function(event) {
+            var before = new Date();
             self.stlViewPort.splitSelectedModel();
+            var after = new Date();
+            console.log(after.getTime() - before.getTime());
         });
 
         $("#slicer-viewport .values input").change(function() {
