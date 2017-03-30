@@ -22,7 +22,7 @@
 
 import { forEach } from 'lodash-es';
 import * as THREE from 'three';
-import { IslandSeparator, OrbitControls, TransformControls, STLLoader, PointerInteractions } from '3tk';
+import { BufferGeometryAnalyzer, OrbitControls, TransformControls, STLLoader, PointerInteractions } from '3tk';
 
 export function STLViewPort( canvas, width, height ) {
 
@@ -302,7 +302,7 @@ export function STLViewPort( canvas, width, height ) {
         } else {
             var originalModel = self.selectedModel()
             var geometry = originalModel.children[0].geometry;
-            var newGeometries = new IslandSeparator().separate(geometry);
+            var newGeometries = BufferGeometryAnalyzer.isolatedGeometries(geometry);
             var newModels = newGeometries.map( function(geometry) {
                     return self.addModelOfGeometry( geometry, originalModel );
                 });
