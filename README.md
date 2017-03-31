@@ -34,3 +34,7 @@ docker-compose up
 ```
 
 1. Open [http://localhost:5000/](http://localhost:5000/) in your browser
+
+## Thanks
+![BrowserStack](https://d3but80xmlhqzj.cloudfront.net/production/images/static/header/header-logo.svg "BrowserStack") BrowserStack generously sponsors a free license so that I can test Slicer Plugin on different browsers/versions.
+
