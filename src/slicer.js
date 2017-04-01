@@ -330,7 +330,9 @@ function SlicerViewModel(parameters) {
         }
         else if(input[0].type == "number" && !isNaN(parseFloat(input.val()))) {
             input.val(parseFloat(input.val()).toFixed(3));
+
             var model = self.stlViewPort.selectedModel();
+            if (model === undefined) return;
 
             if (input.closest(".values").hasClass("scale") && self.lockScale) {
                 $("#slicer-viewport .scale.values input").val(input.val());
