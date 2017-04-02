@@ -9,7 +9,7 @@
     "watch": "rollup -c -w"
   },
   "dependencies": {
-    "3tk": "^0.3.9",
+    "3tk": "^0.3.10",
     "babel-polyfill": "^6.23.0",
     "bin-packing-es": "0.0.3",
     "lodash-es": "^4.17.4",

@@ -214,6 +214,7 @@ function SlicerViewModel(parameters) {
                         <p><span class="axis x">X</span><input type="number" step="any" name="x"><span title="">°</span></p>\
                         <p><span class="axis y">Y</span><input type="number" step="any" name="y"><span title="">°</span></p>\
                         <p><span class="axis z">Z</span><input type="number" step="any" name="z"><span title="">°</span></p>\
+                       <p><button id="lay-flat" class="btn"><i class="icon-unlink" /><span>&nbsp;Lay flat</span></button></p>\
                         <span></span>\
                     </div>\
                </div>\
@@ -284,6 +285,13 @@ function SlicerViewModel(parameters) {
         $("#slicer-viewport button#split").click(function(event) {
             var before = new Date();
             self.stlViewPort.splitSelectedModel();
+            var after = new Date();
+            console.log(after.getTime() - before.getTime());
+        });
+
+        $("#slicer-viewport button#lay-flat").click(function(event) {
+            var before = new Date();
+            self.stlViewPort.laySelectedModelFlat();
             var after = new Date();
             console.log(after.getTime() - before.getTime());
         });

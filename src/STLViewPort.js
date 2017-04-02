@@ -23,6 +23,7 @@
 import { forEach } from 'lodash-es';
 import * as THREE from 'three';
 import { BufferGeometryAnalyzer, OrbitControls, TransformControls, STLLoader, PointerInteractions } from '3tk';
+import { OrientationOptimizer } from './OrientationOptimizer';
 
 export function STLViewPort( canvas, width, height ) {
 
@@ -296,19 +297,29 @@ export function STLViewPort( canvas, width, height ) {
         self.dispatchEvent( { type: eventType.delete, models: arrayCopy} );
     };
 
+    self.laySelectedModelFlat = function() {
+        var model = self.selectedModel();
+        if (! model) return;
+
+        var newRotation = new OrientationOptimizer(self.selectedModel().children[0].geometry).optimalOrientation();
+        model.rotation.set( newRotation.x, newRotation.y, newRotation.z );
+        self.dispatchEvent( { type: eventType.change } );
+
+    };
+
     self.splitSelectedModel = function() {
         if (!self.selectedModel()) {
             return;
-        } else {
-            var originalModel = self.selectedModel()
-            var geometry = originalModel.children[0].geometry;
-            var newGeometries = BufferGeometryAnalyzer.isolatedGeometries(geometry);
-            var newModels = newGeometries.map( function(geometry) {
-                    return self.addModelOfGeometry( geometry, originalModel );
-                });
-            self.removeModel( originalModel );
-            self.dispatchEvent( { type: eventType.split, from: originalModel, to: newModels } );
         }
+
+        var originalModel = self.selectedModel()
+        var geometry = originalModel.children[0].geometry;
+        var newGeometries = BufferGeometryAnalyzer.isolatedGeometries(geometry);
+        var newModels = newGeometries.map( function(geometry) {
+                return self.addModelOfGeometry( geometry, originalModel );
+            });
+        self.removeModel( originalModel );
+        self.dispatchEvent( { type: eventType.split, from: originalModel, to: newModels } );
     };
 
     self.onlyOneOriginalModel = function() {
