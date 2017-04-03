@@ -298,10 +298,13 @@ export function STLViewPort( canvas, width, height ) {
     };
 
     self.laySelectedModelFlat = function() {
+
         var model = self.selectedModel();
         if (! model) return;
 
-        var newOrientation = new OrientationOptimizer(self.selectedModel().children[0].geometry).optimalOrientation();
+        var originalOrientation = new THREE.Vector3(0, 0, -1).applyEuler( model.rotation );
+        var newOrientation = new OrientationOptimizer(self.selectedModel().children[0].geometry)
+            .optimalOrientation(originalOrientation, 0.785398);
         model.rotation.copy( self.eulerOfOrientationAlongVector( newOrientation ) );
         self.dispatchEvent( { type: eventType.change } );
 
