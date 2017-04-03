@@ -23,14 +23,14 @@ export function OrientationOptimizer(geometry) {
     var normals = geometry.attributes.normal.array;
     var positions = geometry.attributes.position.array;
 
-    var surfaces = BufferGeometryAnalyzer.sortedPlanesByArea( geometry );
+    var surfaces = BufferGeometryAnalyzer.sortedSurfacesByArea( geometry );
 
     // Cost function for the optimal level of orientation. Larger is worse.
     function costFunction( orientation ) {
         return orientation.overhangArea - 0.25*orientation.bottomArea;
     }
 
-    function calculatedOrientationFromVector( orientationVector ) {
+    self.calculatedOrientationFromVector = function( orientationVector ) {
 
         // Largest projection represents the "bottom" of geometry along the direction of o.vector
         // Any vertex that has the same projection is considered "sitting at the bottom"
@@ -38,6 +38,8 @@ export function OrientationOptimizer(geometry) {
 
         var bottomArea = 0;
         var overhangArea = 0;
+        var bottom = [];
+        var overhang = [];
 
         for ( var surface of surfaces ) {
 
@@ -48,12 +50,14 @@ export function OrientationOptimizer(geometry) {
 
                 if ( angle < PERPENDICULAR && (largestProjection - projectionToVector( surface.faceIndices[0], orientationVector) ) < TOUCH_BOTTOM_TOLERANCE ) {
                     bottomArea += surface.area;
+                    bottom.push(surface);
                 } else {
                     overhangArea += surface.area;
+                    overhang.push(surface);
                 }
             }
         }
-        return { vector: orientationVector, bottomArea, overhangArea };
+        return { vector: orientationVector, bottomArea, overhangArea, bottom, overhang };
 
     }
 
@@ -99,7 +103,7 @@ export function OrientationOptimizer(geometry) {
             .filter( function(v) { return v.angleTo(originalVector) <= maxPivot; } )
             .slice(0, 127);
 
-        var rankedOrientations = vectorsToTest.map( calculatedOrientationFromVector )
+        var rankedOrientations = vectorsToTest.map( self.calculatedOrientationFromVector )
             .sort( function(a, b) { return costFunction(a) - costFunction(b); } );
         return rankedOrientations.length > 0 ? rankedOrientations[0].vector : originalVector;
 

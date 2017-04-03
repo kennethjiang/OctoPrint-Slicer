@@ -332,6 +332,8 @@ function SlicerViewModel(parameters) {
             model.scale.y =  parseFloat($("#slicer-viewport .scale.values input[name=\"y\"]").val())
             model.scale.z =  parseFloat($("#slicer-viewport .scale.values input[name=\"z\"]").val())
             self.fixZPosition(model);
+
+            self.stlViewPort.recalculateOverhang(model);
         }
     };
 

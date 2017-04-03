@@ -88,8 +88,8 @@ export function STLViewPort( canvas, width, height ) {
 
         self.transformControls.setRotationSnap( THREE.Math.degToRad( 15 ) )
         self.transformControls.addEventListener("change", self.render);
-        self.transformControls.addEventListener("mouseDown", self.startTransform);
-        self.transformControls.addEventListener("mouseUp", self.endTransform);
+        self.transformControls.addEventListener("transformStart", self.startTransform);
+        self.transformControls.addEventListener("transformEnd", self.endTransform);
         self.transformControls.addEventListener("objectChange", self.onChange);
         self.transformControls.space = "world";
         self.transformControls.setHandles( 'translate', null );
@@ -111,8 +111,8 @@ export function STLViewPort( canvas, width, height ) {
 
         self.orbitControls.removeEventListener("change", self.render);
         self.transformControls.removeEventListener("change", self.render);
-        self.transformControls.removeEventListener("mouseDown", self.startTransform);
-        self.transformControls.removeEventListener("mouseUp", self.endTransform);
+        self.transformControls.removeEventListener("transformStart", self.startTransform);
+        self.transformControls.removeEventListener("transformEnd", self.endTransform);
         self.transformControls.removeEventListener("objectChange", self.onChange);
         self.renderer.domElement.removeEventListener( "mousedown", self.onPointerDown, false );
         self.renderer.domElement.removeEventListener( "touchstart", self.onPointerDown, false );
@@ -160,12 +160,14 @@ export function STLViewPort( canvas, width, height ) {
     };
 
     self.addModelOfGeometry = function( geometry, modelToCopyTransformFrom ) {
+
         var material = new THREE.MeshStandardMaterial({
             color: self.effectController.modelInactiveColor,  // We'll mark it active below.
             shading: THREE.SmoothShading,
             side: THREE.DoubleSide,
             metalness: self.effectController.metalness,
-            roughness: self.effectController.roughness });
+            roughness: self.effectController.roughness,
+            vertexColors: THREE.VertexColors });
 
         var stlModel = new THREE.Mesh( geometry, material );
 
@@ -179,12 +181,16 @@ export function STLViewPort( canvas, width, height ) {
             model.scale.copy(modelToCopyTransformFrom.scale);
         }
 
+        model.orientationOptimizer = new OrientationOptimizer(geometry);
+        self.recalculateOverhang(model);
+
         self.scene.add(model);
 
         self.pointerInteractions.objects.push(model);
         self.pointerInteractions.update();
 
         return model;
+
     };
 
     // self.pointerInteractions is used to keep the source of truth for all models
@@ -303,8 +309,7 @@ export function STLViewPort( canvas, width, height ) {
         if (! model) return;
 
         var originalOrientation = new THREE.Vector3(0, 0, -1).applyEuler( model.rotation );
-        var newOrientation = new OrientationOptimizer(self.selectedModel().children[0].geometry)
-            .optimalOrientation(originalOrientation, 0.785398);
+        var newOrientation = model.orientationOptimizer.optimalOrientation(originalOrientation, 0.785398); // Limit to 45 degree pivot
         model.rotation.copy( self.eulerOfOrientationAlongVector( newOrientation ) );
         self.dispatchEvent( { type: eventType.change } );
 
@@ -346,8 +351,55 @@ export function STLViewPort( canvas, width, height ) {
     self.endTransform = function () {
         // Enable orbit controls
         self.orbitControls.enabled = true;
+
+        self.recalculateOverhang( self.selectedModel() );
     };
 
+    self.recalculateOverhang = function(model) {
+        if (!model || !model.orientationOptimizer) return;
+
+        var orientation = model.orientationOptimizer.calculatedOrientationFromVector( new THREE.Vector3(0, 0, -1).applyEuler( model.rotation ) );
+        self.tintSurfaces(model, null, 255, 255, 255); // Clear tints off the whole model
+        self.tintSurfaces(model, orientation.overhang, 255, 0, 0);
+        self.tintSurfaces(model, orientation.bottom, 0, 0, 255);
+    };
+
+    function setGeometryColors(geometry, colors) {
+        geometry.removeAttribute( 'color' );
+        geometry.addAttribute( 'color', new THREE.BufferAttribute( new Float32Array( colors ), 3 ) );
+    }
+
+    self.tintSurfaces = function(model, surfaces, r, g, b) {
+
+        var geometry = model.children[0].geometry;
+        var colors = geometry.attributes.color !== undefined ? geometry.attributes.color.array : [];
+
+        if (surfaces) {
+
+            for ( var i = 0; i < surfaces.length; i++) {
+                for ( var index of surfaces[i].faceIndices ) {
+                    colors[index] = r/255;
+                    colors[index+1] = g/255;
+                    colors[index+2] = b/255;
+                    colors[index+3] = r/255;
+                    colors[index+4] = g/255;
+                    colors[index+5] = b/255;
+                    colors[index+6] = r/255;
+                    colors[index+7] = g/255;
+                    colors[index+8] = b/255;
+                }
+            }
+
+        } else {
+
+            for ( var i = 0; i < geometry.attributes.position.array.length; i++ ) colors[i] = 1;
+
+        }
+        setGeometryColors(geometry, colors);
+    };
+
+    // Assuming the original "orientation" of an object is (0,0,-1),
+    // return the rotation this object has to perform to re-orient itself along given 'vector'
     self.eulerOfOrientationAlongVector = function( vector ) {
         // Use lookAt to calculate euler rotation to make model oriented along vector
         var obj = new THREE.Object3D();
