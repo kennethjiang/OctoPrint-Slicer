@@ -9,12 +9,12 @@ export function OrientationOptimizer(geometry) {
 
     // When normal of a surface is at less than critical angle, the surface is considered overhang or bottom,
     // depending on where it sits.
-    // 0.70710678118 is cos(45 degree)
-    var CRITICAL_ANGLE = 0.70710678118;
+    // 0.785398 is 45 degree in radians
+    var CRITICAL_ANGLE = 0.785398;
 
     // When normal of a surface is considered perpendicular (hence the surface itself is level).
-    // 0.99999847691 is cos(0.1 degree);
-    var PERPENDICULAR = 0.99999847691;
+    // 0.00174533 is 0.1 degree in radians
+    var PERPENDICULAR = 0.00174533;
 
     // When a vertex is considered "touching the bottom"
     var TOUCH_BOTTOM_TOLERANCE = 0.15;
@@ -88,11 +88,12 @@ export function OrientationOptimizer(geometry) {
 
                 var surfaceNormal = normalVectorOfSurface(surface);
 
-                var cosAngle = surfaceNormal.dot(o.vector) / (surfaceNormal.length() * o.vector.length()) ; //Based on Linear Algebra
-                if ( cosAngle > CRITICAL_ANGLE ) {
+                var angle = surfaceNormal.angleTo(o.vector);
+                //var cosAngle = surfaceNormal.dot(o.vector) / (surfaceNormal.length() * o.vector.length()) ; //Based on Linear Algebra
+                if ( angle < CRITICAL_ANGLE ) {
 
                     // When
-                    if ( cosAngle > PERPENDICULAR && (largestProjection - projectionToVector( surface.faceIndices[0], o.vector) ) < TOUCH_BOTTOM_TOLERANCE ) {
+                    if ( angle < PERPENDICULAR && (largestProjection - projectionToVector( surface.faceIndices[0], o.vector) ) < TOUCH_BOTTOM_TOLERANCE ) {
                         o.bottomArea += surface.area;
                     } else {
                         o.overhangArea += surface.area;
@@ -102,7 +103,6 @@ export function OrientationOptimizer(geometry) {
         }
 
         var rankedOrientations = orientationsToTest.sort( function(a, b) { return costFunction(a) - costFunction(b); } );
-        debugger;
         return rankedOrientations[0].vector;
 
     }

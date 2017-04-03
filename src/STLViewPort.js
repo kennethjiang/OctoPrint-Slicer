@@ -301,8 +301,8 @@ export function STLViewPort( canvas, width, height ) {
         var model = self.selectedModel();
         if (! model) return;
 
-        var newRotation = new OrientationOptimizer(self.selectedModel().children[0].geometry).optimalOrientation();
-        model.rotation.set( newRotation.x, newRotation.y, newRotation.z );
+        var newOrientation = new OrientationOptimizer(self.selectedModel().children[0].geometry).optimalOrientation();
+        model.rotation.copy( self.eulerOfOrientationAlongVector( newOrientation ) );
         self.dispatchEvent( { type: eventType.change } );
 
     };
@@ -343,6 +343,14 @@ export function STLViewPort( canvas, width, height ) {
     self.endTransform = function () {
         // Enable orbit controls
         self.orbitControls.enabled = true;
+    };
+
+    self.eulerOfOrientationAlongVector = function( vector ) {
+        // Use lookAt to calculate euler rotation to make model oriented along vector
+        var obj = new THREE.Object3D();
+        vector.setZ( vector.z * -1 );
+        obj.lookAt(vector);
+        return obj.rotation;
     };
 
 }
