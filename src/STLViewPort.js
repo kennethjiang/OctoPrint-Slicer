@@ -269,6 +269,7 @@ export function STLViewPort( canvas, width, height ) {
         // Sets one file active and inactivates all the others.
         if (m) {
             self.transformControls.attach(m);
+            self.orien = new OrientationOptimizer(m.children[0].geometry)
         } else {
             self.transformControls.detach();
         }
@@ -364,6 +365,9 @@ export function STLViewPort( canvas, width, height ) {
         self.tintSurfaces(model, null, 255, 255, 255); // Clear tints off the whole model
         self.tintSurfaces(model, orientation.overhang, 255, 0, 0);
         self.tintSurfaces(model, orientation.bottom, 0, 0, 255);
+
+            $('.report').html('bottom:' + orientation.bottomArea + 'overhang:' + orientation.overhangArea);
+
     };
 
     self.tintSurfaces = function(model, surfaces, r, g, b) {
