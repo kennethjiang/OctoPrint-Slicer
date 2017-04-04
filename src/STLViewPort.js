@@ -54,6 +54,8 @@ export function STLViewPort( canvas, width, height ) {
 
         self.scene = new THREE.Scene();
 
+        self.scene.add( new THREE.AxisHelper(50) );
+
         // Lights
         var ambientLight = new THREE.AmbientLight( self.effectController.ambientLightColor );  // 0.2
         self.scene.add( ambientLight );
@@ -308,9 +310,9 @@ export function STLViewPort( canvas, width, height ) {
         var model = self.selectedModel();
         if (! model) return;
 
-        var originalOrientation = new THREE.Vector3(0, 0, -1).applyEuler( model.rotation );
-        var newOrientation = model.orientationOptimizer.optimalOrientation(originalOrientation, 0.785398); // Limit to 45 degree pivot
-        model.rotation.copy( self.eulerOfOrientationAlongVector( newOrientation ) );
+        var newOrientation = model.orientationOptimizer.optimalOrientation( downVectorAfterRotation(model.rotation), 0.785398); // Limit to 45 degree pivot
+        model.rotation.copy( eulerOfOrientationAlongVector( newOrientation ) );
+        self.recalculateOverhang(model);
         self.dispatchEvent( { type: eventType.change } );
 
     };
@@ -358,16 +360,11 @@ export function STLViewPort( canvas, width, height ) {
     self.recalculateOverhang = function(model) {
         if (!model || !model.orientationOptimizer) return;
 
-        var orientation = model.orientationOptimizer.calculatedOrientationFromVector( new THREE.Vector3(0, 0, -1).applyEuler( model.rotation ) );
+        var orientation = model.orientationOptimizer.calculatedOrientationFromVector( downVectorAfterRotation( model.rotation ) );
         self.tintSurfaces(model, null, 255, 255, 255); // Clear tints off the whole model
         self.tintSurfaces(model, orientation.overhang, 255, 0, 0);
         self.tintSurfaces(model, orientation.bottom, 0, 0, 255);
     };
-
-    function setGeometryColors(geometry, colors) {
-        geometry.removeAttribute( 'color' );
-        geometry.addAttribute( 'color', new THREE.BufferAttribute( new Float32Array( colors ), 3 ) );
-    }
 
     self.tintSurfaces = function(model, surfaces, r, g, b) {
 
@@ -398,15 +395,29 @@ export function STLViewPort( canvas, width, height ) {
         setGeometryColors(geometry, colors);
     };
 
+    // The vector of the "down" direction after euler rotation is applied to object
+    // It's equivalent of applying the negation of object rotation to (0, 0, -1), in reverse order "ZYX"
+    function downVectorAfterRotation( euler ) {
+        return new THREE.Vector3(0, 0, -1).applyEuler( new THREE.Euler( -1*euler.x, -1*euler.y, -1*euler.z, "ZYX") );
+    }
+
     // Assuming the original "orientation" of an object is (0,0,-1),
     // return the rotation this object has to perform to re-orient itself along given 'vector'
-    self.eulerOfOrientationAlongVector = function( vector ) {
+    function eulerOfOrientationAlongVector( vector ) {
         // Use lookAt to calculate euler rotation to make model oriented along vector
+        var matrix = new THREE.Matrix4();
+        matrix.lookAt(new THREE.Vector3(), vector, new THREE.Vector3(0, 1, 0));
+        var reverse = new THREE.Matrix4();
+        reverse.getInverse(matrix);
         var obj = new THREE.Object3D();
-        vector.setZ( vector.z * -1 );
-        obj.lookAt(vector);
+        obj.setRotationFromMatrix(matrix);
         return obj.rotation;
-    };
+    }
+
+    function setGeometryColors(geometry, colors) {
+        geometry.removeAttribute( 'color' );
+        geometry.addAttribute( 'color', new THREE.BufferAttribute( new Float32Array( colors ), 3 ) );
+    }
 
 }
 STLViewPort.prototype = Object.create( THREE.EventDispatcher.prototype );
