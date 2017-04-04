@@ -310,7 +310,7 @@ export function STLViewPort( canvas, width, height ) {
         var model = self.selectedModel();
         if (! model) return;
 
-        var newOrientation = model.orientationOptimizer.optimalOrientation( downVectorAfterRotation(model.rotation), 0.785398); // Limit to 45 degree pivot
+        var newOrientation = model.orientationOptimizer.optimalOrientation( downVectorAfterRotation(model.rotation), 0.7857); // Limit to 45 degree pivot
         model.rotation.copy( eulerOfOrientationAlongVector( newOrientation ) );
         self.recalculateOverhang(model);
         self.dispatchEvent( { type: eventType.change } );
