@@ -27,7 +27,7 @@ export function OrientationOptimizer(geometry) {
 
     // Cost function for the optimal level of orientation. Larger is worse.
     function costFunction( orientation ) {
-        return orientation.overhangArea - 0.25*orientation.bottomArea;
+        return orientation.overhangArea - 4.0*orientation.bottomArea;
     }
 
     self.calculatedOrientationFromVector = function( orientationVector ) {
