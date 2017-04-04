@@ -411,10 +411,10 @@ export function STLViewPort( canvas, width, height ) {
         // Use lookAt to calculate euler rotation to make model oriented along vector
         var matrix = new THREE.Matrix4();
         matrix.lookAt(new THREE.Vector3(), vector, new THREE.Vector3(0, 1, 0));
-        var reverse = new THREE.Matrix4();
-        reverse.getInverse(matrix);
+        var inverse = new THREE.Matrix4();
+        inverse.getInverse(matrix);
         var obj = new THREE.Object3D();
-        obj.setRotationFromMatrix(matrix);
+        obj.setRotationFromMatrix(inverse);
         return obj.rotation;
     }
 
