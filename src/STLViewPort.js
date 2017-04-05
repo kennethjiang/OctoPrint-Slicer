@@ -369,9 +369,6 @@ export function STLViewPort( canvas, width, height ) {
         self.tintSurfaces(model, null, 255, 255, 255); // Clear tints off the whole model
         self.tintSurfaces(model, orientation.overhang, 128, 16, 16);
         self.tintSurfaces(model, orientation.bottom, 16, 16, 128);
-
-            $('.report').html('score:' + orientation.printability.toFixed(6) + 'bottom:' + orientation.bottomArea.toFixed(1) + 'overhang:' + orientation.overhangArea.toFixed(1));
-
     };
 
     self.tintSurfaces = function(model, surfaces, r, g, b) {
