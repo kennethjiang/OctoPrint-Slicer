@@ -63,7 +63,8 @@ export function OrientationOptimizer(geometry) {
     }
 
     function projectionToVector( vertexIndex, vector ) {
-        return vector.dot( new THREE.Vector3(positions[vertexIndex], positions[vertexIndex+1], positions[vertexIndex+2]) );  // According to Linear Algebra
+        // According to Triangular theory, project is dot product between 2 vectors
+        return vector.x*positions[vertexIndex] + vector.y*positions[vertexIndex+1] + vector.z*positions[vertexIndex+2]
     }
 
     function largestProjectionToVector( vector ) {
@@ -76,13 +77,6 @@ export function OrientationOptimizer(geometry) {
                 }
         }
         return highest;
-    }
-
-    function normalVectorOfSurface( surface ) {
-        return new THREE.Vector3(
-            normals[surface.faceIndices[0]],
-            normals[surface.faceIndices[0]+1],
-            normals[surface.faceIndices[0]+2]);
     }
 
     self.optimalOrientation = function( originalRotation, maxPivot ) {
@@ -98,7 +92,7 @@ export function OrientationOptimizer(geometry) {
                 areaSumSoFar += surface.area;
                 return areaSumSoFar/totalArea <= 0.99;
             } )
-            .map( normalVectorOfSurface )
+            .map( function(s) {return s.normal;} )
 
         var vectorsToTest = uniqBy(vectorCandidates, function(v) {
                 return Math.round( v.x*10000 ) + '_' + Math.round( v.y*10000 ) + '_' + Math.round( v.z*10000 );
@@ -131,8 +125,7 @@ export function OrientationOptimizer(geometry) {
 
         for ( var surface of surfaces ) {
 
-            var surfaceNormal = normalVectorOfSurface(surface);
-            var angle = surfaceNormal.angleTo(orientationVector);
+            var angle = surface.normal.angleTo(orientationVector);
 
             if ( angle < CRITICAL_ANGLE ) {
 
