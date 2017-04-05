@@ -311,8 +311,8 @@ export function STLViewPort( canvas, width, height ) {
         var model = self.selectedModel();
         if (! model) return;
 
-        var newOrientation = model.orientationOptimizer.optimalOrientation( downVectorAfterRotation(model.rotation), 0.7857); // Limit to 45 degree pivot
-        model.rotation.copy( eulerOfOrientationAlongVector( newOrientation ) );
+        var newOrientation = model.orientationOptimizer.optimalOrientation( model.rotation, 0.7857); // Limit to 45 degree pivot
+        model.rotation.copy( newOrientation );
         self.recalculateOverhang(model);
         self.dispatchEvent( { type: eventType.change } );
 
@@ -361,7 +361,7 @@ export function STLViewPort( canvas, width, height ) {
     self.recalculateOverhang = function(model) {
         if (!model || !model.orientationOptimizer) return;
 
-        var orientation = model.orientationOptimizer.calculatedOrientationFromVector( downVectorAfterRotation( model.rotation ) );
+        var orientation = model.orientationOptimizer.printabilityOfOrientationByRotation( model.rotation );
         self.tintSurfaces(model, null, 255, 255, 255); // Clear tints off the whole model
         self.tintSurfaces(model, orientation.overhang, 128, 16, 16);
         self.tintSurfaces(model, orientation.bottom, 16, 16, 128);
@@ -398,31 +398,6 @@ export function STLViewPort( canvas, width, height ) {
         }
         setGeometryColors(geometry, colors);
     };
-
-    // The vector of the "down" direction after euler rotation is applied to object
-    // It's apply the inverse of rotation matrix of the object to (0,0,-1) (imagine the new "down" line follows the inverse of objection rotation)
-    function downVectorAfterRotation( euler ) {
-        var matrix = new THREE.Matrix4();
-        matrix.makeRotationFromEuler( euler );
-        var inverse = new THREE.Matrix4();
-        inverse.getInverse(matrix);
-        return new THREE.Vector3(0, 0, -1).applyMatrix4(inverse);
-    }
-
-    // Assuming the original "orientation" of an object is (0,0,-1),
-    // return the rotation this object has to perform to re-orient itself along given 'vector'
-    // Imagine that this rotation is the inverse of rotation matrix from (0,0,-1) to 'vector' so that it "brings back"
-    // the object from 'vector' to (0,0,-1)
-    function eulerOfOrientationAlongVector( vector ) {
-        // Use lookAt to calculate euler rotation to make model oriented along vector
-        var matrix = new THREE.Matrix4();
-        matrix.lookAt(new THREE.Vector3(), vector, new THREE.Vector3(0, 1, 0));
-        var inverse = new THREE.Matrix4();
-        inverse.getInverse(matrix);
-        var obj = new THREE.Object3D();
-        obj.setRotationFromMatrix(inverse);
-        return obj.rotation;
-    }
 
     function setGeometryColors(geometry, colors) {
         geometry.removeAttribute( 'color' );
