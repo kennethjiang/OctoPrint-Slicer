@@ -24,7 +24,7 @@ export function OrientationOptimizer(geometry) {
     var positions = geometry.attributes.position.array;
 
     // Only include the surfaces that account for 99% of the area for analysis
-    var surfaces = BufferGeometryAnalyzer.sortedSurfacesByArea( geometry );
+    var surfaces = BufferGeometryAnalyzer.sortedSurfacesByArea( geometry, 2);
     var totalArea = surfaces.reduce( function(sum, surface) { return sum+surface.area }, 0);
     var areaSumSoFar = 0;
     surfaces = surfaces
