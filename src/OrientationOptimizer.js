@@ -8,8 +8,8 @@ export function OrientationOptimizer(geometry) {
 
     // When normal of a surface is at less than critical angle, the surface is considered overhang or bottom,
     // depending on where it sits.
-    // 0.785398 is 45 degree in radians
-    var CRITICAL_ANGLE = 0.785398;
+    // 0.523599 is 30 degree in radians
+    var CRITICAL_ANGLE = 0.523599;
 
     // When normal of a surface is considered perpendicular (hence the surface itself is level).
     // 0.00174533 is 0.1 degree in radians
@@ -26,8 +26,15 @@ export function OrientationOptimizer(geometry) {
     var surfaces = BufferGeometryAnalyzer.sortedSurfacesByArea( geometry );
 
     // Cost function for the optimal level of orientation. Larger is worse.
-    function costFunction( orientation ) {
-        return orientation.overhangArea - 20.0*orientation.bottomArea;
+    function costFunction( bottomArea, overhangArea ) {
+        if (bottomArea == 0) return Infinity;
+
+        var prioritizedBottom = 10 * bottomArea;
+        var bottomFactor = prioritizedBottom / (prioritizedBottom + overhangArea);
+        var overhangFactor = overhangArea / (prioritizedBottom + overhangArea);
+
+        // sqrt to reflect the fact that difference matters a lot when absolute is tiny but not so much when absolute is large
+        return Math.sqrt(overhangFactor) / Math.sqrt(bottomFactor);
     }
 
     // The vector of the "down" direction after euler rotation is applied to object
@@ -82,28 +89,31 @@ export function OrientationOptimizer(geometry) {
 
         var originalVector = downVectorAfterRotation(originalRotation);
 
-        // Choose the surfaces that account for 90% of the area for testing
+        // Choose the surfaces that account for 99% of the area for testing
         // De-dup orientations; make sure the angle change doesn't exceed maxPivot; and take up to 128 orientations
         var totalArea = surfaces.reduce( function(sum, surface) { return sum+surface.area }, 0);
         var areaSumSoFar = 0;
         var vectorCandidates = surfaces
             .filter( function(surface) {
                 areaSumSoFar += surface.area;
-                return areaSumSoFar/totalArea <= 0.9;
+                return areaSumSoFar/totalArea <= 0.99;
             } )
             .map( normalVectorOfSurface )
 
         var vectorsToTest = uniqBy(vectorCandidates, function(v) {
                 return Math.round( v.x*10000 ) + '_' + Math.round( v.y*10000 ) + '_' + Math.round( v.z*10000 );
-            })
-            .filter( function(v) { return v.angleTo(originalVector) <= maxPivot; } )
-            .slice(0, 127);
+        });
+
+        if (maxPivot !== undefined) {
+            vectorsToTest = vectorsToTest.filter( function(v) { return v.angleTo(originalVector) <= maxPivot; } )
+        }
+        vectorsToTest = vectorsToTest.slice(0, 127);
 
         var rankedOrientations = vectorsToTest.map( self.printabilityOfOrientation )
-            .sort( function(a, b) { return costFunction(a) - costFunction(b); } );
+            .sort( function(a, b) { return a.printability - b.printability; } );
 
         return eulerOfOrientationAlongVector (
-            rankedOrientations.length > 0 ? rankedOrientations[0].vector : originalVector );
+            rankedOrientations.length > 0  && rankedOrientations[0].printability != Infinity ? rankedOrientations[0].vector : originalVector );
 
     }
 
@@ -135,13 +145,13 @@ export function OrientationOptimizer(geometry) {
                 }
             }
         }
-        return { vector: orientationVector, bottomArea, overhangArea, bottom, overhang };
+        return { printability: costFunction( bottomArea, overhangArea),
+            vector: orientationVector,
+            bottomArea, overhangArea, bottom, overhang };
 
     }
 
     self.printabilityOfOrientationByRotation = function( rotation ) {
         return self.printabilityOfOrientation( downVectorAfterRotation( rotation ) );
     }
-
-
 }

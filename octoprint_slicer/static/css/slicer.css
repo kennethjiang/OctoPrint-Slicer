@@ -144,6 +144,8 @@
 }
 
 #slicer-viewport > div.values > div > p.show {
+    float: left;
+    clear: left;
     display: block;
 }
 

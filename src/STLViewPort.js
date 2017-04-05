@@ -54,8 +54,6 @@ export function STLViewPort( canvas, width, height ) {
 
         self.scene = new THREE.Scene();
 
-        self.scene.add( new THREE.AxisHelper(50) );
-
         // Lights
         var ambientLight = new THREE.AmbientLight( self.effectController.ambientLightColor );  // 0.2
         self.scene.add( ambientLight );
@@ -306,12 +304,18 @@ export function STLViewPort( canvas, width, height ) {
         self.dispatchEvent( { type: eventType.delete, models: arrayCopy} );
     };
 
-    self.laySelectedModelFlat = function() {
+    self.laySelectedModelFlat = function(restricted) {
 
         var model = self.selectedModel();
         if (! model) return;
 
-        var newOrientation = model.orientationOptimizer.optimalOrientation( model.rotation, 0.7857); // Limit to 45 degree pivot
+        var newOrientation;
+        if (restricted) {
+            newOrientation = model.orientationOptimizer.optimalOrientation( model.rotation, 0.7857); // Limit to 45 degree pivot
+        } else {
+            newOrientation = model.orientationOptimizer.optimalOrientation( model.rotation );
+        }
+
         model.rotation.copy( newOrientation );
         self.recalculateOverhang(model);
         self.dispatchEvent( { type: eventType.change } );
@@ -366,7 +370,7 @@ export function STLViewPort( canvas, width, height ) {
         self.tintSurfaces(model, orientation.overhang, 128, 16, 16);
         self.tintSurfaces(model, orientation.bottom, 16, 16, 128);
 
-            $('.report').html('bottom:' + orientation.bottomArea + 'overhang:' + orientation.overhangArea);
+            $('.report').html('score:' + orientation.printability.toFixed(6) + 'bottom:' + orientation.bottomArea.toFixed(1) + 'overhang:' + orientation.overhangArea.toFixed(1));
 
     };
 
