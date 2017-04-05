@@ -94,6 +94,7 @@ function SlicerViewModel(parameters) {
 
     self.resetToDefault = function() {
         self.resetSlicingViewModel();
+        self.stlViewPort.transformControls.setMode("translate");
         self.newSession = true;
     }
 
@@ -217,7 +218,7 @@ function SlicerViewModel(parameters) {
                         <p><span class="axis y">Y</span><input type="number" step="any" name="y"><span title="">°</span></p>\
                         <p><span class="axis z">Z</span><input type="number" step="any" name="z"><span title="">°</span></p>\
                         <p><button id="lay-flat" class="btn"><i class="icon-glass" /><span>&nbsp;Lay flat</span></button></p>\
-                        <p><button id="orient" class="btn"><i class="icon-magic" /><span>&nbsp;I feel magical</span></button></p>\
+                        <p><button id="orient" class="btn"><i class="icon-magic" /><span>&nbsp;Optimize</span></button></p>\
                         <span></span>\
                     </div>\
                </div>\
@@ -254,8 +255,7 @@ function SlicerViewModel(parameters) {
                 self.stlViewPort.transformControls.space = "world";
                 self.stlViewPort.transformControls.axis = "XY";
             }
-
-            self.toggleValueInputs($("#slicer-viewport .rotate.values div"));
+            updateInputVisibility();
         });
 
         $("#slicer-viewport button.scale").click(function(event) {
@@ -268,8 +268,7 @@ function SlicerViewModel(parameters) {
                 self.stlViewPort.transformControls.space = "world";
                 self.stlViewPort.transformControls.axis = "XY";
             }
-
-            self.toggleValueInputs($("#slicer-viewport .scale.values div"));
+            updateInputVisibility();
         });
 
         $("#slicer-viewport button.remove").click(function(event) {
@@ -277,7 +276,13 @@ function SlicerViewModel(parameters) {
         });
 
         $("#slicer-viewport button.more").click(function(event) {
-            self.toggleValueInputs($("#slicer-viewport .more.values div"));
+            if ( $("#slicer-viewport .more.values div").hasClass("show") ) {
+                updateInputVisibility();
+            } else if (self.stlViewPort.selectedModel()) {
+                self.stlViewPort.transformControls.setMode("translate");
+                updateInputVisibility();
+                $("#slicer-viewport .more.values div").addClass("show").children('p').addClass("show");
+            }
         });
 
         $("#slicer-viewport button#clear").click(function(event) {
@@ -301,15 +306,6 @@ function SlicerViewModel(parameters) {
             self.applyValueInputs($(this));
         });
 
-    };
-
-    self.toggleValueInputs = function(parentDiv) {
-        if ( parentDiv.hasClass("show") ) {
-            parentDiv.removeClass("show").children('p').removeClass("show");
-        } else if (self.stlViewPort.selectedModel()) {
-            $("#slicer-viewport .values div").removeClass("show");
-            parentDiv.addClass("show").children('p').addClass("show");
-        }
     };
 
     self.applyValueInputs = function(input) {
@@ -360,12 +356,7 @@ function SlicerViewModel(parameters) {
             self.fixZPosition(model);
         }
 
-        if (!self.stlViewPort.selectedModel()) {
-            $("#slicer-viewport .values div").removeClass("show")
-            $("#slicer-viewport button").addClass("disabled");
-        } else {
-            $("#slicer-viewport button").removeClass("disabled");
-        }
+        updateInputVisibility();
     };
 
     // Slicing
@@ -630,13 +621,34 @@ function SlicerViewModel(parameters) {
 
     self.init();
 
+    //////////////////////
     // internal functions
+    ///////////////////////
+
     function startLongRunning( func ) {
         $('#tab_plugin_slicer > div.translucent-blocker').show();
         setTimeout( function() {
             func();
             $('#tab_plugin_slicer > div.translucent-blocker').hide();
         }, 1);
+    }
+
+    function updateInputVisibility() {
+        $("#slicer-viewport .values div").removeClass("show")
+
+        if (!self.stlViewPort.selectedModel()) {
+            $("#slicer-viewport button").addClass("disabled");
+        } else {
+            $("#slicer-viewport button").removeClass("disabled");
+            switch (self.stlViewPort.transformControls.getMode()) {
+                case "rotate":
+                    $("#slicer-viewport .rotate.values div").addClass("show").children('p').addClass("show");
+                    break;
+                case "scale":
+                    $("#slicer-viewport .scale.values div").addClass("show").children('p').addClass("show");
+                    break;
+            }
+        }
     }
 }
 
