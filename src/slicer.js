@@ -99,7 +99,9 @@ function SlicerViewModel(parameters) {
 
     self.addSTL = function(target, file) {
         self.newSession = false;
-        self.stlViewPort.loadSTL(BASEURL + "downloads/files/" + target + "/" + file);
+        startLongRunning( function() {
+            self.stlViewPort.loadSTL(BASEURL + "downloads/files/" + target + "/" + file);
+        });
     }
 
     self.onModelAdd = function(event) {
@@ -114,8 +116,6 @@ function SlicerViewModel(parameters) {
         if (self.stlViewPort.models().length > 1) {
             new ModelArranger().arrange(self.stlViewPort.models());
         }
-
-        $('#tab_plugin_slicer > div.translucent-blocker').hide();
 
     };
 
@@ -172,6 +172,8 @@ function SlicerViewModel(parameters) {
 
 
     self.init = function() {
+
+        $('#tab_plugin_slicer > div.translucent-blocker').hide();
 
         self.slicingViewModel.requestData();
 
@@ -284,15 +286,15 @@ function SlicerViewModel(parameters) {
         });
 
         $("#slicer-viewport button#split").click(function(event) {
-            self.stlViewPort.splitSelectedModel();
+            startLongRunning( self.stlViewPort.splitSelectedModel );
         });
 
         $("#slicer-viewport button#lay-flat").click(function(event) {
-            self.stlViewPort.laySelectedModelFlat(true);
+            startLongRunning( function() {self.stlViewPort.laySelectedModelFlat(true); } );
         });
 
         $("#slicer-viewport button#orient").click(function(event) {
-            self.stlViewPort.laySelectedModelFlat();
+            startLongRunning( self.stlViewPort.laySelectedModelFlat );
         });
 
         $("#slicer-viewport .values input").change(function() {
@@ -627,6 +629,15 @@ function SlicerViewModel(parameters) {
     };
 
     self.init();
+
+    // internal functions
+    function startLongRunning( func ) {
+        $('#tab_plugin_slicer > div.translucent-blocker').show();
+        setTimeout( function() {
+            func();
+            $('#tab_plugin_slicer > div.translucent-blocker').hide();
+        }, 1);
+    }
 }
 
 
