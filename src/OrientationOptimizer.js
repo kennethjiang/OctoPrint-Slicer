@@ -8,12 +8,12 @@ export function OrientationOptimizer(geometry) {
 
     // When normal of a surface is at less than critical angle, the surface is considered overhang or bottom,
     // depending on where it sits.
-    // 0.86602540378 is cos(30 degree)
-    var CRITICAL_ANGLE = 0.86602540378;
+    // 0.523599 is 30 degree in radians
+    var CRITICAL_ANGLE = 0.523599;
 
     // When normal of a surface is considered perpendicular (hence the surface itself is level).
-    // 0.99999847691 is cos(0.1 degree)
-    var PERPENDICULAR = 0.99999847691;
+    // 0.00174533 is 0.1 degree in radians
+    var PERPENDICULAR = 0.00174533;
 
     // When a vertex is considered "touching the bottom"
     var TOUCH_BOTTOM_TOLERANCE = 0.15;
@@ -123,10 +123,11 @@ export function OrientationOptimizer(geometry) {
 
         for ( var surface of surfaces ) {
 
-            var cosAngle = surface.normal.dot(orientationVector);
-            if ( cosAngle > CRITICAL_ANGLE ) {
+            var angle = surface.normal.angleTo(orientationVector);
 
-                if ( cosAngle > PERPENDICULAR && (largestProjection - projectionToVector( surface.faceIndices[0], orientationVector) ) < TOUCH_BOTTOM_TOLERANCE ) {
+            if ( angle < CRITICAL_ANGLE ) {
+
+                if ( angle < PERPENDICULAR && (largestProjection - projectionToVector( surface.faceIndices[0], orientationVector) ) < TOUCH_BOTTOM_TOLERANCE ) {
                     bottomArea += surface.area;
                     bottom.push(surface);
                 } else {
