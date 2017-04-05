@@ -267,7 +267,6 @@ export function STLViewPort( canvas, width, height ) {
         // Sets one file active and inactivates all the others.
         if (m) {
             self.transformControls.attach(m);
-            self.orien = new OrientationOptimizer(m.children[0].geometry)
         } else {
             self.transformControls.detach();
         }

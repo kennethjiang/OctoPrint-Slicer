@@ -94,8 +94,8 @@ function SlicerViewModel(parameters) {
 
     self.resetToDefault = function() {
         self.resetSlicingViewModel();
-        self.stlViewPort.transformControls.setMode("translate");
         self.newSession = true;
+        setTransformMode( "translate" );
     }
 
     self.addSTL = function(target, file) {
@@ -117,13 +117,14 @@ function SlicerViewModel(parameters) {
         if (self.stlViewPort.models().length > 1) {
             new ModelArranger().arrange(self.stlViewPort.models());
         }
-
+        updateInputVisibility();
     };
 
     self.onModelDelete = function() {
         if (self.stlViewPort.models().length == 0) {
             self.resetToDefault();
         }
+        updateInputVisibility();
     };
 
     self.onModelSplit = function( event ) {
@@ -135,6 +136,8 @@ function SlicerViewModel(parameters) {
             new ModelArranger().arrange( self.stlViewPort.models() );
             self.stlViewPort.selectModel( event.to[0] );
         }
+
+        updateInputVisibility();
     };
 
 
@@ -248,25 +251,18 @@ function SlicerViewModel(parameters) {
 
         $("#slicer-viewport button.rotate").click(function(event) {
             if (self.stlViewPort.transformControls.getMode() != "rotate") {
-                self.stlViewPort.transformControls.setMode("rotate");
-                self.stlViewPort.transformControls.space = "world";
+                setTransformMode("rotate");
             } else {
-                self.stlViewPort.transformControls.setMode("translate");
-                self.stlViewPort.transformControls.space = "world";
-                self.stlViewPort.transformControls.axis = "XY";
+                setTransformMode("translate");
             }
             updateInputVisibility();
         });
 
         $("#slicer-viewport button.scale").click(function(event) {
             if (self.stlViewPort.transformControls.getMode() != "scale") {
-                self.stlViewPort.transformControls.setMode("scale");
-                self.stlViewPort.transformControls.space = "local";
-                self.stlViewPort.transformControls.axis = null;
+                setTransformMode("scale");
             } else {
-                self.stlViewPort.transformControls.setMode("translate");
-                self.stlViewPort.transformControls.space = "world";
-                self.stlViewPort.transformControls.axis = "XY";
+                setTransformMode("translate");
             }
             updateInputVisibility();
         });
@@ -279,7 +275,7 @@ function SlicerViewModel(parameters) {
             if ( $("#slicer-viewport .more.values div").hasClass("show") ) {
                 updateInputVisibility();
             } else if (self.stlViewPort.selectedModel()) {
-                self.stlViewPort.transformControls.setMode("translate");
+                setTransformMode("translate");
                 updateInputVisibility();
                 $("#slicer-viewport .more.values div").addClass("show").children('p').addClass("show");
             }
@@ -634,6 +630,7 @@ function SlicerViewModel(parameters) {
     }
 
     function updateInputVisibility() {
+        $('#tab_plugin_slicer > div.translucent-blocker').hide();
         $("#slicer-viewport .values div").removeClass("show")
 
         if (!self.stlViewPort.selectedModel()) {
@@ -648,6 +645,25 @@ function SlicerViewModel(parameters) {
                     $("#slicer-viewport .scale.values div").addClass("show").children('p').addClass("show");
                     break;
             }
+        }
+    }
+
+    function setTransformMode( mode ) {
+        switch (mode) {
+            case "rotate":
+                self.stlViewPort.transformControls.setMode("rotate");
+                self.stlViewPort.transformControls.space = "world";
+                break;
+            case "translate":
+                self.stlViewPort.transformControls.setMode("translate");
+                self.stlViewPort.transformControls.space = "world";
+                self.stlViewPort.transformControls.axis = "XY";
+                break;
+            case "scale":
+                self.stlViewPort.transformControls.setMode("scale");
+                self.stlViewPort.transformControls.space = "local";
+                self.stlViewPort.transformControls.axis = null;
+                break;
         }
     }
 }
