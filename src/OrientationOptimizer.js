@@ -23,7 +23,15 @@ export function OrientationOptimizer(geometry) {
     var normals = geometry.attributes.normal.array;
     var positions = geometry.attributes.position.array;
 
+    // Only include the surfaces that account for 99% of the area for analysis
     var surfaces = BufferGeometryAnalyzer.sortedSurfacesByArea( geometry );
+    var totalArea = surfaces.reduce( function(sum, surface) { return sum+surface.area }, 0);
+    var areaSumSoFar = 0;
+    surfaces = surfaces
+            .filter( function(surface) {
+                areaSumSoFar += surface.area;
+                return areaSumSoFar/totalArea <= 0.99;
+            } )
 
     // Cost function for the optimal level of orientation. Larger is worse.
     function costFunction( bottomArea, overhangArea ) {
@@ -71,10 +79,10 @@ export function OrientationOptimizer(geometry) {
         var highest = -1*Infinity;
 
         for ( var i = 0; i < positions.length; i+=3 ) {
-                var projection = projectionToVector( i, vector );
-                if ( projection > highest ) {
-                    highest = projection;
-                }
+            var projection = projectionToVector( i, vector );
+            if ( projection > highest ) {
+                highest = projection;
+            }
         }
         return highest;
     }
@@ -83,24 +91,14 @@ export function OrientationOptimizer(geometry) {
 
         var originalVector = downVectorAfterRotation(originalRotation);
 
-        // Choose the surfaces that account for 99% of the area for testing
         // De-dup orientations; make sure the angle change doesn't exceed maxPivot; and take up to 128 orientations
-        var totalArea = surfaces.reduce( function(sum, surface) { return sum+surface.area }, 0);
-        var areaSumSoFar = 0;
-        var vectorCandidates = surfaces
-            .filter( function(surface) {
-                areaSumSoFar += surface.area;
-                return areaSumSoFar/totalArea <= 0.99;
-            } )
-            .map( function(s) {return s.normal;} )
-
-        var vectorsToTest = uniqBy(vectorCandidates, function(v) {
+        var vectorCandidates = uniqBy( surfaces.map( function(s) {return s.normal;} ),
+            function(v) {
                 return Math.round( v.x*10000 ) + '_' + Math.round( v.y*10000 ) + '_' + Math.round( v.z*10000 );
         });
 
-        if (maxPivot !== undefined) {
-            vectorsToTest = vectorsToTest.filter( function(v) { return v.angleTo(originalVector) <= maxPivot; } )
-        }
+        var vectorsToTest = (maxPivot !== undefined) ?
+            vectorCandidates.filter( function(v) { return v.angleTo(originalVector) <= maxPivot; } ) : vectorCandidates
         vectorsToTest = vectorsToTest.slice(0, 127);
 
         var rankedOrientations = vectorsToTest.map( self.printabilityOfOrientation )
