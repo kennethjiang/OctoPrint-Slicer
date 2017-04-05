@@ -23,6 +23,7 @@
 import { forEach } from 'lodash-es';
 import * as THREE from 'three';
 import { BufferGeometryAnalyzer, OrbitControls, TransformControls, STLLoader, PointerInteractions } from '3tk';
+import { OrientationOptimizer } from './OrientationOptimizer';
 
 export function STLViewPort( canvas, width, height ) {
 
@@ -87,8 +88,8 @@ export function STLViewPort( canvas, width, height ) {
 
         self.transformControls.setRotationSnap( THREE.Math.degToRad( 15 ) )
         self.transformControls.addEventListener("change", self.render);
-        self.transformControls.addEventListener("mouseDown", self.startTransform);
-        self.transformControls.addEventListener("mouseUp", self.endTransform);
+        self.transformControls.addEventListener("transformStart", self.startTransform);
+        self.transformControls.addEventListener("transformEnd", self.endTransform);
         self.transformControls.addEventListener("objectChange", self.onChange);
         self.transformControls.space = "world";
         self.transformControls.setHandles( 'translate', null );
@@ -110,8 +111,8 @@ export function STLViewPort( canvas, width, height ) {
 
         self.orbitControls.removeEventListener("change", self.render);
         self.transformControls.removeEventListener("change", self.render);
-        self.transformControls.removeEventListener("mouseDown", self.startTransform);
-        self.transformControls.removeEventListener("mouseUp", self.endTransform);
+        self.transformControls.removeEventListener("transformStart", self.startTransform);
+        self.transformControls.removeEventListener("transformEnd", self.endTransform);
         self.transformControls.removeEventListener("objectChange", self.onChange);
         self.renderer.domElement.removeEventListener( "mousedown", self.onPointerDown, false );
         self.renderer.domElement.removeEventListener( "touchstart", self.onPointerDown, false );
@@ -159,12 +160,14 @@ export function STLViewPort( canvas, width, height ) {
     };
 
     self.addModelOfGeometry = function( geometry, modelToCopyTransformFrom ) {
+
         var material = new THREE.MeshStandardMaterial({
             color: self.effectController.modelInactiveColor,  // We'll mark it active below.
             shading: THREE.SmoothShading,
             side: THREE.DoubleSide,
             metalness: self.effectController.metalness,
-            roughness: self.effectController.roughness });
+            roughness: self.effectController.roughness,
+            vertexColors: THREE.VertexColors });
 
         var stlModel = new THREE.Mesh( geometry, material );
 
@@ -178,12 +181,16 @@ export function STLViewPort( canvas, width, height ) {
             model.scale.copy(modelToCopyTransformFrom.scale);
         }
 
+        model.orientationOptimizer = new OrientationOptimizer(geometry);
+        self.recalculateOverhang(model);
+
         self.scene.add(model);
 
         self.pointerInteractions.objects.push(model);
         self.pointerInteractions.update();
 
         return model;
+
     };
 
     // self.pointerInteractions is used to keep the source of truth for all models
@@ -296,19 +303,37 @@ export function STLViewPort( canvas, width, height ) {
         self.dispatchEvent( { type: eventType.delete, models: arrayCopy} );
     };
 
+    self.laySelectedModelFlat = function(restricted) {
+
+        var model = self.selectedModel();
+        if (! model) return;
+
+        var newOrientation;
+        if (restricted) {
+            newOrientation = model.orientationOptimizer.optimalOrientation( model.rotation, 0.7857); // Limit to 45 degree pivot
+        } else {
+            newOrientation = model.orientationOptimizer.optimalOrientation( model.rotation );
+        }
+
+        model.rotation.copy( newOrientation );
+        self.recalculateOverhang(model);
+        self.dispatchEvent( { type: eventType.change } );
+
+    };
+
     self.splitSelectedModel = function() {
         if (!self.selectedModel()) {
             return;
-        } else {
-            var originalModel = self.selectedModel()
-            var geometry = originalModel.children[0].geometry;
-            var newGeometries = BufferGeometryAnalyzer.isolatedGeometries(geometry);
-            var newModels = newGeometries.map( function(geometry) {
-                    return self.addModelOfGeometry( geometry, originalModel );
-                });
-            self.removeModel( originalModel );
-            self.dispatchEvent( { type: eventType.split, from: originalModel, to: newModels } );
         }
+
+        var originalModel = self.selectedModel()
+        var geometry = originalModel.children[0].geometry;
+        var newGeometries = BufferGeometryAnalyzer.isolatedGeometries(geometry);
+        var newModels = newGeometries.map( function(geometry) {
+                return self.addModelOfGeometry( geometry, originalModel );
+            });
+        self.removeModel( originalModel );
+        self.dispatchEvent( { type: eventType.split, from: originalModel, to: newModels } );
     };
 
     self.onlyOneOriginalModel = function() {
@@ -332,7 +357,52 @@ export function STLViewPort( canvas, width, height ) {
     self.endTransform = function () {
         // Enable orbit controls
         self.orbitControls.enabled = true;
+
+        self.recalculateOverhang( self.selectedModel() );
     };
+
+    self.recalculateOverhang = function(model) {
+        if (!model || !model.orientationOptimizer) return;
+
+        var orientation = model.orientationOptimizer.printabilityOfOrientationByRotation( model.rotation );
+        self.tintSurfaces(model, null, 255, 255, 255); // Clear tints off the whole model
+        self.tintSurfaces(model, orientation.overhang, 128, 16, 16);
+        self.tintSurfaces(model, orientation.bottom, 16, 16, 128);
+    };
+
+    self.tintSurfaces = function(model, surfaces, r, g, b) {
+
+        var geometry = model.children[0].geometry;
+        var colors = geometry.attributes.color !== undefined ? geometry.attributes.color.array : [];
+
+        if (surfaces) {
+
+            for ( var i = 0; i < surfaces.length; i++) {
+                for ( var index of surfaces[i].faceIndices ) {
+                    colors[index] = r/255;
+                    colors[index+1] = g/255;
+                    colors[index+2] = b/255;
+                    colors[index+3] = r/255;
+                    colors[index+4] = g/255;
+                    colors[index+5] = b/255;
+                    colors[index+6] = r/255;
+                    colors[index+7] = g/255;
+                    colors[index+8] = b/255;
+                }
+            }
+
+        } else {
+
+            for ( var i = 0; i < geometry.attributes.position.array.length; i++ ) colors[i] = 1;
+
+        }
+        setGeometryColors(geometry, colors);
+    };
+
+    function setGeometryColors(geometry, colors) {
+        geometry.removeAttribute( 'color' );
+        geometry.addAttribute( 'color', new THREE.BufferAttribute( new Float32Array( colors ), 3 ) );
+    }
 
 }
 STLViewPort.prototype = Object.create( THREE.EventDispatcher.prototype );

@@ -21,7 +21,7 @@ export function CheckerboardMaterial( repeatX, repeatY, parameters, onTextureLoa
     this.depthTest = true;
     this.side = DoubleSide;
     this.transparent = true;
-    this.opacity = 0.2;
+    this.opacity = 0.15;
     this.map = this.createTexture( repeatX, repeatY );
 
     this.setValues( parameters );

@@ -1,0 +1,80 @@
+accessControl:
+  salt: 7PaUzUJ1nnZs6b3AAwuRb9WNv4rrCXem
+api:
+  key: 38B23BB308E848C4A4976F25BD379319
+appearance: {}
+feature: {}
+gcodeViewer: {}
+plugins:
+  announcements:
+    channels:
+      _important:
+        read_until: 1478614200
+  cura:
+    cura_engine: /usr/bin/CuraEngine
+  discovery:
+    upnpUuid: 5fe20dd3-cf41-4a18-879d-fe1affeffaa2
+  slic3r:
+    debug_logging: true
+    slic3r_engine: /Slic3r/slic3r.pl
+  softwareupdate:
+    _config_version: 5
+    check_providers:
+      Slic3r: slic3r
+      slicer: slicer
+      stats: stats
+    checks:
+      octoprint:
+        checkout_folder: null
+printerParameters: {}
+printerProfiles:
+  default: micro_3d
+  defaultProfile:
+    axes:
+      e:
+        inverted: false
+        speed: 300
+      x:
+        inverted: false
+        speed: 6000
+      y:
+        inverted: false
+        speed: 6000
+      z:
+        inverted: false
+        speed: 200
+    color: default
+    extruder:
+      count: 1
+      nozzleDiameter: 0.4
+      offsets:
+      - - 0.0
+        - 0.0
+      sharedNozzle: false
+    heatedBed: true
+    id: _default
+    model: Generic RepRap Printer
+    name: Default
+    volume:
+      custom_box: false
+      depth: 220.0
+      formFactor: rectangular
+      height: 220.0
+      origin: lowerleft
+      width: 220.0
+serial:
+  maxCommunicationTimeouts: {}
+  timeout: {}
+server:
+  commands: {}
+  firstRun: false
+  secretKey: 5kzC70sNrs4pAR2xCSq54iJ0EzrGLtrU
+  seenWizards:
+    corewizard: null
+    softwareupdate: null
+slicing:
+  defaultProfiles:
+    cura: nosupport
+system: {}
+temperature: {}
+webcam: {}

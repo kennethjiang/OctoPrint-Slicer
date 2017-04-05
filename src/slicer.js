@@ -7,6 +7,7 @@
 
 'use strict';
 
+import '../node_modules/babel-polyfill/dist/polyfill'
 import * as THREE from 'three';
 import * as THREETK from '3tk';
 import { STLViewPort } from './STLViewPort';
@@ -14,30 +15,6 @@ import { OverridesViewModel } from './profile_overrides';
 import { ModelArranger } from './ModelArranger';
 import { CheckerboardMaterial } from './CheckerboardMaterial';
 import { find, forEach, endsWith, some, extend } from 'lodash-es';
-
-//////////////////
-// Polyfills /////
-//////////////////
-if (!String.prototype.startsWith) {
-    String.prototype.startsWith = function(searchString, position){
-        position = position || 0;
-        return this.substr(position, searchString.length) === searchString;
-    };
-}
-
-if (!String.prototype.endsWith) {
-    String.prototype.endsWith = function(searchString, position) {
-        var subjectString = this.toString();
-        if (typeof position !== 'number' || !isFinite(position) || Math.floor(position) !== position || position > subjectString.length) {
-            position = subjectString.length;
-        }
-        position -= searchString.length;
-        var lastIndex = subjectString.lastIndexOf(searchString, position);
-        return lastIndex !== -1 && lastIndex === position;
-    };
-}
-
-/////////////////
 
 function isDev() {
     return window.location.hostname == "localhost";
@@ -118,10 +95,12 @@ function SlicerViewModel(parameters) {
     self.resetToDefault = function() {
         self.resetSlicingViewModel();
         self.newSession = true;
+        setTransformMode( "translate" );
     }
 
     self.addSTL = function(target, file) {
         self.newSession = false;
+        $('#tab_plugin_slicer > div.translucent-blocker').show();
         self.stlViewPort.loadSTL(BASEURL + "downloads/files/" + target + "/" + file);
     }
 
@@ -137,15 +116,14 @@ function SlicerViewModel(parameters) {
         if (self.stlViewPort.models().length > 1) {
             new ModelArranger().arrange(self.stlViewPort.models());
         }
-
-        $('#tab_plugin_slicer > div.translucent-blocker').hide();
-
+        updateInputVisibility();
     };
 
     self.onModelDelete = function() {
         if (self.stlViewPort.models().length == 0) {
             self.resetToDefault();
         }
+        updateInputVisibility();
     };
 
     self.onModelSplit = function( event ) {
@@ -157,6 +135,8 @@ function SlicerViewModel(parameters) {
             new ModelArranger().arrange( self.stlViewPort.models() );
             self.stlViewPort.selectModel( event.to[0] );
         }
+
+        updateInputVisibility();
     };
 
 
@@ -195,6 +175,8 @@ function SlicerViewModel(parameters) {
 
 
     self.init = function() {
+
+        $('#tab_plugin_slicer > div.translucent-blocker').hide();
 
         self.slicingViewModel.requestData();
 
@@ -237,6 +219,8 @@ function SlicerViewModel(parameters) {
                         <p><span class="axis x">X</span><input type="number" step="any" name="x"><span title="">°</span></p>\
                         <p><span class="axis y">Y</span><input type="number" step="any" name="y"><span title="">°</span></p>\
                         <p><span class="axis z">Z</span><input type="number" step="any" name="z"><span title="">°</span></p>\
+                        <p><button id="lay-flat" class="btn"><i class="icon-glass" /><span>&nbsp;Lay flat</span></button></p>\
+                        <p><button id="orient" class="btn"><i class="icon-magic" /><span>&nbsp;Optimize</span></button></p>\
                         <span></span>\
                     </div>\
                </div>\
@@ -266,29 +250,20 @@ function SlicerViewModel(parameters) {
 
         $("#slicer-viewport button.rotate").click(function(event) {
             if (self.stlViewPort.transformControls.getMode() != "rotate") {
-                self.stlViewPort.transformControls.setMode("rotate");
-                self.stlViewPort.transformControls.space = "world";
+                setTransformMode("rotate");
             } else {
-                self.stlViewPort.transformControls.setMode("translate");
-                self.stlViewPort.transformControls.space = "world";
-                self.stlViewPort.transformControls.axis = "XY";
+                setTransformMode("translate");
             }
-
-            self.toggleValueInputs($("#slicer-viewport .rotate.values div"));
+            updateInputVisibility();
         });
 
         $("#slicer-viewport button.scale").click(function(event) {
             if (self.stlViewPort.transformControls.getMode() != "scale") {
-                self.stlViewPort.transformControls.setMode("scale");
-                self.stlViewPort.transformControls.space = "local";
-                self.stlViewPort.transformControls.axis = null;
+                setTransformMode("scale");
             } else {
-                self.stlViewPort.transformControls.setMode("translate");
-                self.stlViewPort.transformControls.space = "world";
-                self.stlViewPort.transformControls.axis = "XY";
+                setTransformMode("translate");
             }
-
-            self.toggleValueInputs($("#slicer-viewport .scale.values div"));
+            updateInputVisibility();
         });
 
         $("#slicer-viewport button.remove").click(function(event) {
@@ -296,7 +271,13 @@ function SlicerViewModel(parameters) {
         });
 
         $("#slicer-viewport button.more").click(function(event) {
-            self.toggleValueInputs($("#slicer-viewport .more.values div"));
+            if ( $("#slicer-viewport .more.values div").hasClass("show") ) {
+                updateInputVisibility();
+            } else if (self.stlViewPort.selectedModel()) {
+                setTransformMode("translate");
+                updateInputVisibility();
+                $("#slicer-viewport .more.values div").addClass("show").children('p').addClass("show");
+            }
         });
 
         $("#slicer-viewport button#clear").click(function(event) {
@@ -305,22 +286,21 @@ function SlicerViewModel(parameters) {
         });
 
         $("#slicer-viewport button#split").click(function(event) {
-            self.stlViewPort.splitSelectedModel();
+            startLongRunning( self.stlViewPort.splitSelectedModel );
+        });
+
+        $("#slicer-viewport button#lay-flat").click(function(event) {
+            startLongRunning( function() {self.stlViewPort.laySelectedModelFlat(true); } );
+        });
+
+        $("#slicer-viewport button#orient").click(function(event) {
+            startLongRunning( self.stlViewPort.laySelectedModelFlat );
         });
 
         $("#slicer-viewport .values input").change(function() {
             self.applyValueInputs($(this));
         });
 
-    };
-
-    self.toggleValueInputs = function(parentDiv) {
-        if ( parentDiv.hasClass("show") ) {
-            parentDiv.removeClass("show").children('p').removeClass("show");
-        } else if (self.stlViewPort.selectedModel()) {
-            $("#slicer-viewport .values div").removeClass("show");
-            parentDiv.addClass("show").children('p').addClass("show");
-        }
     };
 
     self.applyValueInputs = function(input) {
@@ -346,6 +326,8 @@ function SlicerViewModel(parameters) {
             model.scale.y =  parseFloat($("#slicer-viewport .scale.values input[name=\"y\"]").val())
             model.scale.z =  parseFloat($("#slicer-viewport .scale.values input[name=\"z\"]").val())
             self.fixZPosition(model);
+
+            self.stlViewPort.recalculateOverhang(model);
         }
     };
 
@@ -371,12 +353,7 @@ function SlicerViewModel(parameters) {
             self.fixZPosition(model);
         }
 
-        if (!self.stlViewPort.selectedModel()) {
-            $("#slicer-viewport .values div").removeClass("show")
-            $("#slicer-viewport button").addClass("disabled");
-        } else {
-            $("#slicer-viewport button").removeClass("disabled");
-        }
+        updateInputVisibility();
     };
 
     // Slicing
@@ -640,6 +617,56 @@ function SlicerViewModel(parameters) {
     };
 
     self.init();
+
+    //////////////////////
+    // internal functions
+    ///////////////////////
+
+    function startLongRunning( func ) {
+        $('#tab_plugin_slicer > div.translucent-blocker').show();
+        setTimeout( function() {
+            func();
+            $('#tab_plugin_slicer > div.translucent-blocker').hide();
+        }, 25);
+    }
+
+    function updateInputVisibility() {
+        $('#tab_plugin_slicer > div.translucent-blocker').hide();
+        $("#slicer-viewport .values div").removeClass("show")
+
+        if (!self.stlViewPort.selectedModel()) {
+            $("#slicer-viewport button").addClass("disabled");
+        } else {
+            $("#slicer-viewport button").removeClass("disabled");
+            switch (self.stlViewPort.transformControls.getMode()) {
+                case "rotate":
+                    $("#slicer-viewport .rotate.values div").addClass("show").children('p').addClass("show");
+                    break;
+                case "scale":
+                    $("#slicer-viewport .scale.values div").addClass("show").children('p').addClass("show");
+                    break;
+            }
+        }
+    }
+
+    function setTransformMode( mode ) {
+        switch (mode) {
+            case "rotate":
+                self.stlViewPort.transformControls.setMode("rotate");
+                self.stlViewPort.transformControls.space = "world";
+                break;
+            case "translate":
+                self.stlViewPort.transformControls.setMode("translate");
+                self.stlViewPort.transformControls.space = "world";
+                self.stlViewPort.transformControls.axis = "XY";
+                break;
+            case "scale":
+                self.stlViewPort.transformControls.setMode("scale");
+                self.stlViewPort.transformControls.space = "local";
+                self.stlViewPort.transformControls.axis = null;
+                break;
+        }
+    }
 }
 
 
