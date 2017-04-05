@@ -100,9 +100,8 @@ function SlicerViewModel(parameters) {
 
     self.addSTL = function(target, file) {
         self.newSession = false;
-        startLongRunning( function() {
-            self.stlViewPort.loadSTL(BASEURL + "downloads/files/" + target + "/" + file);
-        });
+        $('#tab_plugin_slicer > div.translucent-blocker').show();
+        self.stlViewPort.loadSTL(BASEURL + "downloads/files/" + target + "/" + file);
     }
 
     self.onModelAdd = function(event) {
@@ -626,7 +625,7 @@ function SlicerViewModel(parameters) {
         setTimeout( function() {
             func();
             $('#tab_plugin_slicer > div.translucent-blocker').hide();
-        }, 1);
+        }, 25);
     }
 
     function updateInputVisibility() {
