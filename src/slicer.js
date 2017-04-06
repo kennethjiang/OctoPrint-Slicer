@@ -226,7 +226,6 @@ function SlicerViewModel(parameters) {
                         <p><span class="axis y">Y</span><input type="number" step="any" name="y"><span title="">°</span></p>\
                         <p><span class="axis z">Z</span><input type="number" step="any" name="z"><span title="">°</span></p>\
                         <p><button id="lay-flat" class="btn"><i class="icon-glass" /><span>&nbsp;Lay flat</span></button></p>\
-                        <p><button id="orient" class="btn"><i class="icon-magic" /><span>&nbsp;Optimize</span></button></p>\
                         <p><button id="rotate0" class="btn"><i class="icon-fast-backward" /><span>&nbsp;Reset</span></button></p>\
                         <span></span>\
                     </div>\
@@ -284,10 +283,6 @@ function SlicerViewModel(parameters) {
 
         $("#slicer-viewport button#lay-flat").click(function(event) {
             startLongRunning( function() {self.stlViewPort.laySelectedModelFlat(true); } );
-        });
-
-        $("#slicer-viewport button#orient").click(function(event) {
-            startLongRunning( self.stlViewPort.laySelectedModelFlat );
         });
 
         $("#slicer-viewport button#rotate0").click(function(event) {
