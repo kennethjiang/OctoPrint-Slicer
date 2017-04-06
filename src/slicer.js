@@ -221,6 +221,7 @@ function SlicerViewModel(parameters) {
                         <p><span class="axis z">Z</span><input type="number" step="any" name="z"><span title="">°</span></p>\
                         <p><button id="lay-flat" class="btn"><i class="icon-glass" /><span>&nbsp;Lay flat</span></button></p>\
                         <p><button id="orient" class="btn"><i class="icon-magic" /><span>&nbsp;Optimize</span></button></p>\
+                        <p><button id="rotate0" class="btn"><i class="icon-fast-backward" /><span>&nbsp;Reset</span></button></p>\
                         <span></span>\
                     </div>\
                </div>\
@@ -297,6 +298,11 @@ function SlicerViewModel(parameters) {
             startLongRunning( self.stlViewPort.laySelectedModelFlat );
         });
 
+        $("#slicer-viewport button#rotate0").click(function(event) {
+            $("#slicer-viewport .rotate.values input").val(0);
+            self.applyValueInputs($("#slicer-viewport .rotate.values input"));
+        });
+
         $("#slicer-viewport .values input").change(function() {
             self.applyValueInputs($(this));
         });
@@ -316,7 +322,6 @@ function SlicerViewModel(parameters) {
 
             if (input.closest(".values").hasClass("scale") && self.lockScale) {
                 $("#slicer-viewport .scale.values input").val(input.val());
-                console.log($("#slicer-viewport .scale.values input[name=\"x\"]").val());
             }
 
             model.rotation.x =  THREE.Math.degToRad($("#slicer-viewport .rotate.values input[name=\"x\"]").val());
