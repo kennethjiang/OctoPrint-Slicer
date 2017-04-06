@@ -207,9 +207,12 @@
 }
 
 #slicer-viewport > div.values.scale > div > p > span:not(.axis) {
-    width: 15px;
     cursor: pointer;
     text-align: center;
+}
+
+#slicer-viewport > div.values.scale > div > p > span.size {
+    width: 64px;
 }
 
 #slicer-viewport > div > div > p > button {

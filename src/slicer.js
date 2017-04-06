@@ -226,9 +226,9 @@ function SlicerViewModel(parameters) {
                </div>\
                 <div class="values scale">\
                     <div>\
-                        <p><span class="axis x">X</span><input type="number" step="0.001" name="x" min="0.001"></p>\
-                        <p><span class="axis y">Y</span><input type="number" step="0.001" name="y" min="0.001"></p>\
-                        <p><span class="axis z">Z</span><input type="number" step="0.001" name="z" min="0.001"></p>\
+                        <p><span class="axis x">X</span><input type="number" step="0.001" name="x" min="0.001"><span class="size x" ></span></p>\
+                        <p><span class="axis y">Y</span><input type="number" step="0.001" name="y" min="0.001"><span class="size y" ></span></p>\
+                        <p><span class="axis z">Z</span><input type="number" step="0.001" name="z" min="0.001"><span class="size z" ></span></p>\
                         <p class="checkbox"><label><input type="checkbox" checked>Lock</label></p>\
                         <span></span>\
                     </div>\
@@ -327,6 +327,7 @@ function SlicerViewModel(parameters) {
             model.scale.z =  parseFloat($("#slicer-viewport .scale.values input[name=\"z\"]").val())
             self.fixZPosition(model);
 
+            updateSizeInfo(model);
             self.stlViewPort.recalculateOverhang(model);
         }
     };
@@ -343,9 +344,9 @@ function SlicerViewModel(parameters) {
     self.onModelChange = function() {
         var model = self.stlViewPort.selectedModel();
         if (model) {
-            $("#slicer-viewport .rotate.values input[name=\"x\"]").val((model.rotation.x * 180 / Math.PI).toFixed(3)).attr("min", '');
-            $("#slicer-viewport .rotate.values input[name=\"y\"]").val((model.rotation.y * 180 / Math.PI).toFixed(3)).attr("min", '');
-            $("#slicer-viewport .rotate.values input[name=\"z\"]").val((model.rotation.z * 180 / Math.PI).toFixed(3)).attr("min", '');
+            $("#slicer-viewport .rotate.values input[name=\"x\"]").val((model.rotation.x * 180 / Math.PI).toFixed(1)).attr("min", '');
+            $("#slicer-viewport .rotate.values input[name=\"y\"]").val((model.rotation.y * 180 / Math.PI).toFixed(1)).attr("min", '');
+            $("#slicer-viewport .rotate.values input[name=\"z\"]").val((model.rotation.z * 180 / Math.PI).toFixed(1)).attr("min", '');
             $("#slicer-viewport .scale.values input[name=\"x\"]").val(model.scale.x.toFixed(3)).attr("min", '');
             $("#slicer-viewport .scale.values input[name=\"y\"]").val(model.scale.y.toFixed(3)).attr("min", '');
             $("#slicer-viewport .scale.values input[name=\"z\"]").val(model.scale.z.toFixed(3)).attr("min", '');
@@ -353,6 +354,7 @@ function SlicerViewModel(parameters) {
             self.fixZPosition(model);
         }
 
+        updateSizeInfo(model);
         updateInputVisibility();
     };
 
@@ -667,6 +669,14 @@ function SlicerViewModel(parameters) {
                 break;
         }
     }
+
+    function updateSizeInfo(model) {
+            var size = new THREE.Box3().setFromObject( model ).size();
+            $("#slicer-viewport > div.values.scale > div > p > span.size.x").text(size.x.toFixed(1) + "mm");
+            $("#slicer-viewport > div.values.scale > div > p > span.size.y").text(size.y.toFixed(1) + "mm");
+            $("#slicer-viewport > div.values.scale > div > p > span.size.z").text(size.z.toFixed(1) + "mm");
+    }
+
 }
 
 
