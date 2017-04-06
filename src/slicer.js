@@ -357,9 +357,9 @@ function SlicerViewModel(parameters) {
             $("#slicer-viewport .scale.values input[name=\"z\"]").val(model.scale.z.toFixed(3)).attr("min", '');
             $("#slicer-viewport .scale.values input[type=\"checkbox\"]").checked = self.lockScale;
             self.fixZPosition(model);
+            updateSizeInfo(model);
         }
 
-        updateSizeInfo(model);
         updateInputVisibility();
     };
 
