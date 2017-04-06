@@ -222,6 +222,15 @@
     padding: 0px 10px;
 }
 
+#slicer-viewport > div.values a.close {
+    position: absolute;
+    margin: 0;
+    top: -11px;
+    right: -9px;
+    color: black;
+    opacity: 0.7;
+}
+
 #slicer-viewport > div button {
     display: block;
     cursor: pointer;
