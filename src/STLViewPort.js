@@ -58,11 +58,14 @@ export function STLViewPort( canvas, width, height ) {
         var ambientLight = new THREE.AmbientLight( self.effectController.ambientLightColor );  // 0.2
         self.scene.add( ambientLight );
         var directionalLight = new THREE.DirectionalLight(self.effectController.directionalLightColor, 1.0);
-        directionalLight.position.set( 100, 100, 500 );
+        directionalLight.position.set( -100, -100, 500 );
         self.scene.add( directionalLight );
         var directionalLight2= new THREE.DirectionalLight(self.effectController.directionalLightColor, 1.0);
         directionalLight2.position.set( 100, 100, -500);
         self.scene.add( directionalLight2);
+        var directionalLight3= new THREE.DirectionalLight(self.effectController.directionalLightColor, 0.2);
+        directionalLight3.position.set( -300, 300, 500);
+        self.scene.add( directionalLight3);
 
         self.renderer = new THREE.WebGLRenderer( { canvas: self.canvas, antialias: true } );
 
