@@ -27,14 +27,12 @@ export function OrientationOptimizer(geometry) {
 
     // Cost function for the optimal level of orientation. Larger is worse.
     function costFunction( bottomArea, overhangArea ) {
-        if (bottomArea == 0) return Infinity;
-
-        var prioritizedBottom = 10 * bottomArea;
+        var prioritizedBottom = bottomArea;
         var bottomFactor = prioritizedBottom / (prioritizedBottom + overhangArea);
         var overhangFactor = overhangArea / (prioritizedBottom + overhangArea);
 
         // sqrt to reflect the fact that difference matters a lot when absolute is tiny but not so much when absolute is large
-        return Math.sqrt(overhangFactor) / Math.sqrt(bottomFactor);
+        return Math.sqrt(overhangFactor) * Math.log(bottomFactor) * -1;
     }
 
     // The vector of the "down" direction after euler rotation is applied to object
