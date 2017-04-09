@@ -1,10 +1,7 @@
 accessControl:
-  salt: 7PaUzUJ1nnZs6b3AAwuRb9WNv4rrCXem
+  enabled: false
 api:
-  key: 38B23BB308E848C4A4976F25BD379319
-appearance: {}
-feature: {}
-gcodeViewer: {}
+  key: 0689A79DB939469ABB099A5294683556
 plugins:
   announcements:
     channels:
@@ -13,68 +10,151 @@ plugins:
   cura:
     cura_engine: /usr/bin/CuraEngine
   discovery:
-    upnpUuid: 5fe20dd3-cf41-4a18-879d-fe1affeffaa2
+    upnpUuid: e7f6ce9b-2ec8-4049-b753-8ed6c4917bc2
   slic3r:
-    debug_logging: true
     slic3r_engine: /Slic3r/slic3r.pl
   softwareupdate:
     _config_version: 5
     check_providers:
       Slic3r: slic3r
       slicer: slicer
-      stats: stats
-    checks:
-      octoprint:
-        checkout_folder: null
-printerParameters: {}
-printerProfiles:
-  default: micro_3d
-  defaultProfile:
-    axes:
-      e:
-        inverted: false
-        speed: 300
-      x:
-        inverted: false
-        speed: 6000
-      y:
-        inverted: false
-        speed: 6000
-      z:
-        inverted: false
-        speed: 200
-    color: default
-    extruder:
-      count: 1
-      nozzleDiameter: 0.4
-      offsets:
-      - - 0.0
-        - 0.0
-      sharedNozzle: false
-    heatedBed: true
-    id: _default
-    model: Generic RepRap Printer
-    name: Default
-    volume:
-      custom_box: false
-      depth: 220.0
-      formFactor: rectangular
-      height: 220.0
-      origin: lowerleft
-      width: 220.0
-serial:
-  maxCommunicationTimeouts: {}
-  timeout: {}
 server:
-  commands: {}
   firstRun: false
-  secretKey: 5kzC70sNrs4pAR2xCSq54iJ0EzrGLtrU
+  secretKey: 63obWUi08Jqh7moNHLmn5ehT7MCY2tiZ
   seenWizards:
     corewizard: null
+    cura: null
     softwareupdate: null
-slicing:
-  defaultProfiles:
-    cura: nosupport
-system: {}
-temperature: {}
-webcam: {}
+# Settings only relevant for development
+devel:
+  # Settings for OctoPrint's internal caching
+  cache:
+    # Whether to enable caching. Defaults to true. Setting it to false will cause the UI to always
+    # be fully rerendered on request to / on the server.
+    enabled: true
+
+    # Whether to enable the preemptive cache
+    preemptive: true
+
+  # Settings for stylesheet preference. OctoPrint will prefer to use the stylesheet type
+  # specified here. Usually (on a production install) that will be the compiled css (default).
+  # Developers may specify less here too.
+  stylesheet: css
+
+  # Settings for OctoPrint's web asset merging and minifying
+  webassets:
+    # If set to true, OctoPrint will merge all JS, all CSS and all Less files into one file per type
+    # to reduce request count. Setting it to false will load all assets individually. Note: if this is set to
+    # false, no minification will take place regardless of the minify setting below.
+    bundle: false
+
+    # If set to true, OctoPrint will minify its viewmodels (that includes those of plugins). Note: if bundle is
+    # set to false, no minification will take place either.
+    minify: true
+
+    # Whether to delete generated web assets on server startup (forcing a regeneration)
+    clean_on_startup: true
+
+  # Settings for the virtual printer
+  virtualPrinter:
+
+    # Whether to enable the virtual printer and include it in the list of available serial connections.
+    # Defaults to false.
+    enabled: true
+
+    # Whether to send an additional "ok" after a resend request (like Repetier)
+    okAfterResend: false
+
+    # Whether to force checksums and line number in the communication (like Repetier), if set to true
+    # printer will only accept commands that come with linenumber and checksum and throw an error for
+    # lines that don't. Defaults to false
+    forceChecksum: false
+
+    # Whether to send "ok" responses with the line number that gets acknowledged by the "ok". Defaults
+    # to false.
+    okWithLinenumber: false
+
+    # Number of extruders to simulate on the virtual printer.
+    numExtruders: 1
+
+    # Whether to include the current tool temperature in the M105 output as separate T segment or not.
+    #
+    # True:  > M105
+    #        < ok T:23.5/0.0 T0:34.3/0.0 T1:23.5/0.0 B:43.2/0.0
+    # False: > M105
+    #        < ok T0:34.3/0.0 T1:23.5/0.0 B:43.2/0.0
+    includeCurrentToolInTemps: true
+
+    # Whether to include the selected filename in the M23 File opened response.
+    #
+    # True:  > M23 filename.gcode
+    #        < File opened: filename.gcode  Size: 27
+    # False: > M23 filename.gcode
+    #        > File opened
+    includeFilenameInOpened: true
+
+    # The maximum movement speeds of the simulated printer's axes, in mm/s
+    movementSpeed:
+      x: 6000
+      y: 6000
+      z: 200
+      e: 300
+
+    # Whether the simulated printer should also simulate a heated bed or not
+    hasBed: true
+
+    # If enabled, reports the set target temperatures as separate messages from the firmware
+    #
+    # True:  > M109 S220.0
+    #        < TargetExtr0:220.0
+    #        < ok
+    #        > M105
+    #        < ok T0:34.3 T1:23.5 B:43.2
+    # False: > M109 S220.0
+    #        < ok
+    #        > M105
+    #        < ok T0:34.3/220.0 T1:23.5/0.0 B:43.2/0.0
+    repetierStyleTargetTemperature: false
+
+    # If enabled, uses repetier style resends, sending multiple resends for the same line
+    # to make sure nothing gets lost on the line
+    repetierStyleResends: false
+
+    # If enabled, reports the first extruder in M105 responses as T instead of T0
+    #
+    # True:  > M105
+    #        < ok T:34.3/0.0 T1:23.5/0.0 B:43.2/0.0
+    # False: > M105
+    #        < ok T0:34.3/0.0 T1:23.5/0.0 B:43.2/0.0
+    smoothieTemperatureReporting: false
+
+    # Whether M20 responses will include filesize or not
+    #
+    # True:  <filename> <filesize in bytes>
+    # False: <filename>
+    extendedSdFileList: false
+
+    # Forced pause for retrieving from the outgoing buffer
+    throttle: 0.01
+
+    # Whether to send "wait" responses every "waitInterval" seconds when serial rx buffer is empty
+    sendWait: false
+
+    # Interval in which to send "wait" lines when rx buffer is empty
+    waitInterval: 1
+
+    # Size of the simulated RX buffer in bytes, when it's full a send from OctoPrint's
+    # side will block
+    rxBuffer: 64
+
+    # Size of simulated command buffer
+    commandBuffer: 4
+
+    # Whether to support the M112 command with simulated kill
+    supportM112: true
+
+    # Whether to send messages received via M117 back as "echo:" lines
+    echoOnM117: true
+
+    # Whether to simulate broken M29 behaviour (missing ok after response)
+    brokenM29: true
