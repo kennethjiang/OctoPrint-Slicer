@@ -30,6 +30,7 @@ if ( ! isDev() ) {
             /_jp.*is not a function/,
             "chrome is not defined",
             "You cannot apply bindings multiple times to the same element.",
+            "SVG_MATRIX_NOT_INVERTABLE",
         ],
     }).install();
 }
@@ -204,7 +205,7 @@ function SlicerViewModel(parameters) {
 
         // Buttons on the canvas, and their behaviors.
         // TODO: it's not DRY. mix of prez code and logics. need to figure out a better way
-        $("#slicer-viewport").empty().append('<div class="report"><span>Got issues or suggestions? <a target="_blank" href="https://github.com/kennethjiang/OctoPrint-Slicer/issues/new">Click here!</a></span></div>\
+        $("#slicer-viewport").empty().append('<div class="report"><span>Got issues or suggestions? <a target="_blank" href="https://goo.gl/forms/P9Vw2fZRYJCy7RAn1">Click here!</a></span></div>\
                   <div class="model">\
                     <button class="rotate disabled" title="Rotate"><img src="'
                         + PLUGIN_BASEURL
