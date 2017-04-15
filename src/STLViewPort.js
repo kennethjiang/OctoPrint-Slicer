@@ -175,7 +175,7 @@ export function STLViewPort( canvas, width, height ) {
         var stlModel = new THREE.Mesh( geometry, material );
 
         // center model's origin
-        var center = new THREE.Box3().setFromObject(stlModel).center();
+        var center = new THREE.Box3().setFromObject(stlModel).getCenter();
         var model = new THREE.Object3D();
         model.add(stlModel);
         stlModel.position.copy(center.negate());
