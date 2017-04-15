@@ -13,6 +13,7 @@ import * as THREETK from '3tk';
 import { STLViewPort } from './STLViewPort';
 import { OverridesViewModel } from './profile_overrides';
 import { ModelArranger } from './ModelArranger';
+import { ArrangeModels } from './ArrangeModels';
 import { CheckerboardMaterial } from './CheckerboardMaterial';
 import { find, forEach, endsWith, some, extend } from 'lodash-es';
 
@@ -216,6 +217,9 @@ function SlicerViewModel(parameters) {
                     <button class="remove disabled" title="Remove"><img src="'
                         + PLUGIN_BASEURL
                         + 'slicer/static/img/remove.png"></button>\
+                    <button class="arrange disabled" title="Arrange"><img src="'
+                        + PLUGIN_BASEURL
+                        + 'slicer/static/img/arrange.png"></button>\
                     <button class="more disabled" title="More..."><img src="'
                         + PLUGIN_BASEURL
                         + 'slicer/static/img/more.png"></button>\
@@ -269,6 +273,10 @@ function SlicerViewModel(parameters) {
             self.stlViewPort.removeSelectedModel();
         });
 
+        $("#slicer-viewport button.arrange").click(function(event) {
+            self.arrange(10 /* mm margin */, 5000 /* milliseconds max */);
+        });
+
         $("#slicer-viewport button.more").click(function(event) {
             toggleValueInputs($("#slicer-viewport .more.values div"));
         });
@@ -313,6 +321,18 @@ function SlicerViewModel(parameters) {
         boundaryBox.max.sub(model.position);
         model.position.z -= model.position.z + boundaryBox.min.z - bedLowMinZ;
     }
+
+    self.arrangeModels = new ArrangeModels();
+    self.arrange = function(margin, timeoutMilliseconds, forceStartOver = false) {
+        var renderFn = function () {
+            //self.updateTransformInputs();
+            //self.startCollisionDetection();
+            //self.render();
+        }
+        var arrangeResult = self.arrangeModels.arrange(
+            self.stlViewPort.models(), self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM,
+            margin, timeoutMilliseconds, renderFn, forceStartOver);
+    };
 
     // callback function when models are changed by TransformControls
     self.onModelChange = function() {
