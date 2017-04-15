@@ -163,6 +163,9 @@ function SlicerViewModel(parameters) {
                 self.ORIGIN_OFFSET_X_MM = 0;
                 self.ORIGIN_OFFSET_Y_MM = 0;
             }
+            self.stlViewPort.canvasWidth = self.BEDSIZE_X_MM;
+            self.stlViewPort.canvasDepth = self.BEDSIZE_Y_MM;
+            self.stlViewPort.canvasHeight = self.BEDSIZE_Z_MM;
         }
         self.drawBedFloor(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM, self.BED_FORM_FACTOR);
         self.drawWalls(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM, self.BEDSIZE_Z_MM, self.BED_FORM_FACTOR);
@@ -178,6 +181,7 @@ function SlicerViewModel(parameters) {
     self.ORIGIN_OFFSET_Y_MM = 0;
 
     var CANVAS_WIDTH = 588,
+        CANVAS_DEPTH = 588,
         CANVAS_HEIGHT = 588;
 
 
@@ -187,7 +191,7 @@ function SlicerViewModel(parameters) {
 
         self.slicingViewModel.requestData();
 
-        self.stlViewPort = new STLViewPort(self.canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
+        self.stlViewPort = new STLViewPort(self.canvas, CANVAS_WIDTH, CANVAS_DEPTH, CANVAS_HEIGHT);
         self.stlViewPort.addEventListener( "change", self.onModelChange );
         self.stlViewPort.addEventListener( "add", self.onModelAdd );
         self.stlViewPort.addEventListener( "delete", self.onModelDelete );
