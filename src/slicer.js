@@ -531,7 +531,7 @@ function SlicerViewModel(parameters) {
 
         } else  {
 
-            var cubeGeometry = new THREE.BoxBufferGeometry( width, height, depth );
+            var cubeGeometry = new THREE.BoxBufferGeometry( width, depth, height );
             var materials = [
                     wallMaterial,
                     wallMaterial,
