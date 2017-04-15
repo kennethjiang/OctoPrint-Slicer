@@ -350,7 +350,7 @@ function SlicerViewModel(parameters) {
         }
         var groupCenter = new THREE.Vector3(0,0,0);
         if (group) {
-            groupCenter = new THREE.Box3().setFromObject(group).center();
+            groupCenter = new THREE.Box3().setFromObject(group).getCenter();
         }
         var data = {
             command: "slice",
@@ -455,7 +455,7 @@ function SlicerViewModel(parameters) {
         var materialFront = new THREE.MeshBasicMaterial( { color: 0x048e06} );
         var materialSide = new THREE.MeshBasicMaterial( { color: 0x8A8A8A} );
         var materialArray = [ materialFront, materialSide ];
-        var textMaterial = new THREE.MeshFaceMaterial(materialArray);
+        var textMaterial = new THREE.MultiMaterial(materialArray);
 
         var mesh = new THREE.Mesh( textGeometry, textMaterial );
         textGeometry.computeBoundingBox();
@@ -618,7 +618,7 @@ function SlicerViewModel(parameters) {
     function updateSizeInfo() {
         var model = self.stlViewPort.selectedModel();
         if (model) {
-            var size = new THREE.Box3().setFromObject( model ).size();
+            var size = new THREE.Box3().setFromObject( model ).getSize();
             $("#slicer-viewport > div.values.scale > div > p > span.size.x").text(size.x.toFixed(1) + "mm");
             $("#slicer-viewport > div.values.scale > div > p > span.size.y").text(size.y.toFixed(1) + "mm");
             $("#slicer-viewport > div.values.scale > div > p > span.size.z").text(size.z.toFixed(1) + "mm");
