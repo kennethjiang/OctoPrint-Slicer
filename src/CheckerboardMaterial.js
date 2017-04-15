@@ -1,7 +1,7 @@
 
 'use strict';
 
-import { DoubleSide, MeshBasicMaterial, RepeatWrapping, TextureLoader, LinearFilter } from 'three';
+import { DoubleSide, MeshBasicMaterial, RepeatWrapping, TextureLoader, NearestFilter } from 'three';
 
 export function CheckerboardMaterial( repeatX, repeatY, parameters, onTextureLoaded ) {
 
@@ -9,7 +9,7 @@ export function CheckerboardMaterial( repeatX, repeatY, parameters, onTextureLoa
 
     this.createTexture = function ( repeatX, repeatY ) {
         var texture = new TextureLoader().load( PLUGIN_BASEURL + "slicer/static/img/checkerboard.gif", function( texture ) {
-            texture.minFilter = texture.magFilter = LinearFilter;
+            texture.minFilter = texture.magFilter = NearestFilter;
             texture.repeat.set( repeatX, repeatY );
             texture.wrapS = RepeatWrapping;
             texture.wrapT = RepeatWrapping;
