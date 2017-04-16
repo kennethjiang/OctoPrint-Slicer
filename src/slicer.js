@@ -329,9 +329,7 @@ function SlicerViewModel(parameters) {
     self.arrangeModels = new ArrangeModels();
     self.arrange = function(margin, timeoutMilliseconds, forceStartOver = false) {
         var renderFn = function () {
-            //self.updateTransformInputs();
-            //self.startCollisionDetection();
-            //self.render();
+            self.stlViewPort.onChange();
         }
         var arrangeResult = self.arrangeModels.arrange(
             self.stlViewPort.models(), self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM,
