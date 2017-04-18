@@ -96,6 +96,12 @@ export function STLViewPort( canvas, width, depth, height ) {
         self.orbitControls.enablePan = false;
         self.orbitControls.addEventListener("change", self.render);
 
+        // Must bind these before TransformControls because we want to attach it ourselves.
+        // This will only work if events are run in the order that they are added, which is
+        // true for modern browsers.
+        self.renderer.domElement.addEventListener( "mousedown", self.onPointerDown, false );
+        self.renderer.domElement.addEventListener( "touchstart", self.onPointerDown, false );
+
         self.transformControls = new TransformControls(self.camera, self.renderer.domElement);
 
         self.transformControls.setRotationSnap( THREE.Math.degToRad( 15 ) )
@@ -109,9 +115,6 @@ export function STLViewPort( canvas, width, depth, height ) {
         self.transformControls.axis = "XY";
         self.transformControls.setHandles( 'scale', null );
         self.scene.add(self.transformControls);
-
-        self.renderer.domElement.addEventListener( "mousedown", self.onPointerDown, false );
-        self.renderer.domElement.addEventListener( "touchstart", self.onPointerDown, false );
 
         window.addEventListener( 'keydown', self.onKeydown );
         window.addEventListener( 'keyup', self.onKeyup );
@@ -247,7 +250,6 @@ export function STLViewPort( canvas, width, depth, height ) {
     };
 
     self.onPointerDown = function( event ) {
-
         if ( self.pointerInteractions.hoveredObject && self.transformControls.getMode() == 'translate' ) {
             event.preventDefault();
             event.stopPropagation();
