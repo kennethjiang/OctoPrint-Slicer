@@ -84,8 +84,8 @@ export var CollisionDetector = function (callbackFn) {
         for (var o = 0; o < self.objects.length; o++) {
             var obj = self.objects[o];
             var newGeo = new THREE.Geometry();
-            for (var f=0; f < obj.children[0].geometry.faces.length; f++) {
-                newGeo.faces.push(obj.children[0].geometry.faces[f].clone());
+            for (var f=0; f < obj.children[0].geometry.collisionGeometry.faces.length; f++) {
+                newGeo.faces.push(obj.children[0].geometry.collisionGeometry.faces[f].clone());
                 if (endTime && performance.now() > endTime) {
                     timeoutMilliseconds = (yield intersecting);
                     if (timeoutMilliseconds) {
@@ -96,8 +96,8 @@ export var CollisionDetector = function (callbackFn) {
                 }
             }
             var newGeoBox = new THREE.Box3();
-            for (var v=0; v < obj.children[0].geometry.vertices.length; v++) {
-                newGeo.vertices.push(obj.children[0].geometry.vertices[v].clone());
+            for (var v=0; v < obj.children[0].geometry.collisionGeometry.vertices.length; v++) {
+                newGeo.vertices.push(obj.children[0].geometry.collisionGeometry.vertices[v].clone());
                 obj.updateMatrixWorld();
                 newGeo.vertices[v].applyMatrix4(obj.children[0].matrixWorld);
                 newGeoBox.expandByPoint(newGeo.vertices[v]);
@@ -182,15 +182,12 @@ export var CollisionDetector = function (callbackFn) {
         }
         self.objects = [];
         for (var i = 0; i < objects.length; i++) {
-            if (objects[i].children[0].geometry.isBufferGeometry) {
-                var new_object = objects[i].clone();
-                new_object.children[0].geometry =
-                    new THREE.Geometry().fromBufferGeometry(new_object.children[0].geometry);
-                self.objects.push(new_object);
-            } else {
-                self.objects.push(objects[i]);
+            if (!objects[i].children[0].geometry.collisionGeometry) {
+                objects[i].children[0].geometry.collisionGeometry =
+                    new THREE.Geometry().fromBufferGeometry(objects[i].children[0].geometry);
             }
         }
+        self.objects = objects;
         self.volume = volume;
         intersecting = [];
         // collisionDetector is a ES6 javascript generator.
