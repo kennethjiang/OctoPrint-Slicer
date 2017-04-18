@@ -69,9 +69,11 @@ function SlicerViewModel(parameters) {
         $('a[href="#tab_plugin_slicer"]').tab('show');
 
         self.selectedSTLs[file] = target;
-        if (self.newSession) {
+        if (self.newSession || self.altKey) {
             self.addToNewSession();
-        } else if (Object.getOwnPropertyNames(self.selectedSTLs).length == 1) {
+        } else if (self.shiftKey) {
+            self.addToExistingSession();
+        } else {
             $("#plugin-slicer-load-model").modal("show");
         }
     };
@@ -179,9 +181,13 @@ function SlicerViewModel(parameters) {
     var CANVAS_WIDTH = 588,
         CANVAS_HEIGHT = 588;
 
-
+    self.shiftKey = false;
+    self.altKey = false;
     self.init = function() {
-
+        $(document).on('keyup keydown', function(e) {
+            self.shiftKey = e.shiftKey;
+            self.altKey = e.altKey;
+        });
         $('#tab_plugin_slicer > div.translucent-blocker').hide();
 
         self.slicingViewModel.requestData();
