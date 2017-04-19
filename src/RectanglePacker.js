@@ -274,7 +274,7 @@ var RectanglePacker = {
 
     // Minimum height needed to have made a difference in any of the
     // rectangles.
-    var minDeltaHeight = undefined;
+    var minDeltaHeight = Infinity;
     var totalWidth = 0;
     var totalHeight = 0
     var placements = {};
@@ -309,7 +309,7 @@ var RectanglePacker = {
           } else {
             // Out of boundary.  Could have placed if the maxHeight
             // were bigger.
-            if (minDeltaHeight === undefined || deltaHeight < minDeltaHeight) {
+            if (deltaHeight < minDeltaHeight) {
               minDeltaHeight = deltaHeight;
             }
           }
@@ -443,7 +443,7 @@ var RectanglePacker = {
         // If we succeeded, set a new target width.
         currentWidth = packResult.width;
       }
-    } while (currentWidth >= widest && packResult.minDeltaHeight > 0);
+    } while (currentWidth >= widest && packResult.minDeltaHeight < Infinity);
   },
 
   // Sorts by height, then by width, biggest first.
