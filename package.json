@@ -6,7 +6,6 @@
   "main": "octoprint_slicer/static/js/octoprint_slicer.min.js",
   "scripts": {
     "build": "rollup -c",
-    "debug": "rollup -c rollup.debug.config.js",
     "watch": "rollup -c -w"
   },
   "dependencies": {

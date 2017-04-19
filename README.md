@@ -1,10 +1,21 @@
 # OctoPrint Slicer
 
-A full-blown GUI-based slicer. Rotate and scale model; slice multiple STL files at a time; set layer height and other slicing settings
+Slicer plugin offers useful features that OctoPrint's built-in slicer doesn't have:
 
-A picture is worth 1000 words:
+- Rotate, scale, and move STL models.
+- Slice multiple STLs at a time. Split 1 STL into unconnected parts.
+- Circular print bed support (do you have a delta printer?).
+- High-light overhang areas. Automatically orient the model for better result ("lay flat").
+- Slice based on Cura profiles you upload to OctoPrint.
+- Customizable slicing settings, including Basic (layer height, bed temperature ...) and Advanced (print speed, start/end G-code ...).
+- Slic3r support (when Slic3r plugin is installed).
+- More is coming...
 
 ![Slicer plugin screenshot](/docs/screenshot1.png?raw=true "Slicer Screen Shot")
+![Slicer plugin screenshot](/docs/screenshot2.png?raw=true "Slicer Screen Shot")
+![Slicer plugin screenshot](/docs/screenshot3.png?raw=true "Slicer Screen Shot")
+![Slicer plugin screenshot](/docs/screenshot4.png?raw=true "Slicer Screen Shot")
+
 
 ## Setup
 
@@ -28,3 +39,7 @@ docker-compose up
 ```
 
 1. Open [http://localhost:5000/](http://localhost:5000/) in your browser
+
+## Thanks
+![BrowserStack](https://lh4.googleusercontent.com/wyCKLuED8i1E6mvA8Moiwd5VSq2jXHXPOel85bqnW-rUU_tXBr0c1aSIhY7SHH1jKTaf7AF7vA=s50-h50-e365 "BrowserStack") BrowserStack generously sponsors a free license so that I can test Slicer Plugin on different browsers/versions.
+
