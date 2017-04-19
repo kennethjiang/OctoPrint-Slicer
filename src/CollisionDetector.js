@@ -83,22 +83,12 @@ export var CollisionDetector = function (callbackFn) {
         var geometryBoxes = [];
         for (var o = 0; o < self.objects.length; o++) {
             var obj = self.objects[o];
+            obj.updateMatrixWorld();
             var newGeo = new THREE.Geometry();
-            for (var f=0; f < obj.children[0].geometry.collisionGeometry.faces.length; f++) {
-                newGeo.faces.push(obj.children[0].geometry.collisionGeometry.faces[f].clone());
-                if (endTime && performance.now() > endTime) {
-                    timeoutMilliseconds = (yield intersecting);
-                    if (timeoutMilliseconds) {
-                        endTime = performance.now() + timeoutMilliseconds;
-                    } else {
-                        endTime = undefined;
-                    }
-                }
-            }
+            newGeo.faces = obj.children[0].geometry.collisionGeometry.faces;
             var newGeoBox = new THREE.Box3();
             for (var v=0; v < obj.children[0].geometry.collisionGeometry.vertices.length; v++) {
                 newGeo.vertices.push(obj.children[0].geometry.collisionGeometry.vertices[v].clone());
-                obj.updateMatrixWorld();
                 newGeo.vertices[v].applyMatrix4(obj.children[0].matrixWorld);
                 newGeoBox.expandByPoint(newGeo.vertices[v]);
                 if (endTime && performance.now() > endTime) {
