@@ -261,7 +261,7 @@ var RectanglePacker = {
   // make a difference in this run.
   packRectangles: function(rectangles,
                            maxHeight = Infinity,
-                           maxWidth = -1
+                           maxWidth = Infinity
                           ) {
     var EMPTY = {name: "."};  // name must not be a number, will conflict
 
