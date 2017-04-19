@@ -260,7 +260,7 @@ var RectanglePacker = {
   // minDeltaHeight is the minimum height to add to the boundary to
   // make a difference in this run.
   packRectangles: function(rectangles,
-                           maxHeight = -1,
+                           maxHeight = Infinity,
                            maxWidth = -1
                           ) {
     var EMPTY = {name: "."};  // name must not be a number, will conflict
@@ -298,7 +298,7 @@ var RectanglePacker = {
         if (allEmpty) {
           // No overlapping other rectangles.
           var deltaHeight = y + height - maxHeight;
-          if (maxHeight < 0 || deltaHeight <= 0) {
+          if (deltaHeight <= 0) {
             // Not out of boundary.
             rectangleGrid.setRectangle(x, y, width, height, rectangle);
             placements[rectangle.name] = {"x": x, "y": y};
