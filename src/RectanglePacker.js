@@ -1,6 +1,6 @@
 'use strict';
 
-var RectanglePacker = {
+export var RectanglePacker = {
   // Keeps track of an infinite space of rectangles.  The infinite
   // grid starts initialized to the initialValue.  Rectangles in the
   // infinite grid can be filled with other values.  Points and
@@ -562,3 +562,19 @@ var RectanglePacker = {
 if ( typeof module === 'object' ) {
   module.exports = RectanglePacker;
 }
+/*
+var rectangles = [
+  {name: 0, height:5, width:4},
+  {name: 0, height:6, width:4},
+  {name: 0, height:7, width:4},
+  {name: 0, height:8, width:4},
+  {name: 0, height:9, width:4},
+  {name: 0, height:1, width:4},
+  {name: 0, height:2, width:4}
+];
+for (var x of RectanglePacker.pack(rectangles)) {
+  if (x.placementSuccess) {
+    console.log("result: " + x.width + "x" + x.height);
+  }
+}
+*/
