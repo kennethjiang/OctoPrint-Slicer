@@ -173,13 +173,14 @@ export function STLViewPort( canvas, width, depth, height ) {
         self.renderer.render( self.scene, self.camera );
     };
 
-    self.loadSTL = function ( url, onLoad ) {
+    self.loadSTL = function ( url, afterLoad ) {
         new STLLoader().load(url, function ( geometry ) {
             var newModel = self.addModelOfGeometry(geometry);
             self.dispatchEvent( { type: eventType.add, models: [ newModel ] } );
             // Detect collisions after the event in case the users wants to arrange, for example.
             self.dispatchEvent( { type: eventType.change } );
             self.restartCollisionDetector();
+            afterLoad();
         });
     };
 

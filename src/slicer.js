@@ -108,7 +108,11 @@ function SlicerViewModel(parameters) {
     self.addSTL = function(target, file) {
         self.newSession = false;
         $('#tab_plugin_slicer > div.translucent-blocker').show();
-        self.stlViewPort.loadSTL(BASEURL + "downloads/files/" + target + "/" + file);
+        self.stlViewPort.loadSTL(
+            BASEURL + "downloads/files/" + target + "/" + file,
+            function () {
+                $('#tab_plugin_slicer > div.translucent-blocker').hide();
+            });
     }
 
     self.onModelAdd = function(event) {
@@ -336,7 +340,8 @@ function SlicerViewModel(parameters) {
             self.stlViewPort.onChange();
         }
         var endTime = performance.now() + arrangeTime;
-        var TASK_SWITCH_MS = 50;
+        var TASK_SWITCH_MS = 500;
+        $('#tab_plugin_slicer > div.translucent-blocker').show();
         var arrangeLoop = function() {
             setTimeout(function() {
                 var done = self.arrangeModels.arrange(
@@ -344,6 +349,8 @@ function SlicerViewModel(parameters) {
                     margin, TASK_SWITCH_MS, renderFn, forceStartOver);
                 if (!done && performance.now() < endTime) {
                     arrangeLoop();
+                } else {
+                    $('#tab_plugin_slicer > div.translucent-blocker').hide();
                 }
             }, 0);
         };
@@ -662,7 +669,6 @@ function SlicerViewModel(parameters) {
     }
 
     function updateControlState() {
-        $('#tab_plugin_slicer > div.translucent-blocker').hide();
         if (!self.stlViewPort.selectedModel()) {
             $("#slicer-viewport button").addClass("disabled");
             $("#slicer-viewport .values div").removeClass("show");
