@@ -10,7 +10,7 @@ export var ArrangeModels = function () {
   // similar (within 1%), round up the smaller (to save computation
   // time when trying all possibilities).  All rectangles are
   // increased in size by margin.
-  var getSmallestRectangles = function (margin) {
+  var getSmallestRectangles = function () {
     var rectangles = [];
     var dimensions = []; // A list of all the widths and heights that we've encountered.
     for (var i = 0; i < stlFiles.length; i++ ) {
@@ -85,7 +85,7 @@ export var ArrangeModels = function () {
     return false;
   };
 
-  var applyPackResult = function(packResult, rectangles) {
+  var applyPackResult = function(packResult) {
     // Apply the pack result to the models.
     for (var i = 0; i < stlFiles.length; i++ ) {
       var model = stlFiles[i];
@@ -149,9 +149,11 @@ export var ArrangeModels = function () {
     return modelPositions;
   };
 
-  var previousModelPositions;
-
+  var rectangles;
   var stlFiles;
+
+  // if these changed since the last run, we need to start over.
+  var previousModelPositions;
   var bedsize_x_mm;
   var bedsize_y_mm;
   var margin;
@@ -184,11 +186,11 @@ export var ArrangeModels = function () {
     stlFiles = stlFiles_;
     var endTime = performance.now() + timeoutMilliseconds;
     if (forceStartOver || !arrangementGenerator ||
-        needStartOver(previousModelPositions, bedsize_x_mm_, bedsize_y_mm_)) {
-      var rectangles = getSmallestRectangles(margin);
+        needStartOver(previousModelPositions, bedsize_x_mm_, bedsize_y_mm_, margin_)) {
       bedsize_x_mm = bedsize_x_mm_;
       bedsize_y_mm = bedsize_y_mm_;
       margin = margin_;
+      rectangles = getSmallestRectangles();
       arrangementGenerator = arrangeHelper(rectangles, bedsize_x_mm, bedsize_y_mm, margin, endTime);
     }
     var bestPackResult = arrangementGenerator.next();
