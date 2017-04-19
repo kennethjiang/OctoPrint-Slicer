@@ -331,13 +331,23 @@ function SlicerViewModel(parameters) {
     }
 
     self.arrangeModels = new ArrangeModels();
-    self.arrange = function(margin, timeoutMilliseconds, forceStartOver = false) {
+    self.arrange = function(margin, arrangeTime, forceStartOver = false) {
         var renderFn = function () {
             self.stlViewPort.onChange();
         }
-        var arrangeResult = self.arrangeModels.arrange(
-            self.stlViewPort.models(), self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM,
-            margin, timeoutMilliseconds, renderFn, forceStartOver);
+        var endTime = performance.now() + arrangeTime;
+        var TASK_SWITCH_MS = 50;
+        var arrangeLoop = function() {
+            setTimeout(function() {
+                var done = self.arrangeModels.arrange(
+                    self.stlViewPort.models(), self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM,
+                    margin, TASK_SWITCH_MS, renderFn, forceStartOver);
+                if (!done && performance.now() < endTime) {
+                    arrangeLoop();
+                }
+            }, 0);
+        };
+        arrangeLoop();
     };
 
     // callback function when models are changed by TransformControls
