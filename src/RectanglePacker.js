@@ -213,36 +213,26 @@ var RectanglePacker = {
     // Visit every top-left corner of the cells in rectangleGrid.  The
     // corners are visited from the top left to the bottom right,
     // visiting a column from top to bottom before moving to the
-    // column to the right.  fn should be a function of up to 3
-    // variables, x and y and value, the coordinates of the top-left
-    // corner of the cell and the value there.  If fn returns
-    // something other than undefined end the traverse.  The return
-    // value is the return value from the input function.  If the
-    // traverse ends without a defined result, the return value is
-    // also undefined.
-    self.traverse = function(fn) {
+    // column to the right.  yields objects with x,y,value, the
+    // coordinates of the top-left corner of the cell and the value
+    // there.
+    self.traverse = function*() {
       for (var xIndex = 0; xIndex < verticalCuts.length; xIndex++) {
         for (var yIndex = 0; yIndex < horizontalCuts.length; yIndex++) {
-          var result = fn(verticalCuts[xIndex],
-                          horizontalCuts[yIndex],
-                          contents[xIndex][yIndex]);
-          if (result !== undefined) {
-            return result;
-          }
+          yield {x: verticalCuts[xIndex],
+                 y: horizontalCuts[yIndex],
+                 value: contents[xIndex][yIndex]};
         }
       }
     }
 
     // Like traverse but visits in reverse order.
-    self.reverseTraverse = function(fn) {
+    self.reverseTraverse = function*(fn) {
       for (var xIndex = verticalCuts.length-1; xIndex >= 0; xIndex--) {
         for (var yIndex = horizontalCuts.length-1; yIndex >= 0; yIndex--) {
-          var result = fn(verticalCuts[xIndex],
-                          horizontalCuts[yIndex],
-                          contents[xIndex][yIndex]);
-          if (result != undefined) {
-            return result;
-          }
+          yield {x: verticalCuts[xIndex],
+                 y: horizontalCuts[yIndex],
+                 value: contents[xIndex][yIndex]};
         }
       }
     }
@@ -292,34 +282,41 @@ var RectanglePacker = {
       var rectangle = rectangles[i];
       var width = rectangle.width;
       var height = rectangle.height;
-      var placementSuccess =
-          rectangleGrid.traverse(function (x, y) {
-            if (maxWidth >= 0 && x + width >= maxWidth) {
-              // Give up because all attempts will only be at this x
-              // or greater.
-              return false;
+      var placementSuccess = false;
+      for (var t of rectangleGrid.traverse()) {
+        var x = t.x;
+        var y = t.y;
+        if (x + width >= maxWidth) {
+          // Give up because all attempts will only be at this x or
+          // greater.
+          placementSuccess = false;
+          break;
+        }
+        // If true, maybe there's place for this rectangle.
+        var allEmpty = rectangleGrid.isRectangle(
+            x, y, width, height, EMPTY);
+        if (allEmpty) {
+          // No overlapping other rectangles.
+          var deltaHeight = y + height - maxHeight;
+          if (maxHeight < 0 || deltaHeight <= 0) {
+            // Not out of boundary.
+            rectangleGrid.setRectangle(x, y, width, height, rectangle);
+            placements[rectangle.name] = {"x": x, "y": y};
+            totalWidth = Math.max(totalWidth, x + width);
+            totalHeight = Math.max(totalHeight, y + height);
+            placementSuccess = true;  // End the traverse with success.
+            break;
+          } else {
+            // Out of boundary.  Could have placed if the maxHeight
+            // were bigger.
+            if (minDeltaHeight === undefined || deltaHeight < minDeltaHeight) {
+              minDeltaHeight = deltaHeight;
             }
-            // If positive, crosses the boundary.
-            var allEmpty = rectangleGrid.isRectangle(
-                x, y, width, height, EMPTY);
-            if (allEmpty) {
-              var deltaHeight = y + height - maxHeight;
-              if (maxHeight < 0 || deltaHeight <= 0) {
-                // Can place.
-                rectangleGrid.setRectangle(x, y, width, height, rectangle);
-                placements[rectangle.name] = {"x": x, "y": y};
-                totalWidth = Math.max(totalWidth, x + width);
-                totalHeight = Math.max(totalHeight, y + height);
-                return true;  // End the traverse with success.
-              }
-              // Could have placed if the maxHeight were bigger.
-              if (minDeltaHeight === undefined || deltaHeight < minDeltaHeight) {
-                minDeltaHeight = deltaHeight;
-              }
-            }
-          });
+          }
+        }
+      }
       if (!placementSuccess) {
-        // Didn't succeed in any of the placements, don't keep trying.
+        // Didn't succeed in one of the placements, don't keep trying.
         // Caller can read placements to see how many worked.
         break;
       }
@@ -431,13 +428,13 @@ var RectanglePacker = {
     }
 
     var currentHeight = tallest;
-    var currentWidth = -1;
+    var currentWidth = Infinity;
     var result;
     do {
       var newWH = skipFn(currentWidth, currentHeight);
       currentHeight = newWH.height;
       currentWidth = newWH.width;
-      console.log("current: " + currentWidth + "x" + currentHeight);
+      //console.log("current: " + currentWidth + "x" + currentHeight);
       var packResult =
           RectanglePacker.packRectangles(rectangles, currentHeight, currentWidth);
       yield packResult;
@@ -492,8 +489,6 @@ var RectanglePacker = {
    * member, rotation, alongside x and y in the placements.  */
   packWithRotation: function*(rectangles, skipFn) {
     var rotatedRectangles = RectanglePacker.rotateRectangles(rectangles);
-    // Because the traverse is a side effect, memoizing essentially
-    // means that we don't run the original traverse at all.
     var memoizedPacker = RectanglePacker.memoize(
       RectanglePacker.packWithoutRotation,
       function (rectangles) {
@@ -551,7 +546,7 @@ var RectanglePacker = {
     };
     for (var packResult of RectanglePacker.packWithRotation(rectangles, skipFn)) {
       if (packResult.placementSuccess) {
-        console.log("found " + packResult.width + "x" +packResult.height);
+        //console.log("found " + packResult.width + "x" +packResult.height);
         if (!bestHW.hasOwnProperty(packResult.height) ||
             bestHW[packResult.height] > packResult.width) {
           // Save the best width for each height.
