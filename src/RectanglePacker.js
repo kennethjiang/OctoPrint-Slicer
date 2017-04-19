@@ -562,15 +562,3 @@ var RectanglePacker = {
 if ( typeof module === 'object' ) {
   module.exports = RectanglePacker;
 }
-
-var rectangles = [
-  {name: 0, height:5, width:4},
-  {name: 0, height:5, width:4},
-  {name: 0, height:5, width:4},
-  {name: 0, height:5, width:4}
-];
-for (var x of RectanglePacker.pack(rectangles)) {
-  if (x.placementSuccess) {
-    console.log("result: " + x.width + "x" + x.height);
-  }
-}
