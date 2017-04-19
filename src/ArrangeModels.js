@@ -166,7 +166,7 @@ export var ArrangeModels = function () {
     for(var newPackResult of RectanglePacker.pack(rectangles)) {
       if (isBetterPackResult(newPackResult, bestPackResult, bedsize_x_mm_, bedsize_y_mm_)) {
         bestPackResult = newPackResult;
-        yield bestPackResult;
+        endTime = yield bestPackResult;
       }
       if (performance.now() > endTime) {
         yield null;
@@ -193,12 +193,12 @@ export var ArrangeModels = function () {
       rectangles = getSmallestRectangles();
       arrangementGenerator = arrangeHelper(rectangles, bedsize_x_mm, bedsize_y_mm, margin, endTime);
     }
-    var bestPackResult = arrangementGenerator.next();
+    var bestPackResult = arrangementGenerator.next(endTime);
     while (!bestPackResult.done && bestPackResult.value) {
       // We got a new, better pack result.
       applyPackResult(bestPackResult.value);
       renderFn();
-      bestPackResult = arrangementGenerator.next();
+      bestPackResult = arrangementGenerator.next(endTime);
     }
     previousModelPositions = getModelPositions();  // Save what we've
                                                    // done so far.
