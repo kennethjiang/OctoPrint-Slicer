@@ -1,6 +1,6 @@
 'use strict';
 
-export var RectanglePacker = {
+var RectanglePacker = {
   // Keeps track of an infinite space of rectangles.  The infinite
   // grid starts initialized to the initialValue.  Rectangles in the
   // infinite grid can be filled with other values.  Points and
@@ -334,67 +334,31 @@ export var RectanglePacker = {
            };
   },
 
-  // Runs traverse on each ordering of the inputs.  traverseFn must
-  // not modify the inputs.  If any of traverseFn return something
-  // other than undefiend, stop the traversal.  If compareFn is
-  // defined, it is used to compare inputs to remove duplicate
-  // permutations.  compareFn should return 0 if elements are the
-  // same, like the compare that sort uses.
-  //
-  // Returns an object with the result and with a continuation number.
-  // That number is the number of permutations that have already run.
-  // It includes the count of duplicates even though those duplicates
-  // didn't occur so that compareFn can be changed when rerunning
-  // permute.
-  permute: function(inputs, traverseFn, start = 0, compareFn) {
+  // If compareFn is defined, it is used to compare inputs to remove
+  // duplicate permutations.  compareFn should return 0 if elements
+  // are the same, like the compare that sort uses.
+  permute: function*(inputs, compareFn) {
     var inputsCopy = inputs.slice(0);
-    var position = 0;
     var swap = function(a,b) {
       var temp = inputsCopy[a];
       inputsCopy[a] = inputsCopy[b];
       inputsCopy[b] = temp;
     };
-    var factorial = function (x) {
-      var result = 1;
-      while (x > 1) {
-        result *= x;
-        x--;
-      }
-      return result;
-    };
-    var p = function(index = 0) {
-      if (index >= inputsCopy.length) {
-        position++;
-        return traverseFn(inputsCopy);
-      }
-      var toDo = factorial(inputsCopy.length - (index+1));
-      if (position + toDo > start) {
-        var result = p(index+1);
-        if (result !== undefined) {
-          return result;
-        }
+    var p = function*(position) {
+      if (position >= inputsCopy.length-1) {
+        yield inputsCopy;
       } else {
-        position += toDo; // Skip these.
-      }
-      for (var i=index+1; i < inputsCopy.length; i++) {
-        if (position + toDo > start) {
-          if (!compareFn || compareFn(inputsCopy[index], inputsCopy[i]) != 0) {
-            swap(index, i);
-            var result = p(index+1, start);
-            if (result !== undefined) {
-              return result;
-            }
-            swap(index, i);
-          } else {
-            position += toDo; // Still need to count them.
+        yield* p(position+1);
+        for (var i=position+1; i < inputsCopy.length; i++) {
+          if (!compareFn || compareFn(inputsCopy[position], inputsCopy[i]) != 0) {
+            swap(position, i);
+            yield* p(position+1);
+            swap(position, i);
           }
-        } else {
-          position += toDo;
         }
       }
-    };
-
-    return {result: p(), position: position};
+    }
+    yield* p(0);
   },
 
   // Provide a function to memoize fn.  Optionally provide a function
@@ -418,51 +382,45 @@ export var RectanglePacker = {
     };
   },
 
-  // Given a list of lists, runs traverseFn on a list of elements, one
-  // picked from each list in the input list.  traverseFn must not
-  // modify its input.  start is the position at which to start.  the
-  // result value is an object hasand a result and also a position for
-  // continuing the combination.
-  combinations: function(inputs, traverseFn, start = 0) {
+  // Given a list of lists, yields a list of elements, one picked from
+  // each list in the input list.  All such combinations are yielded.
+  // Each member of inputs must be a non-empty list.
+  combinations: function*(inputs) {
+    var indices = [];
     var combination = [];
-    var position = 0;
-    var c = function(index = 0) {
-      if (index >= inputs.length) {
-        position++;
-        return traverseFn(combination);
-      }
-      var toDo = 1;
-      for (var i=index+1; i < inputs.length; i++) {
-        toDo *= inputs[i].length;
-      }
-      for (var i=0; i < inputs[index].length; i++) {
-        if (position + toDo > start) {
-          combination.push(inputs[index][i]);
-          var result = c(index+1);
-          if (result !== undefined) {
-            return result;
-          }
-          combination.pop();
+    for (var i = 0; i < inputs.length; i++) {
+      indices.push(0);
+      combination.push(inputs[i][0]);
+    }
+    while (1) {
+      yield combination;
+      var i;
+      for (i=0; i < inputs.length; i++) {
+        if(indices[i]+1 < inputs[i].length) {
+          indices[i]++;
+          combination[i] = inputs[i][indices[i]];
+          break;
         } else {
-          position += toDo;
+          indices[i] = 0;
+          combination[i] = inputs[i][indices[i]];
         }
       }
+      if (i >= inputs.length) {
+        return;
+      }
     }
-
-    return {result: c(), position: position};
   },
 
   // Packs rectangles without rotating them.  Attempts all interesting
-  // sizes of output rectangle given the input rectangle.  Runs
-  // traverseFn on the result of each packing.  If traverseFn returns
-  // anything other than undefined, stop and return that.  The
-  // rectangles are inserted in the order that they are provided.
-  // Sorting them from tallest to shortest yields good results.
+  // sizes of output rectangle given the input rectangle.  yields each
+  // result.  The rectangles are inserted in the order that they are
+  // provided.  Sorting them from tallest to shortest yields good
+  // results.
   //
   // skipFn takes as input the current width and height and returns
   // them possibly modified.
-  packWithoutRotation: function(
-    rectangles, traverseFn,
+  packWithoutRotation: function*(
+    rectangles,
     skipFn = function(w,h) {
       return {"width": w, "height": h};}) {
     var tallest = 0;
@@ -479,20 +437,16 @@ export var RectanglePacker = {
       var newWH = skipFn(currentWidth, currentHeight);
       currentHeight = newWH.height;
       currentWidth = newWH.width;
+      console.log("current: " + currentWidth + "x" + currentHeight);
       var packResult =
           RectanglePacker.packRectangles(rectangles, currentHeight, currentWidth);
-      var traverseResult = traverseFn(packResult);
-      result = traverseResult;
-      // Don't return just yet, only store the result.  We hope that
-      // the caller will keep sending results and we'll output the
-      // last one.
+      yield packResult;
       currentHeight = currentHeight + packResult.minDeltaHeight;
       if (packResult.placementsCount == rectangles.length) {
         // If we succeeded, set a new target width.
         currentWidth = packResult.width;
       }
     } while (currentWidth >= widest && packResult.minDeltaHeight > 0);
-    return result;
   },
 
   // Sorts by height, then by width, biggest first.
@@ -536,7 +490,7 @@ export var RectanglePacker = {
    * or not rotating elements by 90 degrees, which might improve
    * packing. The result is the same as pack above but with an extra
    * member, rotation, alongside x and y in the placements.  */
-  packWithRotation: function(rectangles, traverseFn, start = 0, skipFn) {
+  packWithRotation: function*(rectangles, skipFn) {
     var rotatedRectangles = RectanglePacker.rotateRectangles(rectangles);
     // Because the traverse is a side effect, memoizing essentially
     // means that we don't run the original traverse at all.
@@ -548,54 +502,31 @@ export var RectanglePacker = {
           return r.width + "x" + r.height;
         }).join(",");
       });
-    var factorial = function (x) {
-      var result = 1;
-      while (x > 1) {
-        result *= x;
-        x--;
-      }
-      return result;
-    };
-    var position = 0;
-    var continuation = RectanglePacker.combinations(
-      rotatedRectangles,
-      function (combination) {
-        var continuation = RectanglePacker.permute(
-          RectanglePacker.sortRectangles(combination.slice()),
-          function (permutation) {
-            return memoizedPacker(
-              permutation,
-              function (x) {
-                // Put the rotations into the placements and call
-                // traverseFn.
-                for (var i=0; i < permutation.length; i++) {
-                  if (x.placements.hasOwnProperty(permutation[i].name)) {
-                    x.placements[permutation[i].name].rotation =
-                      permutation[i].rotation;
-                  }
-                }
-                return traverseFn(x);
-              },
-              skipFn);
-          },
-          start - position,
-          function (a,b) { // compareFn
-            return (a.height == b.height && a.width == b.width) ? 0 : 1;
-          });
-        position += continuation.position;
-        if (continuation.result !== undefined) {
-          return continuation.result;
+    for (var combination of RectanglePacker.combinations(rotatedRectangles)) {
+      var combinationCopy = RectanglePacker.sortRectangles(combination.slice());
+      var skipPermutation = function (a,b) {
+        return (a.height == b.height && a.width == b.width) ? 0 : 1;
+      };
+      for (var permutation of RectanglePacker.permute(combinationCopy, skipPermutation)) {
+        for (var packResult of memoizedPacker(permutation, skipFn)) {
+          // Put the rotations into the placements.
+          for (var i=0; i < permutation.length; i++) {
+            if (packResult.placements.hasOwnProperty(permutation[i].name)) {
+              packResult.placements[permutation[i].name].rotation =
+                  permutation[i].rotation;
+            }
+          }
+          yield packResult;
         }
-      },
-      0);
-    return {result: continuation.result, position: position};
+      }
+    }
   },
 
   // Pack rectangles into as small a space as possible.
   //
   // rectangles is a list of objects.  Each must have height, width,
   // and a unique name which is a simple data type, like a string or
-  // number.  pack will call traverseFn with a packResult for every
+  // number.  pack will yield a packResult for every
   // unique combination and permutation of packing.  The packResult
   // includes a placement object which maps from rectangle name to x,y
   // coordinates for the top-left corner of the rectangle and also a
@@ -603,47 +534,48 @@ export var RectanglePacker = {
   // packResult also has a placementCount which is the number of
   // successfully placed rectangles and placementSuccess, which
   // indicates if placement of all rectangles was successful.
-  //
-  // If traverseFn returns anything other than undefined, that pack
-  // will end and return an object with result and position.  The
-  // result is the value that was returned.  The position is the start
-  // input that can be given to a subsequent calls to pack to resume
-  // trying rectangle packing from the previous spot.  If the result
-  // is undefined then all possible packings have been tried.
-  pack: function(rectangles, traverseFn, start = 0) {
+  pack: function*(rectangles) {
     var bestHW = {}
-    return RectanglePacker.packWithRotation(
-        rectangles, function(packResult) {
-          if (packResult.placementSuccess) {
-            if (!bestHW.hasOwnProperty(packResult.height) ||
-                bestHW[packResult.height] > packResult.width) {
-              // Save the best width for each height.
-              bestHW[packResult.height] = packResult.width;
-            }
-          }
-        var traverseResult = traverseFn(packResult);
-        if (traverseResult !== undefined) {
-          return traverseResult;
+    var skipFn = function (w,h) {
+      // Narrow the available width if it is worse than an already
+      // seen better width.
+      var newWidth = w;
+      for (var bestHeight in bestHW) {
+        if (bestHeight <= h &&
+            bestHW[bestHeight] < newWidth) {
+          newWidth = bestHW[bestHeight];
         }
-      },
-      start,
-      function (w,h) {  // skipFn
-        // Narrow the available width if it is worse than an already
-        // seen better width.
-        var newWidth = w;
-        for (var bestHeight in bestHW) {
-          if (bestHeight <= h &&
-              bestHW[bestHeight] < newWidth) {
-            newWidth = bestHW[bestHeight];
-          }
+      }
+      return {"height": h,
+              "width": newWidth};
+    };
+    for (var packResult of RectanglePacker.packWithRotation(rectangles, skipFn)) {
+      if (packResult.placementSuccess) {
+        console.log("found " + packResult.width + "x" +packResult.height);
+        if (!bestHW.hasOwnProperty(packResult.height) ||
+            bestHW[packResult.height] > packResult.width) {
+          // Save the best width for each height.
+          bestHW[packResult.height] = packResult.width;
         }
-        return {"height": h,
-                "width": newWidth};
-      });
+      }
+      yield packResult;
+    }
   }
 };
 
 // browserify support
 if ( typeof module === 'object' ) {
   module.exports = RectanglePacker;
+}
+
+var rectangles = [
+  {name: 0, height:5, width:4},
+  {name: 0, height:5, width:4},
+  {name: 0, height:5, width:4},
+  {name: 0, height:5, width:4}
+];
+for (var x of RectanglePacker.pack(rectangles)) {
+  if (x.placementSuccess) {
+    console.log("result: " + x.width + "x" + x.height);
+  }
 }
