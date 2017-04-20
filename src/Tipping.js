@@ -31,7 +31,7 @@ var Tipping = function () {
     // Given a list of Vector2, find the convex hull of those points.
     // The convex hull is given as a list of points that are the
     // outline of the convex hull.  The points are given so that they
-    // wrap the hull counterclockwise.
+    // wrap the hull counterclockwise.  Use quickhull algorithm.
     self.convexHull = function(points) {
         // Find the point farthest from the line.  points must have at
         // least one point in it.
@@ -48,39 +48,6 @@ var Tipping = function () {
                 }
             }
             return farthestPoint;
-        }
-
-        if (points.length <= 2) {
-            return points;
-        }
-        // Use quickhull algorithm.
-        var leftmostPoint = points[0];
-        var rightmostPoint = points[0]
-        for (var point of points) {
-            if (point.x < leftmostPoint.x ||
-                (point.x == leftmostPoint.x && point.y < leftmostPoint.y)) {
-                leftmostPoint = point;
-            }
-            if (point.x > rightmostPoint.x ||
-                (point.x == rightmostPoint.x && point.y > rightmostPoint.y)) {
-                rightmostPoint = point;
-            }
-        }
-        if (leftmostPoint.equals(rightmostPoint)) {
-            return [leftmostPoint]; // Degenerate, only 1 point.
-        }
-        var pointsAbove = [];
-        var pointsBelow = [];
-        for (var point of points) {
-            if (point == leftmostPoint || rightmostPoint == leftmostPoint) {
-                continue;  // diffAngle isn't well-defined.
-            }
-            var diffAngle = self.angle3(rightmostPoint, leftmostPoint, point);
-            if (diffAngle > 0 && diffAngle < Math.PI) {
-                pointsAbove.push(point);
-            } else if (diffAngle > Math.PI) {
-                pointsBelow.push(point);
-            }
         }
 
         // Returns a list of points that are to the left of ray
@@ -113,6 +80,10 @@ var Tipping = function () {
             }
             // Found the farthest point.
             var farthestPoint = findFarthestPoint(points, fromPoint, toPoint);
+            return findHull3(points, fromPoint, farthestPoint, toPoint);
+        };
+
+        var findHull3 = function(points, fromPoint, farthestPoint, toPoint) {
             // Iterate on one side.
             var pointsLeft = findLeftPoints(points, farthestPoint, toPoint);
             var halfHull = findHull(pointsLeft, farthestPoint, toPoint);
@@ -120,9 +91,29 @@ var Tipping = function () {
             pointsLeft = findLeftPoints(points, fromPoint, farthestPoint);
             var halfHull2 = findHull(pointsLeft, fromPoint, farthestPoint);
             return halfHull.concat(halfHull2);
-        };
-        return findHull(pointsAbove, leftmostPoint, rightmostPoint).concat(
-            findHull(pointsBelow, rightmostPoint, leftmostPoint));
+        }
+
+        if (points.length < 2) {
+            return points;
+        }
+
+        var leftmostPoint = points[0];
+        var rightmostPoint = points[0]
+        for (var point of points) {
+            if (point.x < leftmostPoint.x ||
+                (point.x == leftmostPoint.x && point.y < leftmostPoint.y)) {
+                leftmostPoint = point;
+            }
+            if (point.x > rightmostPoint.x ||
+                (point.x == rightmostPoint.x && point.y > rightmostPoint.y)) {
+                rightmostPoint = point;
+            }
+        }
+        if (leftmostPoint.equals(rightmostPoint)) {
+            return [leftmostPoint]; // Degenerate, only 1 point.
+        }
+
+        return findHull3(points, rightmostPoint, leftmostPoint, rightmostPoint);
     };
 };
 
@@ -132,11 +123,35 @@ if ( typeof module === 'object' ) {
 }
 
 var t = new Tipping();
-var points = [
-    new THREE.Vector2(0,0),
-    new THREE.Vector2(10,0),
-    new THREE.Vector2(0,5),
-    new THREE.Vector2(0,-5)
-];
-while(1)
-console.log(t.convexHull(points));
+var points = [];
+var SIZE = 10;
+for (var i = 0; i < 10; i++) {
+    points.push(new THREE.Vector2(Math.floor(Math.random()*SIZE),
+                                  Math.floor(Math.random()*SIZE)));
+}
+
+var result = t.convexHull(points);
+var resultString = "";
+for (var i = 0; i < SIZE; i++) {
+    for (var j = 0; j < SIZE; j++) {
+        var testPoint = new THREE.Vector2(i,j);
+        var found = false;
+        if(!found) for (var p of result) {
+            if (testPoint.equals(p)) {
+                found = true;
+                resultString += "x";
+                break;
+            }
+        }
+        if(!found) for (var p of points) {
+            if (testPoint.equals(p)) {
+                found = true;
+                resultString += "o";
+                break;
+            }
+        }
+        if(!found) resultString += ".";
+    }
+    resultString += "\n";
+}
+console.log(resultString);
