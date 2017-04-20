@@ -33,6 +33,23 @@ var Tipping = function () {
     // outline of the convex hull.  The points are given so that they
     // wrap the hull counterclockwise.
     self.convexHull = function(points) {
+        // Find the point farthest from the line.  points must have at
+        // least one point in it.
+        var findFarthestPoint = function(points, a, b) {
+            var farthestPoint = points[0];
+            var projection = self.projectPointToLine(points[0], a, b);
+            var farthestDistanceSquared = projection.distanceToSquared(points[0]);
+            for (var point of points) {
+                var projection = self.projectPointToLine(point, a, b);
+                var distanceSquared = projection.distanceToSquared(point);
+                if (distanceSquared > farthestDistanceSquared) {
+                    farthestPoint = point;
+                    farthestDistanceSquared = distanceSquared;
+                }
+            }
+            return farthestPoint;
+        }
+
         if (points.length <= 2) {
             return points;
         }
@@ -66,6 +83,24 @@ var Tipping = function () {
             }
         }
 
+        // Returns a list of points that are to the left of ray
+        // from-to.  That is, the ray from_to needs a rotation of less
+        // than 180 degrees to get the ray from_p for every p in
+        // points.  0 and 180 degrees are excluded.
+        var findLeftPoints = function(points, fromPoint, toPoint) {
+            var pointsLeft = [];
+            for (var point of points) {
+                if (toPoint == fromPoint || point == fromPoint) {
+                    continue;
+                }
+                var diffAngle = self.angle3(toPoint, fromPoint, point);
+                if (diffAngle > 0 && diffAngle < Math.PI) {
+                    pointsLeft.push(point);
+                }
+            }
+            return pointsLeft;
+        }
+
         // Returns the points that need to be added before toPoint so
         // that [returned_points, toPoint] make a convex hull that
         // goes around counter-clockwise and encloses all the points
@@ -76,41 +111,13 @@ var Tipping = function () {
             if (points.length == 0) {
                 return [toPoint];
             }
-            var farthestPoint = points[0];
-            var projection = self.projectPointToLine(points[0], fromPoint, toPoint);
-            var farthestDistanceSquared = projection.distanceToSquared(points[0]);
-            for (var point of points) {
-                var projection = self.projectPointToLine(point, fromPoint, toPoint);
-                var distanceSquared = projection.distanceToSquared(point);
-                if (distanceSquared > farthestDistanceSquared) {
-                    farthestPoint = point;
-                    farthestDistanceSquared = distanceSquared;
-                }
-            }
             // Found the farthest point.
+            var farthestPoint = findFarthestPoint(points, fromPoint, toPoint);
             // Iterate on one side.
-            var pointsLeft = [];
-            for (var point of points) {
-                if (toPoint == farthestPoint || point == farthestPoint) {
-                    continue;
-                }
-                var diffAngle = self.angle3(toPoint, farthestPoint, point);
-                if (diffAngle > 0 && diffAngle < Math.PI) {
-                    pointsLeft.push(point);
-                }
-            }
+            var pointsLeft = findLeftPoints(points, farthestPoint, toPoint);
             var halfHull = findHull(pointsLeft, farthestPoint, toPoint);
             // Iterate on other side.
-            pointsLeft = [];
-            for (var point of points) {
-                if (toPoint == farthestPoint || point == farthestPoint) {
-                    continue;
-                }
-                var diffAngle = self.angle3(farthestPoint, fromPoint, point);
-                if (diffAngle > 0 && diffAngle < Math.PI) {
-                    pointsLeft.push(point);
-                }
-            }
+            pointsLeft = findLeftPoints(points, fromPoint, farthestPoint);
             var halfHull2 = findHull(pointsLeft, fromPoint, farthestPoint);
             return halfHull.concat(halfHull2);
         };
