@@ -1,6 +1,7 @@
 'use strict';
 
 //import * as THREE from 'three';
+
 const THREE = require("three");
 
 var Tipping = function () {
@@ -122,6 +123,9 @@ if ( typeof module === 'object' ) {
     module.exports = Tipping;
 }
 
+
+// Test of tipping code.
+/*
 var t = new Tipping();
 var points = [];
 var SIZE = 10;
@@ -136,10 +140,10 @@ for (var i = 0; i < SIZE; i++) {
     for (var j = 0; j < SIZE; j++) {
         var testPoint = new THREE.Vector2(i,j);
         var found = false;
-        if(!found) for (var p of result) {
-            if (testPoint.equals(p)) {
+        if(!found) for (var p=0; p < result.length; p++) {
+            if (testPoint.equals(result[p])) {
                 found = true;
-                resultString += "x";
+                resultString += ("" + p);
                 break;
             }
         }
@@ -155,3 +159,4 @@ for (var i = 0; i < SIZE; i++) {
     resultString += "\n";
 }
 console.log(resultString);
+*/
