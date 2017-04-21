@@ -116,6 +116,23 @@ var Tipping = function () {
 
         return findHull3(points, rightmostPoint, leftmostPoint, rightmostPoint);
     };
+
+    // Finds the center of mass of a geometry.
+    self.centroid = function(geometry) {
+        // Volume = magnitude(a*(b cross c))/6
+        var totalVolume = 0;
+        var totalCentroid = new THREE.Vector3();
+        for (var face of geometry.faces) {
+            var a = geometry.vertices[face.a];
+            var b = geometry.vertices[face.b];
+            var c = geometry.vertices[face.c];
+            var volume = b.clone().cross(c).dot(a)/6;
+            var centroid = a.clone().add(b).add(c).divide(4);
+            totalVolume += volume;
+            totalCentroid.add(centroid.multiplyScalar(volume));
+        }
+        return totalCentroid.divideScalar(totalVolume);
+    };
 };
 
 // browserify support
@@ -159,4 +176,24 @@ for (var i = 0; i < SIZE; i++) {
     resultString += "\n";
 }
 console.log(resultString);
+*/
+
+
+var a = new THREE.Vector3(0,0,10);
+var b = new THREE.Vector3(10,0,10);
+var c = new THREE.Vector3(0,10,10);
+var m = new THREE.Matrix3().set(3,3,10,
+                                4,9,8,
+                                10,0,10);
+console.log(b.clone().cross(a));
+console.log(b.clone().cross(c).dot(a)/6);
+console.log(m.determinant()/6);
+
+/*
+a0 a1 a2
+b0 b1 b2
+c0 c1 c2
+
+a0c1b2-a0c2b1, a1c2b0-a1c0b2, a2c0b1-a2c1b0
+
 */
