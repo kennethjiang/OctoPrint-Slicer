@@ -71,7 +71,7 @@ function SlicerViewModel(parameters) {
         self.selectedSTLs[file] = target;
         if (self.newSession || self.altKey) {
             self.addToNewSession();
-        } else if (self.shiftKey) {
+        } else if (self.ctrlKey) {
             self.addToExistingSession();
         } else {
             $("#plugin-slicer-load-model").modal("show");
@@ -181,11 +181,11 @@ function SlicerViewModel(parameters) {
     var CANVAS_WIDTH = 588,
         CANVAS_HEIGHT = 588;
 
-    self.shiftKey = false;
+    self.ctrlKey = false;
     self.altKey = false;
     self.init = function() {
         $(document).on('keyup keydown', function(e) {
-            self.shiftKey = e.shiftKey;
+            self.ctrlKey = e.ctrlKey;
             self.altKey = e.altKey;
         });
         $('#tab_plugin_slicer > div.translucent-blocker').hide();
