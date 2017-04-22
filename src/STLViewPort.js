@@ -302,12 +302,13 @@ export function STLViewPort( canvas, width, depth, height ) {
             new THREE.Vector3(-self.canvasWidth/2, -self.canvasDepth/2, -EPSILON_Z),
             new THREE.Vector3(self.canvasWidth/2, self.canvasDepth/2, self.canvasHeight));
         var TASK_SWITCH_MS = 50;
-        var CD = self.collisionDetector.start(self.models(),
-                                              printVolume,
-                                              performance.now() + TASK_SWITCH_MS);
-                var collisionLoop = function () {
+        var collisionDetectorGenerator =
+            self.collisionDetector.start(self.models(),
+                                         printVolume,
+                                         performance.now() + TASK_SWITCH_MS);
+        var collisionLoop = function () {
             self.collisionLoopRunner = setTimeout(function() {
-                var result = CD.next(performance.now() + 50);
+                var result = collisionDetectorGenerator.next(performance.now() + TASK_SWITCH_MS);
                 self.markCollidingModels(result.value);
                 if (!result.done) {
                     collisionLoop();
