@@ -13,7 +13,6 @@ import * as THREETK from '3tk';
 import { STLViewPort } from './STLViewPort';
 import { OverridesViewModel } from './profile_overrides';
 import { ModelArranger } from './ModelArranger';
-import { Tipping } from './Tipping';
 import { CheckerboardMaterial } from './CheckerboardMaterial';
 import { find, forEach, endsWith, some, extend } from 'lodash-es';
 
@@ -284,7 +283,7 @@ function SlicerViewModel(parameters) {
         });
 
         $("#slicer-viewport button#lay-flat").click(function(event) {
-            startLongRunning( function() {self.stlViewPort.laySelectedModelFlat(true); } );
+            startLongRunning( function() {self.stlViewPort.laySelectedModelFlat(); } );
         });
 
         $("#slicer-viewport button#rotate0").click(function(event) {
@@ -315,14 +314,6 @@ function SlicerViewModel(parameters) {
         model.position.z -= model.position.z + boundaryBox.min.z - bedLowMinZ;
     }
 
-        var model = self.stlViewPort.selectedModel();
-        var tippingQuaternion = new Tipping().tipObject(model);
-        if (tippingQuaternion) {
-            model.quaternion.premultiply(tippingQuaternion);
-        }
-        self.stlViewPort.recalculateOverhang(self.stlViewPort.selectedModel());
-        self.stlViewPort.onChange();
-        return;
     // callback function when models are changed by TransformControls
     self.onModelChange = function() {
         var model = self.stlViewPort.selectedModel();
