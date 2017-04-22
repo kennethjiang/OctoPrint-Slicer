@@ -25,6 +25,7 @@ import * as THREE from 'three';
 import { BufferGeometryAnalyzer, OrbitControls, TransformControls, STLLoader, PointerInteractions } from '3tk';
 import { OrientationOptimizer } from './OrientationOptimizer';
 import { CollisionDetector } from './CollisionDetector';
+import { Tipping } from './Tipping';
 
 export function STLViewPort( canvas, width, depth, height ) {
 
@@ -376,21 +377,17 @@ export function STLViewPort( canvas, width, depth, height ) {
         self.dispatchEvent( { type: eventType.delete, models: arrayCopy} );
     };
 
-    self.laySelectedModelFlat = function(restricted) {
-
+    var tipping = new Tipping();
+    self.laySelectedModelFlat = function() {
         var model = self.selectedModel();
         if (! model) return;
-
-        var newOrientation;
-        if (restricted) {
-            newOrientation = model.orientationOptimizer.optimalOrientation( model.rotation, 0.7857); // Limit to 45 degree pivot
-        } else {
-            newOrientation = model.orientationOptimizer.optimalOrientation( model.rotation );
+        var tippingQuaternion = tipping.tipObject(model);
+        while (tippingQuaternion) {
+            model.quaternion.premultiply(tippingQuaternion);
+            self.recalculateOverhang(model);
+            self.dispatchEvent( { type: eventType.change } );  // We need this for the fixZ.
+            tippingQuaternion = tipping.tipObject(model);
         }
-
-        model.rotation.copy( newOrientation );
-        self.recalculateOverhang(model);
-        self.dispatchEvent( { type: eventType.change } );
 
     };
 

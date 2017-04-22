@@ -303,7 +303,7 @@ function SlicerViewModel(parameters) {
         });
 
         $("#slicer-viewport button#lay-flat").click(function(event) {
-            startLongRunning( function() {self.stlViewPort.laySelectedModelFlat(true); } );
+            startLongRunning( function() {self.stlViewPort.laySelectedModelFlat(); } );
         });
 
         $("#slicer-viewport button#rotate0").click(function(event) {
