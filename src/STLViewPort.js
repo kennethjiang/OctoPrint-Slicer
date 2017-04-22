@@ -294,14 +294,28 @@ export function STLViewPort( canvas, width, depth, height ) {
 
     self.collisionDetector = new CollisionDetector(self.markCollidingModels);
     self.restartCollisionDetector = function () {
+        if (self.collisionLoopRunner) {
+            clearTimeout(self.collisionLoopRunner);
+        }
         var EPSILON_Z = 0.0001;  // To deal with rounding error after fixZ.
         var printVolume = new THREE.Box3(
             new THREE.Vector3(-self.canvasWidth/2, -self.canvasDepth/2, -EPSILON_Z),
             new THREE.Vector3(self.canvasWidth/2, self.canvasDepth/2, self.canvasHeight));
         var TASK_SWITCH_MS = 50;
-        self.collisionDetector.start(self.models(),
-                                     printVolume,
-                                     performance.now() + TASK_SWITCH_MS);
+        var CD = self.collisionDetector.start(self.models(),
+                                              printVolume,
+                                              performance.now() + TASK_SWITCH_MS);
+                var collisionLoop = function () {
+            self.collisionLoopRunner = setTimeout(function() {
+                var result = CD.next(performance.now() + 50);
+                self.markCollidingModels(result.value);
+                if (!result.done) {
+                    collisionLoop();
+                }
+            }, 0);
+        };
+        collisionLoop();
+
     };
 
     self.onChange = function() {

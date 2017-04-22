@@ -166,17 +166,7 @@ export var CollisionDetector = function (callbackFn) {
         self.volume = volume;
         intersecting = [];
         // collisionDetector is a ES6 javascript generator.
-        var collisionDetector = self.findCollisions(endTime);
-        var collisionLoop = function () {
-            self.collisionLoopRunner = setTimeout(function() {
-                var result = collisionDetector.next(performance.now() + 50);
-                callbackFn(result.value);
-                if (!result.done) {
-                    collisionLoop();
-                }
-            }, 0);
-        };
-        collisionLoop();
+        return self.findCollisions(endTime);
     };
 };
 
