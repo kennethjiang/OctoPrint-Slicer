@@ -2,8 +2,8 @@
 
 import * as THREE from 'three';
 
-// callbackFn is called with a list of true/false results of collisions.
-// Yet unknown results are undefined
+// intersecting is a list of true/false results of collisions.  Yet
+// unknown results are undefined
 
 export var CollisionDetector = function (callbackFn) {
     var self = this;
@@ -73,12 +73,7 @@ export var CollisionDetector = function (callbackFn) {
     // Report all models that collide with any other model or stick out
     // of the provided boundingBox.
     var intersecting = [];
-    self.findCollisions = function*(timeoutMilliseconds) {
-        var endTime = undefined;
-        if (timeoutMilliseconds) {
-            endTime = performance.now() + timeoutMilliseconds;
-        }
-
+    self.findCollisions = function*(endTime = Infinity) {
         var geometries = [];
         var geometryBoxes = [];
         for (var o = 0; o < self.objects.length; o++) {
@@ -91,13 +86,8 @@ export var CollisionDetector = function (callbackFn) {
                 newGeo.vertices.push(obj.children[0].geometry.collisionGeometry.vertices[v].clone());
                 newGeo.vertices[v].applyMatrix4(obj.children[0].matrixWorld);
                 newGeoBox.expandByPoint(newGeo.vertices[v]);
-                if (endTime && performance.now() > endTime) {
-                    timeoutMilliseconds = (yield intersecting);
-                    if (timeoutMilliseconds) {
-                        endTime = performance.now() + timeoutMilliseconds;
-                    } else {
-                        endTime = undefined;
-                    }
+                if (performance.now() > endTime) {
+                    endTime = (yield intersecting);
                 }
             }
             geometries.push(newGeo);
@@ -134,13 +124,8 @@ export var CollisionDetector = function (callbackFn) {
                                 t0 = triangles.length; // To force a break.
                                 break;
                             }
-                            if (endTime && performance.now() > endTime) {
-                                timeoutMilliseconds = (yield intersecting);
-                                if (timeoutMilliseconds) {
-                                    endTime = performance.now() + timeoutMilliseconds;
-                                } else {
-                                    endTime = undefined;
-                                }
+                            if (performance.now() > endTime) {
+                                endTime = (yield intersecting);
                             }
                         }
                     }
@@ -166,7 +151,7 @@ export var CollisionDetector = function (callbackFn) {
     // that the collision status is yet unknown.  timeoutMilliseconds is
     // how often to pause to do other events on the webpage, for
     // cooperative multitasking.
-    self.start = function (objects, volume, timeoutMilliseconds) {
+    self.start = function (objects, volume, endTime) {
         if (self.collisionLoopRunner) {
             clearTimeout(self.collisionLoopRunner);
         }
@@ -181,10 +166,10 @@ export var CollisionDetector = function (callbackFn) {
         self.volume = volume;
         intersecting = [];
         // collisionDetector is a ES6 javascript generator.
-        var collisionDetector = self.findCollisions(timeoutMilliseconds);
+        var collisionDetector = self.findCollisions(endTime);
         var collisionLoop = function () {
             self.collisionLoopRunner = setTimeout(function() {
-                var result = collisionDetector.next(timeoutMilliseconds);
+                var result = collisionDetector.next(performance.now() + 50);
                 callbackFn(result.value);
                 if (!result.done) {
                     collisionLoop();

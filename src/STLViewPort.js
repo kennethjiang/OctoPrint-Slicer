@@ -301,7 +301,7 @@ export function STLViewPort( canvas, width, depth, height ) {
         var TASK_SWITCH_MS = 50;
         self.collisionDetector.start(self.models(),
                                      printVolume,
-                                     TASK_SWITCH_MS);
+                                     performance.now() + TASK_SWITCH_MS);
     };
 
     self.onChange = function() {
