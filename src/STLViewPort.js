@@ -293,6 +293,28 @@ export function STLViewPort( canvas, width, depth, height ) {
     };
 
     self.collisionDetector = new CollisionDetector(self.markCollidingModels);
+    self.collisionLooper = null;
+    self.makeCollisionLooper = function() {
+        var EPSILON_Z = 0.0001;  // To deal with rounding error after fixZ.
+        var printVolume = new THREE.Box3(
+            new THREE.Vector3(-self.canvasWidth/2, -self.canvasDepth/2, -EPSILON_Z),
+            new THREE.Vector3(self.canvasWidth/2, self.canvasDepth/2, self.canvasHeight));
+        var collisionDetectorGenerator =
+            self.collisionDetector.start(self.models(),
+                                         printVolume,
+                                         performance.now() + TASK_SWITCH_MS);
+        var collisionLoop = function (task_switch_ms = 50) {
+            self.collisionLoopRunner = setTimeout(function() {
+                var result = collisionDetectorGenerator.next(performance.now() + task_switch_ms);
+                self.markCollidingModels(result.value);
+                if (!result.done) {
+                    collisionLoop(task_switch_ms);
+                }
+            }, 0);
+        };
+        return collisionLoop;
+    };
+
     self.restartCollisionDetector = function () {
         if (self.collisionLoopRunner) {
             clearTimeout(self.collisionLoopRunner);
@@ -306,16 +328,16 @@ export function STLViewPort( canvas, width, depth, height ) {
             self.collisionDetector.start(self.models(),
                                          printVolume,
                                          performance.now() + TASK_SWITCH_MS);
-        var collisionLoop = function () {
+        var collisionLoop = function (task_switch_ms) {
             self.collisionLoopRunner = setTimeout(function() {
-                var result = collisionDetectorGenerator.next(performance.now() + TASK_SWITCH_MS);
+                var result = collisionDetectorGenerator.next(performance.now() + task_switch_ms);
                 self.markCollidingModels(result.value);
                 if (!result.done) {
-                    collisionLoop();
+                    collisionLoop(task_switch_ms);
                 }
             }, 0);
         };
-        collisionLoop();
+        collisionLoop(TASK_SWITCH_MS);
 
     };
 
