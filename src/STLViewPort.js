@@ -299,20 +299,20 @@ export function STLViewPort( canvas, width, depth, height ) {
         var printVolume = new THREE.Box3(
             new THREE.Vector3(-self.canvasWidth/2, -self.canvasDepth/2, -EPSILON_Z),
             new THREE.Vector3(self.canvasWidth/2, self.canvasDepth/2, self.canvasHeight));
-        var collisionDetectorGenerator =
+        self.collisionDetectorIterator =
             self.collisionDetector.start(self.models(),
                                          printVolume,
                                          performance.now() + TASK_SWITCH_MS);
         var collisionLoop = function (task_switch_ms = 50) {
-            self.collisionLoopRunner = setTimeout(function() {
-                var result = collisionDetectorGenerator.next(performance.now() + task_switch_ms);
+            self.collisionLoopTimeout = setTimeout(function() {
+                var result = collisionDetectorIterator.next(performance.now() + task_switch_ms);
                 self.markCollidingModels(result.value);
                 if (!result.done) {
                     collisionLoop(task_switch_ms);
                 }
             }, 0);
         };
-        return collisionLoop;
+        collisionLoop();
     };
 
     self.restartCollisionDetector = function () {
