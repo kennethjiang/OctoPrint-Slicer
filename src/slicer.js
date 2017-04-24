@@ -388,9 +388,12 @@ function SlicerViewModel(parameters) {
         });
     };
 
-    self.slice = function() {
+    self.slice = function(ignoreCollisions = false) {
         mixpanel.track("Slice Model");
-
+        $('#tab_plugin_slicer > div.translucent-blocker').show();
+        if (!ignoreCollisions && self.stlViewPort.hasCollisions()) {
+            // TODO: Modal dialog.
+        }
         var target = self.slicingViewModel.target;
         var sliceRequestData;
 

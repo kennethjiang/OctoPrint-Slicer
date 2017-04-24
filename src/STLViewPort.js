@@ -176,7 +176,7 @@ export function STLViewPort( canvas, width, depth, height ) {
             self.dispatchEvent( { type: eventType.add, models: [ newModel ] } );
             // Detect collisions after the event in case the users wants to arrange, for example.
             self.dispatchEvent( { type: eventType.change } );
-            self.restartCollisionDetector();
+            resetCollisionDetector();
         });
     };
 
@@ -292,59 +292,45 @@ export function STLViewPort( canvas, width, depth, height ) {
         }
     };
 
-    self.collisionDetector = new CollisionDetector(self.markCollidingModels);
-    self.collisionLooper = null;
-    self.makeCollisionLooper = function() {
+    // true to do live collision detection.  Collision Detection is
+    // always run to completion right before slicing, regardless this
+    // value.
+    const LIVE_COLLISION_DETECTOR = true; 
+    var collisionDetector = new CollisionDetector();
+    var setCollisionDetector = function() {
         var EPSILON_Z = 0.0001;  // To deal with rounding error after fixZ.
         var printVolume = new THREE.Box3(
             new THREE.Vector3(-self.canvasWidth/2, -self.canvasDepth/2, -EPSILON_Z),
             new THREE.Vector3(self.canvasWidth/2, self.canvasDepth/2, self.canvasHeight));
-        self.collisionDetectorIterator =
-            self.collisionDetector.start(self.models(),
-                                         printVolume,
-                                         performance.now() + TASK_SWITCH_MS);
-        var collisionLoop = function (task_switch_ms = 50) {
-            self.collisionLoopTimeout = setTimeout(function() {
-                var result = collisionDetectorIterator.next(performance.now() + task_switch_ms);
-                self.markCollidingModels(result.value);
-                if (!result.done) {
-                    collisionLoop(task_switch_ms);
-                }
-            }, 0);
-        };
-        collisionLoop();
-    };
+        collisionDetector.makeIterator(self.models(), printVolume);
+    }
 
-    self.restartCollisionDetector = function () {
-        if (self.collisionLoopRunner) {
-            clearTimeout(self.collisionLoopRunner);
+    // Run whenever the collision detection inputs may have changed.
+    var resetCollisionDetector = function () {
+        collisionDetector.clearIterator();
+        if (LIVE_COLLISION_DETECTOR) {
+            setCollisionDetector();
+            var TASK_SWITCH_MS = 50;
+            collisionDetector.start(self.markCollidingModels, TASK_SWITCH_MS);
         }
-        var EPSILON_Z = 0.0001;  // To deal with rounding error after fixZ.
-        var printVolume = new THREE.Box3(
-            new THREE.Vector3(-self.canvasWidth/2, -self.canvasDepth/2, -EPSILON_Z),
-            new THREE.Vector3(self.canvasWidth/2, self.canvasDepth/2, self.canvasHeight));
-        var TASK_SWITCH_MS = 50;
-        var collisionDetectorGenerator =
-            self.collisionDetector.start(self.models(),
-                                         printVolume,
-                                         performance.now() + TASK_SWITCH_MS);
-        var collisionLoop = function (task_switch_ms) {
-            self.collisionLoopRunner = setTimeout(function() {
-                var result = collisionDetectorGenerator.next(performance.now() + task_switch_ms);
-                self.markCollidingModels(result.value);
-                if (!result.done) {
-                    collisionLoop(task_switch_ms);
-                }
-            }, 0);
-        };
-        collisionLoop(TASK_SWITCH_MS);
-
     };
+
+    // If the collision detector is not already running, make the
+    // iterator and start it to run until it's done.  Otherwise,
+    // complete the current collision detector.
+    self.hasCollisions = function () {
+        if (!collisionDetector.hasIterator()) {
+            setCollisionDetector();
+        }
+        var collisions = collisionDetector.start(Infinity);
+        self.markCollidingModels(collisions);
+        return collisions.findIndex(function (collides) { return collides; }) > -1;
+    }
 
     self.onChange = function() {
         self.dispatchEvent( { type: eventType.change } );
         // Detect collisions after the event in case the users wants to fix Z, for example.
-        self.restartCollisionDetector();
+        resetCollisionDetector();
     };
 
     /**
