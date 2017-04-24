@@ -5,8 +5,8 @@
     </div>
     <div class="modal-body">
         <div class="controls">
-             <button class="btn btn-block" data-bind="click: function() { $data.slice(true); }">Slice anyway.</button>
-             <button class="btn btn-block" data-bind="click: function() { $data.startLongRunning($.noop()); }">Cancel.</button>
+             <button class="btn btn-block" data-dismiss="modal" data-bind="click: function() { $data.slice(true); }">Slice anyway.</button>
+             <button class="btn btn-block" data-dismiss="modal">Cancel.</button>
              Hint: You can Alt+Click to slice just this model or Ctrl+Click to add to the existing models.
              <br />
         </div>

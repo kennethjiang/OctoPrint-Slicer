@@ -295,4 +295,5 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
 <div id="slicer">
     <button class="btn btn-primary btn-block" data-bind="click: function() { $data.slice(); }, enable: $data.canSliceNow(), text: ($data.canSliceNow() ? 'Slice it!' : 'Slicing disabled - currently printing or no model loaded.')"></button>
     {% include "modal.jinja2" %}
+    {% include "slice_modal.jinja2" %}
 </div>
