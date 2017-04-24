@@ -8,5 +8,5 @@ dist
 .DS_Store
 *.zip
 /data
-node_modules
+/node_modules
 npm-debug.log
