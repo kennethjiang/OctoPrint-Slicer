@@ -4,16 +4,21 @@ import nodeResolve from 'rollup-plugin-node-resolve';
 
 let pkg = require('./package.json');
 
-export default {
-  entry: 'src/slicer.js',
-  plugins: [
-    babel(babelrc()),
+let plugins = [
     nodeResolve({
              jsnext: true,
              main: true,
              browser: true,
     }),
-  ],
+]
+
+if (process.env.DEBUG !== 'true') {
+    plugins.unshift(babel(babelrc()));
+}
+
+export default {
+  entry: 'src/slicer.js',
+  plugins,
   dest: pkg.main,
   format: 'iife',
   sourceMap: false

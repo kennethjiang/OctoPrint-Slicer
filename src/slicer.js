@@ -54,12 +54,15 @@ function SlicerViewModel(parameters) {
     self.overridesViewModel = parameters[1];
     self.printerStateViewModel = parameters[2];
     self.printerProfilesViewModel = parameters[3];
+    self.filesViewModel = parameters[4];
 
     self.lockScale = true;
     self.selectedSTLs = {};
     self.newSession = true;
 
-
+    self.modifierKeys = {ctrlKey: false,
+                         metaKey: false,
+                         altKey: false};
     // Override slicingViewModel.show to surpress default slicing behavior
     self.slicingViewModel.show = function(target, file, force) {
         if (!self.slicingViewModel.enableSlicingDialog() && !force) {
@@ -70,14 +73,48 @@ function SlicerViewModel(parameters) {
         $('a[href="#tab_plugin_slicer"]').tab('show');
 
         self.selectedSTLs[file] = target;
-        if (self.newSession || self.altKey) {
+        if (self.newSession || self.modifierKeys.altKey) {
             self.addToNewSession();
-        } else if (self.ctrlKey) {
+        } else if (self.modifierKeys.ctrlKey || self.modifierKeys.metaKey) {
             self.addToExistingSession();
         } else {
             $("#plugin-slicer-load-model").modal("show");
         }
     };
+
+    // Override filesViewModel so that we can capture Ctrl and Alt
+    // when drag-n-drop completes.
+    self.originalHandleUploadStart = self.filesViewModel._handleUploadStart;
+    self.filesViewModel._handleUploadStart = function(e, data) {
+        if (typeof e.ctrlKey !== "undefined") {
+            data.modifierKeys = {ctrlKey: e.ctrlKey,
+                                 altKey: e.altKey,
+                                 metaKey: e.metaKey};
+        }
+        return self.originalHandleUploadStart(e, data);
+    };
+
+    self.originalHandleUploadDone = self.filesViewModel._handleUploadDone;
+    self.filesViewModel._handleUploadDone = function(e, data) {
+        // Save previous modifier keys.
+        var originalModifierKeys = self.modifierKeys;
+        // Copy them from data, where they were stored for upload start.
+        if (data.modifierKeys) {
+            self.modifierKeys = data.modifierKeys;
+        }
+        var result = self.originalHandleUploadDone(e, data);
+        // Restore actual modifier key values.
+        self.modifierKeys = originalModifierKeys;
+        return result;
+    };
+
+    self.copyModifierKey = ko.computed(function () {
+        if (navigator.platform.indexOf("Mac") > -1) {
+            return "Cmd";
+        } else {
+            return "Ctrl";
+        }
+    });
 
     self.addToNewSession = function() {
         self.stlViewPort.removeAllModels();
@@ -188,12 +225,11 @@ function SlicerViewModel(parameters) {
         CANVAS_DEPTH = 588,
         CANVAS_HEIGHT = 588;
 
-    self.ctrlKey = false;
-    self.altKey = false;
     self.init = function() {
         $(document).on('keyup keydown', function(e) {
-            self.ctrlKey = e.ctrlKey;
-            self.altKey = e.altKey;
+            self.modifierKeys = {ctrlKey: e.ctrlKey,
+                                 altKey: e.altKey,
+                                 metaKey: e.metaKey};
         });
         $('#tab_plugin_slicer > div.translucent-blocker').hide();
 
@@ -742,7 +778,7 @@ OCTOPRINT_VIEWMODELS.push([
     SlicerViewModel,
 
     // e.g. loginStateViewModel, settingsViewModel, ...
-    [ "slicingViewModel", "overridesViewModel", "printerStateViewModel", "printerProfilesViewModel" ],
+    [ "slicingViewModel", "overridesViewModel", "printerStateViewModel", "printerProfilesViewModel", "filesViewModel" ],
 
     // e.g. #settings_plugin_slicer, #tab_plugin_slicer, ...
     [ "#slicer" ]
