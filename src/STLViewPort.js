@@ -39,14 +39,14 @@ export function STLViewPort( canvas, width, depth, height ) {
         metalness: 0.5,
         roughness: 0.5,
         modelNonCollidingColors: {
-            inactive: new THREE.Color("#60715b"), // hsv 106.36,10.78,40
-            active: new THREE.Color("#34bf0d"), // hsv 106.85, 87.25, 40
-            hover: new THREE.Color("#84f25c"), // hsv 104, 85.2, 65
+            inactive: new THREE.Color("hsl(106, 20%, 40%)"),
+            active: new THREE.Color("hsl(106, 87%, 40%)"),
+            hover: new THREE.Color("hsl(106, 87%, 65%)"),
         },
         modelCollidingColors: {
-            inactive: new THREE.Color("#665b5b"), // hsv 0,10.78,40
-            active: new THREE.Color("#bf0d0d"), // hsv 0, 87.25, 40
-            hover: new THREE.Color("#a61919"), // hsv 0, 85.2, 65
+            inactive: new THREE.Color("hsl(0, 20%, 40%)"),
+            active: new THREE.Color("hsl(0, 87%, 40%)"),
+            hover: new THREE.Color("hsl(0, 87%, 65%)"),
         },
         ambientLightColor: new THREE.Color("#2b2b2b"),
         directionalLightColor: new THREE.Color("#ffffff"),
