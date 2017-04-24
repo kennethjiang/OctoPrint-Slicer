@@ -153,7 +153,7 @@ export function STLViewPort( canvas, width, depth, height ) {
                 self.currentCollisions[index] ?
                 self.effectController.modelCollidingColors :
                 self.effectController.modelNonCollidingColors;
-            
+
             if (model == self.selectedModel()) {
                 model.children[0].material.color.copy(effectController.active);
             } else if ( self.pointerInteractions.hoveredObject && model == self.pointerInteractions.hoveredObject.parent ) {
@@ -295,7 +295,7 @@ export function STLViewPort( canvas, width, depth, height ) {
     // true to do live collision detection.  Collision Detection is
     // always run to completion right before slicing, regardless this
     // value.
-    const LIVE_COLLISION_DETECTOR = true; 
+    const LIVE_COLLISION_DETECTOR = false;
     var collisionDetector = new CollisionDetector();
     var setCollisionDetector = function() {
         var EPSILON_Z = 0.0001;  // To deal with rounding error after fixZ.
@@ -311,7 +311,7 @@ export function STLViewPort( canvas, width, depth, height ) {
         if (LIVE_COLLISION_DETECTOR) {
             setCollisionDetector();
             var TASK_SWITCH_MS = 50;
-            collisionDetector.start(self.markCollidingModels, TASK_SWITCH_MS);
+            collisionDetector.startBackground(self.markCollidingModels, TASK_SWITCH_MS);
         }
     };
 

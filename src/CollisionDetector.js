@@ -137,7 +137,7 @@ export var CollisionDetector = function () {
                 intersecting[geometry] = false;
             }
         }
-        return intersecting;
+        yield intersecting;
     };
 
     var timeout = null;
@@ -154,7 +154,7 @@ export var CollisionDetector = function () {
     // Make a new collision iterator on the objects and volume given.
     // If one is already running it is stopped and removed.
     self.makeIterator = function (objects, volume) {
-        stop();
+        self.stop();
         for (var i = 0; i < objects.length; i++) {
             if (!objects[i].children[0].geometry.collisionGeometry) {
                 objects[i].children[0].geometry.collisionGeometry =
@@ -162,12 +162,14 @@ export var CollisionDetector = function () {
             }
         }
         // iterator is a ES6 javascript generator.
+        intersecting = [];
         iterator = self.findCollisions(objects, volume);
     };
 
     // Remove the current iterator, resetting the collision detection.
     self.clearIterator = function () {
-        self.iterator = null;
+        self.stop();
+        iterator = null;
     }
 
     self.hasIterator = function() {
@@ -185,15 +187,15 @@ export var CollisionDetector = function () {
     // task_switch_ms.  It is an error to call this without first
     // making a collision iterator.
     self.startBackground = function (callbackFn, task_switch_ms = 50) {
-        stop();
+        self.stop();
         var collisionLoop = function () {
-            self.timeout = setTimeout(function() {
+            timeout = setTimeout(function() {
                 var result = iterator.next(performance.now() + task_switch_ms);
                 if (!result.done) {
                     callbackFn(result.value);
                     collisionLoop();
                 } else {
-                    self.timeout = null;  // All done.
+                    timeout = null;  // All done.
                 }
             }, 0);
         };
@@ -211,7 +213,7 @@ export var CollisionDetector = function () {
     // stopped before starting in the foreground.  It is an error to
     // call this without first making a collision iterator.
     self.start = function (endTime = Infinity) {
-        stop();
+        self.stop();
         iterator.next(endTime);  // If the iterator was already done,
                                  // this might not return a value!
         return intersecting;
