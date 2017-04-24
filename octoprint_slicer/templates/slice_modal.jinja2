@@ -1,0 +1,14 @@
+<div id="plugin-slicer-slice-collisions" class="modal hide fade modal-sm">
+    <div class="modal-header">
+        <a href="#" class="close" data-dismiss="modal" aria-hidden="true">&times;</a>
+        <h3>Models overlap!</h3>
+    </div>
+    <div class="modal-body">
+        <div class="controls">
+             <button class="btn btn-block" data-bind="click: function() { $data.slice(ignoreCollisions = true); }">Slice anyway.</button>
+             <button class="btn btn-block" data-bind="click: function() { $data.startLongRunning($.noop()); }">Cancel.</button>
+             Hint: You can Alt+Click to slice just this model or Ctrl+Click to add to the existing models.
+             <br />
+        </div>
+    </div>
+</div>

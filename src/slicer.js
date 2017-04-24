@@ -392,7 +392,7 @@ function SlicerViewModel(parameters) {
         mixpanel.track("Slice Model");
         $('#tab_plugin_slicer > div.translucent-blocker').show();
         if (!ignoreCollisions && self.stlViewPort.hasCollisions()) {
-            // TODO: Modal dialog.
+            $("#plugin-slicer-slice-collisions").modal("show");
         }
         var target = self.slicingViewModel.target;
         var sliceRequestData;
