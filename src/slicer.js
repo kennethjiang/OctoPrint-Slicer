@@ -59,7 +59,9 @@ function SlicerViewModel(parameters) {
     self.selectedSTLs = {};
     self.newSession = true;
 
-
+    self.modifierKeys = {ctrlKey: false,
+                         metaKey: false,
+                         altKey: false};
     // Override slicingViewModel.show to surpress default slicing behavior
     self.slicingViewModel.show = function(target, file, force) {
         if (!self.slicingViewModel.enableSlicingDialog() && !force) {
@@ -70,9 +72,9 @@ function SlicerViewModel(parameters) {
         $('a[href="#tab_plugin_slicer"]').tab('show');
 
         self.selectedSTLs[file] = target;
-        if (self.newSession || self.altKey) {
+        if (self.newSession || self.modifierKeys.altKey) {
             self.addToNewSession();
-        } else if (self.ctrlKey) {
+        } else if (self.modifierKeys.ctrlKey || self.modifierKeys.metaKey) {
             self.addToExistingSession();
         } else {
             $("#plugin-slicer-load-model").modal("show");
@@ -83,29 +85,35 @@ function SlicerViewModel(parameters) {
     // when drag-n-drop completes.
     self.originalHandleUploadStart = self.filesViewModel._handleUploadStart;
     self.filesViewModel._handleUploadStart = function(e, data) {
-        data.ctrlKey = e.ctrlKey;
-        data.altKey = e.altKey;
+        if (typeof e.ctrlKey !== "undefined") {
+            data.modifierKeys = {ctrlKey: e.ctrlKey,
+                                 altKey: e.altKey,
+                                 metaKey: e.metaKey};
+        }
         return self.originalHandleUploadStart(e, data);
-    }
+    };
 
     self.originalHandleUploadDone = self.filesViewModel._handleUploadDone;
     self.filesViewModel._handleUploadDone = function(e, data) {
         // Save previous modifier keys.
-        var originalCtrlKey = self.ctrlKey;
-        var originalAltKey = self.altKey;
+        var originalModifierKeys = self.modifierKeys;
         // Copy them from data, where they were stored for upload start.
-        if (data.hasOwnProperty("ctrlKey")) {
-            self.ctrlKey = data.ctrlKey;
-        }
-        if (data.hasOwnProperty("altKey")) {
-            self.altKey = data.altKey;
+        if (data.modifierKeys) {
+            self.modifierKeys = data.modifierKeys;
         }
         var result = self.originalHandleUploadDone(e, data);
         // Restore actual modifier key values.
-        self.ctrlKey = originalCtrlKey;
-        self.altKey = originalAltKey;
+        self.modifierKeys = originalModifierKeys;
         return result;
-    }
+    };
+
+    self.copyModifierKey = ko.computed(function () {
+        if (navigator.platform.indexOf("Mac") > -1) {
+            return "Cmd";
+        } else {
+            return "Ctrl";
+        }
+    });
 
     self.addToNewSession = function() {
         self.stlViewPort.removeAllModels();
@@ -210,12 +218,11 @@ function SlicerViewModel(parameters) {
     var CANVAS_WIDTH = 588,
         CANVAS_HEIGHT = 588;
 
-    self.ctrlKey = false;
-    self.altKey = false;
     self.init = function() {
         $(document).on('keyup keydown', function(e) {
-            self.ctrlKey = e.ctrlKey;
-            self.altKey = e.altKey;
+            self.modifierKeys = {ctrlKey: e.ctrlKey,
+                                 altKey: e.altKey,
+                                 metaKey: e.metaKey};
         });
         $('#tab_plugin_slicer > div.translucent-blocker').hide();
 
