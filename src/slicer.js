@@ -53,6 +53,7 @@ function SlicerViewModel(parameters) {
     self.overridesViewModel = parameters[1];
     self.printerStateViewModel = parameters[2];
     self.printerProfilesViewModel = parameters[3];
+    self.filesViewModel = parameters[4];
 
     self.lockScale = true;
     self.selectedSTLs = {};
@@ -77,6 +78,34 @@ function SlicerViewModel(parameters) {
             $("#plugin-slicer-load-model").modal("show");
         }
     };
+
+    // Override filesViewModel so that we can capture Ctrl and Alt
+    // when drag-n-drop completes.
+    self.originalHandleUploadStart = self.filesViewModel._handleUploadStart;
+    self.filesViewModel._handleUploadStart = function(e, data) {
+        data.ctrlKey = e.ctrlKey;
+        data.altKey = e.altKey;
+        return self.originalHandleUploadStart(e, data);
+    }
+
+    self.originalHandleUploadDone = self.filesViewModel._handleUploadDone;
+    self.filesViewModel._handleUploadDone = function(e, data) {
+        // Save previous modifier keys.
+        var originalCtrlKey = self.ctrlKey;
+        var originalAltKey = self.altKey;
+        // Copy them from data, where they were stored for upload start.
+        if (data.hasOwnProperty("ctrlKey")) {
+            self.ctrlKey = data.ctrlKey;
+        }
+        if (data.hasOwnProperty("altKey")) {
+            self.altKey = data.altKey;
+        }
+        var result = self.originalHandleUploadDone(e, data);
+        // Restore actual modifier key values.
+        self.ctrlKey = originalCtrlKey;
+        self.altKey = originalAltKey;
+        return result;
+    }
 
     self.addToNewSession = function() {
         self.stlViewPort.removeAllModels();
@@ -706,7 +735,7 @@ OCTOPRINT_VIEWMODELS.push([
     SlicerViewModel,
 
     // e.g. loginStateViewModel, settingsViewModel, ...
-    [ "slicingViewModel", "overridesViewModel", "printerStateViewModel", "printerProfilesViewModel" ],
+    [ "slicingViewModel", "overridesViewModel", "printerStateViewModel", "printerProfilesViewModel", "filesViewModel" ],
 
     // e.g. #settings_plugin_slicer, #tab_plugin_slicer, ...
     [ "#slicer" ]
