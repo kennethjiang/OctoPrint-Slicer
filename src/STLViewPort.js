@@ -314,12 +314,10 @@ export function STLViewPort( canvas, width, height ) {
         var model = self.selectedModel();
         if (! model) return;
         var tippingQuaternion = tipping.tipObject(model);
-        while (tippingQuaternion) {
-            model.quaternion.premultiply(tippingQuaternion);
-            self.recalculateOverhang(model);
-            self.dispatchEvent( { type: eventType.change } );  // We need this for the fixZ.
-            tippingQuaternion = tipping.tipObject(model);
-        }
+        model.quaternion.premultiply(tippingQuaternion);
+        self.recalculateOverhang(model);
+        self.dispatchEvent( { type: eventType.change } );  // We need this for the fixZ.
+        tippingQuaternion = tipping.tipObject(model);
 
     };
 
