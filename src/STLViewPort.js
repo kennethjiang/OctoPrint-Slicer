@@ -380,7 +380,6 @@ export function STLViewPort( canvas, width, height ) {
         var orientation = model.orientationOptimizer.printabilityOfOrientationByRotation( model.rotation );
         self.tintSurfaces(model, null, 255, 255, 255); // Clear tints off the whole model
         self.tintSurfaces(model, orientation.overhang, 128, 16, 16);
-        self.tintSurfaces(model, orientation.bottom, 16, 16, 128);
     };
 
     self.tintSurfaces = function(model, surfaces, r, g, b) {
