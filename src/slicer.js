@@ -469,9 +469,15 @@ function SlicerViewModel(parameters) {
         });
     };
 
-    self.slice = function() {
+    self.slice = function(ignoreCollisions = false) {
         mixpanel.track("Slice Model");
-
+        $('#tab_plugin_slicer > div.translucent-blocker').show();
+        var hasCollisions = self.stlViewPort.hasCollisions();
+        $('#tab_plugin_slicer > div.translucent-blocker').hide();
+        if (!ignoreCollisions && hasCollisions) {
+            $("#plugin-slicer-slice-collisions").modal("show");
+            return;
+        }
         var target = self.slicingViewModel.target;
         var sliceRequestData;
 
