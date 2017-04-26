@@ -314,12 +314,21 @@ export function STLViewPort( canvas, width, height ) {
         var model = self.selectedModel();
         if (! model) return;
 
+        const TASK_SWITCH_MS = 250;
+        var tipIterator = tipping.tipObject(model, performance.now() + TASK_SWITCH_MS);
         var tipLoop = function() {
             setTimeout(function() {
-                var tippingQuaternion = tipping.tipObject(model);
+                var tipResult = tipIterator.next(performance.now() + TASK_SWITCH_MS);
+                var tipDone = tipResult.done;
+                var tippingQuaternion = tipResult.value; // Might be undefined.
                 if (tippingQuaternion) {
                     model.quaternion.premultiply(tippingQuaternion);
                     self.dispatchEvent( { type: eventType.change } );  // We need this for the fixZ.
+                    // There might be more to do, make a new iterator.
+                    tipIterator = tipping.tipObject(model, performance.now() + TASK_SWITCH_MS);
+                    tipLoop();
+                } else if (!tipDone) {
+                    // No quaternion yet but still not done, keep going.
                     tipLoop();
                 } else {
                     self.recalculateOverhang(model);

@@ -174,7 +174,7 @@ export var Tipping = function () {
         return closestPoint;
     };
 
-    self.tipObject = function(object) {
+    self.tipObject = function*(object, endTime) {
         object.updateMatrixWorld();
         // Manually convert BufferGeometry to Geometry
         var faces = [];
@@ -188,6 +188,9 @@ export var Tipping = function () {
                         .applyMatrix4(object.children[0].matrixWorld),
                     new THREE.Vector3(positions[i+6], positions[i+7], positions[i+8])
                         .applyMatrix4(object.children[0].matrixWorld)));
+            if (performance.now() > endTime) {
+                endTime = yield;
+            }
         }
         var bottomPoints = [];
         var originalBottomPoints = [];
@@ -197,6 +200,9 @@ export var Tipping = function () {
                 if (vertex.z < EPSILON) {
                     bottomPoints.push(new THREE.Vector2(vertex.x, vertex.y));
                     originalBottomPoints.push(vertex);
+                }
+                if (performance.now() > endTime) {
+                    endTime = yield;
                 }
             }
         }
@@ -233,12 +239,15 @@ export var Tipping = function () {
                     smallestRotationAngle = rotationAngle;
                     vertexToPlatform = vertex;
                 }
+                if (performance.now() > endTime) {
+                    endTime = yield;
+                }
             }
         }
         if (smallestRotationAngle > Math.PI/180) {
             //smallestRotationAngle = Math.PI/180; // limiting tipping to 1 degree
         }
-        return new THREE.Quaternion().setFromAxisAngle(rotationPlane.normal.clone().normalize(), smallestRotationAngle);
+        yield new THREE.Quaternion().setFromAxisAngle(rotationPlane.normal.clone().normalize(), smallestRotationAngle);
     }
 };
 
