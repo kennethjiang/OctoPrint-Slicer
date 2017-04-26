@@ -43,7 +43,7 @@ export function STLViewPort( canvas, width, height ) {
         directionalLightColor: new THREE.Color("#ffffff"),
     };
 
-    var eventType = { change: "change", add: "add", delete: "delete", split: "split" };
+    var eventType = { change: "change", add: "add", delete: "delete" };
 
     self.init = function() {
 
@@ -160,8 +160,7 @@ export function STLViewPort( canvas, width, height ) {
 
     self.loadSTL = function ( url, onLoad ) {
         new STLLoader().load(url, function ( geometry ) {
-            var newModel = self.addModelOfGeometry(geometry);
-            self.dispatchEvent( { type: eventType.add, models: [ newModel ] } );
+            self.addModelOfGeometry(geometry);
         });
     };
 
@@ -196,6 +195,7 @@ export function STLViewPort( canvas, width, height ) {
         self.scene.add(model);
         self.selectModel(model);
 
+        self.dispatchEvent( { type: eventType.add, models: [ model ] } );
         return model;
 
     };
@@ -334,6 +334,13 @@ export function STLViewPort( canvas, width, height ) {
 
     };
 
+    self.duplicateSelectedModel = function( copies ) {
+        for (var i = 0; i < copies; i++) {
+            var originalModel = self.selectedModel();
+            self.addModelOfGeometry( originalModel.children[0].geometry.clone(), originalModel);
+        }
+    };
+
     self.splitSelectedModel = function() {
         if (!self.selectedModel()) {
             return;
@@ -342,11 +349,13 @@ export function STLViewPort( canvas, width, height ) {
         var originalModel = self.selectedModel()
         var geometry = originalModel.children[0].geometry;
         var newGeometries = BufferGeometryAnalyzer.isolatedGeometries(geometry);
-        var newModels = newGeometries.map( function(geometry) {
-                return self.addModelOfGeometry( geometry, originalModel );
-            });
+
         self.removeModel( originalModel );
-        self.dispatchEvent( { type: eventType.split, from: originalModel, to: newModels } );
+        self.dispatchEvent( { type: eventType.delete, models: [originalModel] } );
+
+        forEach(newGeometries, function(geometry) {
+            self.addModelOfGeometry( geometry, originalModel );
+        });
     };
 
     self.onlyOneOriginalModel = function() {
