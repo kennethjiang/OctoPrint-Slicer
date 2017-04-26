@@ -13,10 +13,10 @@ export var Tipping = function () {
         // Consider the line extending the segment, parameterized as v
         // + t (w - v).  We find projection of point p onto the line.
         // It falls where t = [(p-v) . (w-v)] / |w-v|^2
+        var t = p.clone().sub(v).dot(w.clone().sub(v)) / l2;
         if (segment) {
             t = Math.min(1, Math.max(0, t));  // Clamp to line segment.
         }
-        var t = p.clone().sub(v).dot(w.clone().sub(v)) / l2;
         var projection = v.clone().add(w.clone().sub(v).multiplyScalar(t));
         return projection;
     }
@@ -125,14 +125,14 @@ export var Tipping = function () {
     };
 
     // Finds the center of mass of a geometry.
-    self.centroid = function(geometry) {
+    self.centroid = function(faces) {
         // Volume = magnitude(a*(b cross c))/6
         var totalVolume = 0;
         var totalCentroid = new THREE.Vector3();
-        for (var face of geometry.faces) {
-            var a = geometry.vertices[face.a];
-            var b = geometry.vertices[face.b];
-            var c = geometry.vertices[face.c];
+        for (var face of faces) {
+            var a = face.a;
+            var b = face.b;
+            var c = face.c;
             var volume = b.clone().cross(c).dot(a)/6;
             var centroid = a.clone().add(b).add(c).divideScalar(4);
             totalVolume += volume;
@@ -174,19 +174,40 @@ export var Tipping = function () {
         return closestPoint;
     };
 
-    self.tipObject = function(object) {
-        const EPSILON = 0.0001;
-        var bottomPoints = [];
+    self.tipObject = function*(object, endTime) {
         object.updateMatrixWorld();
-        var geometry = new THREE.Geometry().fromBufferGeometry(object.children[0].geometry);
-        geometry.applyMatrix(object.children[0].matrixWorld);
-        for (var vertex of geometry.vertices) {
-            if (vertex.z < EPSILON) {
-                bottomPoints.push(new THREE.Vector2(vertex.x, vertex.y));
+        // Manually convert BufferGeometry to Geometry
+        var faces = [];
+        var positions = object.children[0].geometry.getAttribute("position").array;
+        for (var i = 0; i < positions.length; i+=9) {
+            faces.push(
+                new THREE.Triangle(
+                    new THREE.Vector3(positions[i], positions[i+1], positions[i+2])
+                        .applyMatrix4(object.children[0].matrixWorld),
+                    new THREE.Vector3(positions[i+3], positions[i+4], positions[i+5])
+                        .applyMatrix4(object.children[0].matrixWorld),
+                    new THREE.Vector3(positions[i+6], positions[i+7], positions[i+8])
+                        .applyMatrix4(object.children[0].matrixWorld)));
+            if (performance.now() > endTime) {
+                endTime = yield;
+            }
+        }
+        var bottomPoints = [];
+        var originalBottomPoints = [];
+        const EPSILON = 0.0001;
+        for (var face of faces) {
+            for (var vertex of [face.a, face.b, face.c]) {
+                if (vertex.z < EPSILON) {
+                    bottomPoints.push(new THREE.Vector2(vertex.x, vertex.y));
+                    originalBottomPoints.push(vertex);
+                }
+                if (performance.now() > endTime) {
+                    endTime = yield;
+                }
             }
         }
         var baseHull = self.convexHull(bottomPoints);
-        var centroid = self.centroid(geometry);
+        var centroid = self.centroid(faces);
         var bottomCentroid = new THREE.Vector2(centroid.x, centroid.y);
         if (self.pointInShape(bottomCentroid, baseHull)) {
             return; // No tipping needed.
@@ -207,21 +228,26 @@ export var Tipping = function () {
         // debugger;
         var smallestRotationAngle = Infinity;
         var vertexToPlatform;
-        for (var vertex of geometry.vertices) {
-            if (vertex.z < EPSILON) {
-                continue; // It's already on the bottom.
-            }
-            // How far is that vertex from being rotated to the platform?
-            var rotationAngle = vertex.clone().sub(projectedCentroid3).projectOnPlane(rotationPlane.normal).angleTo(bottomCentroid3.clone().sub(projectedCentroid3))
-            if (rotationAngle < smallestRotationAngle) {
-                smallestRotationAngle = rotationAngle;
-                vertexToPlatform = vertex;
+        for (var face of faces) {
+            for (var vertex of [face.a, face.b, face.c]) {
+                if (vertex.z < EPSILON) {
+                    continue; // It's already on the bottom.
+                }
+                // How far is that vertex from being rotated to the platform?
+                var rotationAngle = vertex.clone().sub(projectedCentroid3).projectOnPlane(rotationPlane.normal).angleTo(bottomCentroid3.clone().sub(projectedCentroid3))
+                if (rotationAngle < smallestRotationAngle && rotationAngle > 0) {
+                    smallestRotationAngle = rotationAngle;
+                    vertexToPlatform = vertex;
+                }
+                if (performance.now() > endTime) {
+                    endTime = yield;
+                }
             }
         }
         if (smallestRotationAngle > Math.PI/180) {
-            smallestRotationAngle = Math.PI/180; // limiting tipping to 1 degree
+            //smallestRotationAngle = Math.PI/180; // limiting tipping to 1 degree
         }
-        return new THREE.Quaternion().setFromAxisAngle(rotationPlane.normal.clone().normalize(), smallestRotationAngle);
+        yield new THREE.Quaternion().setFromAxisAngle(rotationPlane.normal.clone().normalize(), smallestRotationAngle);
     }
 };
 

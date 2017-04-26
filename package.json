@@ -6,7 +6,8 @@
   "main": "octoprint_slicer/static/js/octoprint_slicer.min.js",
   "scripts": {
     "build": "rollup -c",
-    "dev": "rollup -c -w --environment DEBUG"
+    "dev": "rollup -c -w --environment DEBUG",
+    "debug": "rollup -c --environment DEBUG"
   },
   "dependencies": {
     "3tk": "^0.3.12",

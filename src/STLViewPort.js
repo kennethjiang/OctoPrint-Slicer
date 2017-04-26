@@ -378,17 +378,33 @@ export function STLViewPort( canvas, width, depth, height ) {
     };
 
     var tipping = new Tipping();
-    self.laySelectedModelFlat = function() {
+    self.laySelectedModelFlat = function(doneFn) {
         var model = self.selectedModel();
         if (! model) return;
-        var tippingQuaternion = tipping.tipObject(model);
-        while (tippingQuaternion) {
-            model.quaternion.premultiply(tippingQuaternion);
-            self.recalculateOverhang(model);
-            self.dispatchEvent( { type: eventType.change } );  // We need this for the fixZ.
-            tippingQuaternion = tipping.tipObject(model);
-        }
 
+        const TASK_SWITCH_MS = 250;
+        var tipIterator = tipping.tipObject(model, performance.now() + TASK_SWITCH_MS);
+        var tipLoop = function() {
+            setTimeout(function() {
+                var tipResult = tipIterator.next(performance.now() + TASK_SWITCH_MS);
+                var tipDone = tipResult.done;
+                var tippingQuaternion = tipResult.value; // Might be undefined.
+                if (tippingQuaternion) {
+                    model.quaternion.premultiply(tippingQuaternion);
+                    self.dispatchEvent( { type: eventType.change } );  // We need this for the fixZ.
+                    // There might be more to do, make a new iterator.
+                    tipIterator = tipping.tipObject(model, performance.now() + TASK_SWITCH_MS);
+                    tipLoop();
+                } else if (!tipDone) {
+                    // No quaternion yet but still not done, keep going.
+                    tipLoop();
+                } else {
+                    self.recalculateOverhang(model);
+                    doneFn();
+                }
+            }, 0);
+        };
+        tipLoop();
     };
 
     self.splitSelectedModel = function() {
