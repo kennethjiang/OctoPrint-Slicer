@@ -13,10 +13,10 @@ export var Tipping = function () {
         // Consider the line extending the segment, parameterized as v
         // + t (w - v).  We find projection of point p onto the line.
         // It falls where t = [(p-v) . (w-v)] / |w-v|^2
+        var t = p.clone().sub(v).dot(w.clone().sub(v)) / l2;
         if (segment) {
             t = Math.min(1, Math.max(0, t));  // Clamp to line segment.
         }
-        var t = p.clone().sub(v).dot(w.clone().sub(v)) / l2;
         var projection = v.clone().add(w.clone().sub(v).multiplyScalar(t));
         return projection;
     }
@@ -175,7 +175,6 @@ export var Tipping = function () {
     };
 
     self.tipObject = function(object) {
-        var bottomPoints = [];
         object.updateMatrixWorld();
         // Manually convert BufferGeometry to Geometry
         var faces = [];
@@ -190,15 +189,14 @@ export var Tipping = function () {
                     new THREE.Vector3(positions[i+6], positions[i+7], positions[i+8])
                         .applyMatrix4(object.children[0].matrixWorld)));
         }
-        var lowestZ = Infinity;
+        var bottomPoints = [];
+        var originalBottomPoints = [];
+        const EPSILON = 0.0001;
         for (var face of faces) {
             for (var vertex of [face.a, face.b, face.c]) {
-                if (vertex.z < lowestZ) {
-                    bottomPoints = [];
-                    lowestZ = vertex.z;
-                }
-                if (vertex.z == lowestZ) {
+                if (vertex.z < EPSILON) {
                     bottomPoints.push(new THREE.Vector2(vertex.x, vertex.y));
+                    originalBottomPoints.push(vertex);
                 }
             }
         }
@@ -226,7 +224,7 @@ export var Tipping = function () {
         var vertexToPlatform;
         for (var face of faces) {
             for (var vertex of [face.a, face.b, face.c]) {
-                if (vertex.z <= lowestZ) {
+                if (vertex.z < EPSILON) {
                     continue; // It's already on the bottom.
                 }
                 // How far is that vertex from being rotated to the platform?

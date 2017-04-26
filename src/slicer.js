@@ -122,6 +122,7 @@ function SlicerViewModel(parameters) {
         }
         updateValueInputs();
         updateControlState();
+        $('#tab_plugin_slicer > div.translucent-blocker').hide();
     };
 
     self.onModelDelete = function() {
@@ -130,6 +131,7 @@ function SlicerViewModel(parameters) {
         }
         updateValueInputs();
         updateControlState();
+        $('#tab_plugin_slicer > div.translucent-blocker').hide();
     };
 
     self.onModelSplit = function( event ) {
@@ -144,6 +146,7 @@ function SlicerViewModel(parameters) {
 
         updateValueInputs();
         updateControlState();
+        $('#tab_plugin_slicer > div.translucent-blocker').hide();
     };
 
     self.updatePrinterBed = function(profileName) {
@@ -283,7 +286,10 @@ function SlicerViewModel(parameters) {
         });
 
         $("#slicer-viewport button#lay-flat").click(function(event) {
-            startLongRunning( function() {self.stlViewPort.laySelectedModelFlat(); } );
+            $('#tab_plugin_slicer > div.translucent-blocker').show();
+            self.stlViewPort.laySelectedModelFlat(function () {
+                $('#tab_plugin_slicer > div.translucent-blocker').hide();
+            });
         });
 
         $("#slicer-viewport button#rotate0").click(function(event) {
@@ -626,7 +632,7 @@ function SlicerViewModel(parameters) {
     }
 
     function updateControlState() {
-        $('#tab_plugin_slicer > div.translucent-blocker').hide();
+        //$('#tab_plugin_slicer > div.translucent-blocker').hide();
         if (!self.stlViewPort.selectedModel()) {
             $("#slicer-viewport button").addClass("disabled");
             $("#slicer-viewport .values div").removeClass("show");

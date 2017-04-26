@@ -310,14 +310,24 @@ export function STLViewPort( canvas, width, height ) {
     };
 
     var tipping = new Tipping();
-    self.laySelectedModelFlat = function() {
+    self.laySelectedModelFlat = function(doneFn) {
         var model = self.selectedModel();
         if (! model) return;
-        var tippingQuaternion = tipping.tipObject(model);
-        model.quaternion.premultiply(tippingQuaternion);
-        self.recalculateOverhang(model);
-        self.dispatchEvent( { type: eventType.change } );  // We need this for the fixZ.
 
+        var tipLoop = function() {
+            setTimeout(function() {
+                var tippingQuaternion = tipping.tipObject(model);
+                if (tippingQuaternion) {
+                    model.quaternion.premultiply(tippingQuaternion);
+                    self.dispatchEvent( { type: eventType.change } );  // We need this for the fixZ.
+                    tipLoop();
+                } else {
+                    self.recalculateOverhang(model);
+                    doneFn();
+                }
+            }, 0);
+        };
+        tipLoop();
     };
 
     self.splitSelectedModel = function() {
