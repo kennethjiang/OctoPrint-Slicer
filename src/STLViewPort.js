@@ -317,7 +317,6 @@ export function STLViewPort( canvas, width, height ) {
         model.quaternion.premultiply(tippingQuaternion);
         self.recalculateOverhang(model);
         self.dispatchEvent( { type: eventType.change } );  // We need this for the fixZ.
-        tippingQuaternion = tipping.tipObject(model);
 
     };
 
