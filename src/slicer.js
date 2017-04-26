@@ -179,6 +179,7 @@ function SlicerViewModel(parameters) {
 
 
     self.init = function() {
+        OctoPrint.socket.onMessage("event", self.removeTempFilesAfterSlicing);
 
         $('#tab_plugin_slicer > div.translucent-blocker').hide();
 
@@ -301,7 +302,6 @@ function SlicerViewModel(parameters) {
             $("#slicer-viewport .values div").removeClass("show");
             updateTransformMode();
         });
-
     };
 
     self.fixZPosition = function ( model ) {
@@ -332,8 +332,6 @@ function SlicerViewModel(parameters) {
             delete self.tempFiles[event.data.payload.stl];
         }
     }
-
-    OctoPrint.socket.onMessage("event", self.removeTempFilesAfterSlicing);
 
     self.sliceRequestData = function(slicingVM, group) {
         var destinationFilename = slicingVM._sanitize(slicingVM.destinationFilename());
