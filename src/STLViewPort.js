@@ -194,6 +194,7 @@ export function STLViewPort( canvas, width, height ) {
 
         self.pointerInteractions.objects.push(model);
         self.pointerInteractions.update();
+        self.selectModel(model);
 
         return model;
 
@@ -263,17 +264,34 @@ export function STLViewPort( canvas, width, height ) {
         self.dispatchEvent( { type: eventType.change } );
     };
 
+    self.MruModel = [];
     /**
      * params:
-     *    m: model to make active. Clear active model if m is undefined
+     *    m: model to make active. If m is undefined or not found, select from MRU.
      */
     self.selectModel = function(m) {
-
-        // Sets one file active and inactivates all the others.
-        if (m) {
+        if (self.pointerInteractions.objects.indexOf(m) > -1) {
+            // Update the MRU list so that the most recent is at the end.
+            var index = self.MruModel.indexOf(m);
+            if (index > -1) {
+                self.MruModel.splice(index, 1);
+            }
+            self.MruModel.push(m);
+            // Sets the requested model active.
             self.transformControls.attach(m);
         } else {
-            self.transformControls.detach();
+            // Requested model null or not found.  Look for a model to set active.
+            while (self.MruModel.length > 0) {
+                var mru = self.MruModel.pop();
+                if (self.pointerInteractions.objects.indexOf(mru) > -1) {
+                    // Found, set this one active.
+                    self.selectModel(mru);
+                    break;
+                }
+            }
+            if (self.MruModel.length == 0) {
+                self.transformControls.detach();
+            }
         }
 
         self.onChange();
