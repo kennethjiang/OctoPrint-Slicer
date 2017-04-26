@@ -111,7 +111,6 @@ function SlicerViewModel(parameters) {
     self.onModelAdd = function(event) {
 
         var models = event.models;
-        self.stlViewPort.selectModel(models[0]);
 
         forEach( models, function( model ) {
             self.fixZPosition(model);
@@ -139,7 +138,6 @@ function SlicerViewModel(parameters) {
 
         if ( event.to.length > 0 ) {
             new ModelArranger().arrange( self.stlViewPort.models() );
-            self.stlViewPort.selectModel( event.to[0] );
         }
 
         updateValueInputs();
