@@ -85,10 +85,10 @@ export var CollisionDetector = function (callbackFn) {
             var obj = self.objects[o];
             obj.updateMatrixWorld();
             var newGeo = new THREE.Geometry();
-            newGeo.faces = obj.children[0].geometry.collisionGeometry.faces;
+            newGeo.faces = obj.children[0].userData.collisionGeometry.faces;
             var newGeoBox = new THREE.Box3();
-            for (var v=0; v < obj.children[0].geometry.collisionGeometry.vertices.length; v++) {
-                newGeo.vertices.push(obj.children[0].geometry.collisionGeometry.vertices[v].clone());
+            for (var v=0; v < obj.children[0].userData.collisionGeometry.vertices.length; v++) {
+                newGeo.vertices.push(obj.children[0].userData.collisionGeometry.vertices[v].clone());
                 newGeo.vertices[v].applyMatrix4(obj.children[0].matrixWorld);
                 newGeoBox.expandByPoint(newGeo.vertices[v]);
                 if (endTime && performance.now() > endTime) {
@@ -172,8 +172,8 @@ export var CollisionDetector = function (callbackFn) {
         }
         self.objects = [];
         for (var i = 0; i < objects.length; i++) {
-            if (!objects[i].children[0].geometry.collisionGeometry) {
-                objects[i].children[0].geometry.collisionGeometry =
+            if (!objects[i].children[0].userData.collisionGeometry) {
+                objects[i].children[0].userData.collisionGeometry =
                     new THREE.Geometry().fromBufferGeometry(objects[i].children[0].geometry);
             }
         }
