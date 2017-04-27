@@ -86,12 +86,7 @@ function SlicerViewModel(parameters) {
     // when drag-n-drop completes.
     self.originalHandleUploadStart = self.filesViewModel._handleUploadStart;
     self.filesViewModel._handleUploadStart = function(e, data) {
-        if (typeof e.ctrlKey !== "undefined") {
-            data.modifierKeys = {ctrlKey: e.ctrlKey,
-                                 shiftKey: e.shiftKey,
-                                 altKey: e.altKey,
-                                 metaKey: e.metaKey};
-        }
+        data.modifierKeys = self.modifierKeys;
         return self.originalHandleUploadStart(e, data);
     };
 
