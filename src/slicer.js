@@ -22,7 +22,7 @@ function isDev() {
 
 if ( ! isDev() ) {
     Raven.config('https://85bd9314656d40da9249aec5a32a2b52@sentry.io/141297', {
-        release: '1.2.4',
+        release: '1.2.5',
         ignoreErrors: [
             "Failed to execute 'arc' on 'CanvasRenderingContext2D': The radius provided",
             "Cannot read property 'highlightFill' of undefined",
@@ -161,7 +161,6 @@ function SlicerViewModel(parameters) {
     self.onModelAdd = function(event) {
 
         var models = event.models;
-        self.stlViewPort.selectModel(models[0]);
 
         forEach( models, function( model ) {
             self.fixZPosition(model);
@@ -178,20 +177,6 @@ function SlicerViewModel(parameters) {
         if (self.stlViewPort.models().length == 0) {
             self.resetToDefault();
         }
-        updateValueInputs();
-        updateControlState();
-    };
-
-    self.onModelSplit = function( event ) {
-        forEach( event.to, function( model ) {
-            self.fixZPosition(model);
-        });
-
-        if ( event.to.length > 0 ) {
-            new ModelArranger().arrange( self.stlViewPort.models() );
-            self.stlViewPort.selectModel( event.to[0] );
-        }
-
         updateValueInputs();
         updateControlState();
     };
@@ -230,6 +215,7 @@ function SlicerViewModel(parameters) {
         CANVAS_HEIGHT = 588;
 
     self.init = function() {
+        OctoPrint.socket.onMessage("event", self.removeTempFilesAfterSlicing);
         $(document).on('keyup keydown', function(e) {
             self.modifierKeys = {ctrlKey: e.ctrlKey,
                                  altKey: e.altKey,
@@ -243,7 +229,6 @@ function SlicerViewModel(parameters) {
         self.stlViewPort.addEventListener( "change", self.onModelChange );
         self.stlViewPort.addEventListener( "add", self.onModelAdd );
         self.stlViewPort.addEventListener( "delete", self.onModelDelete );
-        self.stlViewPort.addEventListener( "split", self.onModelSplit );
         self.stlViewPort.init();
 
         //Walls and Floor
@@ -299,6 +284,7 @@ function SlicerViewModel(parameters) {
                         <a class="close"><i class="icon-remove-sign" /></a>\
                        <p><button id="clear" class="btn"><i class="icon-trash" /><span>&nbsp;Clear bed</span></button></p>\
                        <p><button id="split" class="btn"><i class="icon-unlink" /><span>&nbsp;Split into parts</span></button></p>\
+                       <p><button id="duplicate" class="btn"><i class="icon-copy" /><span>&nbsp;Duplicate</span></button></p>\
                        <span></span>\
                    </div>\
                </div>');
@@ -335,6 +321,13 @@ function SlicerViewModel(parameters) {
             startLongRunning( self.stlViewPort.splitSelectedModel );
         });
 
+        $("#slicer-viewport button#duplicate").click(function(event) {
+            var copies = parseInt( prompt("The number of copies you want to duplicate:", 1) );
+            if (copies != NaN) {
+                self.stlViewPort.duplicateSelectedModel(copies);
+            }
+        });
+
         $("#slicer-viewport button#lay-flat").click(function(event) {
             startLongRunning( function() {self.stlViewPort.laySelectedModelFlat(true); } );
         });
@@ -356,7 +349,6 @@ function SlicerViewModel(parameters) {
             $("#slicer-viewport .values div").removeClass("show");
             updateTransformMode();
         });
-
     };
 
     self.fixZPosition = function ( model ) {
@@ -387,8 +379,6 @@ function SlicerViewModel(parameters) {
             delete self.tempFiles[event.data.payload.stl];
         }
     }
-
-    OctoPrint.socket.onMessage("event", self.removeTempFilesAfterSlicing);
 
     self.sliceRequestData = function(slicingVM, group) {
         var destinationFilename = slicingVM._sanitize(slicingVM.destinationFilename());
