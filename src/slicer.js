@@ -106,6 +106,10 @@ function SlicerViewModel(parameters) {
     };
 
     $(".dropzone").on("dragover", function (e) {
+        self.modifierKeys = {ctrlKey: e.ctrlKey,
+                             shiftKey: e.shiftKey,
+                             altKey: e.altKey,
+                             metaKey: e.metaKey};
         var dataTransfer = e.dataTransfer = e.originalEvent.dataTransfer;
         // First 4 letters of effectAllowed are "copy" or "move" or
         // "link".  Whichever one it is, we allow that one.
