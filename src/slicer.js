@@ -61,6 +61,7 @@ function SlicerViewModel(parameters) {
     self.newSession = true;
 
     self.modifierKeys = {ctrlKey: false,
+                         shiftKey: false,
                          metaKey: false,
                          altKey: false};
     // Override slicingViewModel.show to surpress default slicing behavior
@@ -75,7 +76,7 @@ function SlicerViewModel(parameters) {
         self.selectedSTLs[file] = target;
         if (self.newSession || self.modifierKeys.altKey) {
             self.addToNewSession();
-        } else if (self.modifierKeys.ctrlKey || self.modifierKeys.metaKey) {
+        } else if (self.modifierKeys.ctrlKey || self.modifierKeys.metaKey || self.modifierKeys.shiftKey) {
             self.addToExistingSession();
         } else {
             $("#plugin-slicer-load-model").modal("show");
@@ -88,6 +89,7 @@ function SlicerViewModel(parameters) {
     self.filesViewModel._handleUploadStart = function(e, data) {
         if (typeof e.ctrlKey !== "undefined") {
             data.modifierKeys = {ctrlKey: e.ctrlKey,
+                                 shiftKey: e.shiftKey,
                                  altKey: e.altKey,
                                  metaKey: e.metaKey};
         }
@@ -230,6 +232,7 @@ function SlicerViewModel(parameters) {
         OctoPrint.socket.onMessage("event", self.removeTempFilesAfterSlicing);
         $(document).on('keyup keydown', function(e) {
             self.modifierKeys = {ctrlKey: e.ctrlKey,
+                                 shiftKey: e.shiftKey,
                                  altKey: e.altKey,
                                  metaKey: e.metaKey};
         });
