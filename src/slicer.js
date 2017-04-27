@@ -107,6 +107,17 @@ function SlicerViewModel(parameters) {
         return result;
     };
 
+    $(".dropzone").on("dragover", function (e) {
+        var dataTransfer = e.dataTransfer = e.originalEvent.dataTransfer;
+        // First 4 letters of effectAllowed are "copy" or "move" or
+        // "link".  Whichever one it is, we allow that one.
+        dataTransfer.dropEffect = dataTransfer.effectAllowed.slice(0,4);
+        // To prevent the original _onDragOver in blue imp from
+        // running, because it will set the wrong dropEffect.
+        e.stopImmediatePropagation();
+        e.preventDefault();
+    });
+
     self.copyModifierKey = ko.computed(function () {
         if (navigator.platform.indexOf("Mac") > -1) {
             return "Cmd";
