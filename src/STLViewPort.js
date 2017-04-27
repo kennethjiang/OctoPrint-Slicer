@@ -298,7 +298,7 @@ export function STLViewPort( canvas, width, depth, height ) {
     // true to do live collision detection.  Collision Detection is
     // always run to completion right before slicing, regardless this
     // value.
-    const LIVE_COLLISION_DETECTOR = false;
+    const LIVE_COLLISION_DETECTOR = true;
     var collisionDetector = new CollisionDetector();
     var setCollisionDetector = function() {
         var EPSILON_Z = 0.0001;  // To deal with rounding error after fixZ.
