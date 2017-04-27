@@ -254,6 +254,29 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
                               <input type="checkbox" data-bind="checked: $data['profile.fan_enabled']"></input>
                           </div>
                       </div>
+                      <div data-bind="visible: $data['profile.fan_enabled']">
+                          <div title="Full fan on height" class="input-append" data-bind="visible: !_.isUndefined($data['profile.fan_full_height']())">
+                              <label class="control-label">Full at height</label>
+                              <div class="controls">
+                                  <input data-bind="numericValue: $data['profile.fan_full_height']" type="number" min="0" max="2000" step="0.1"></input>
+                                  <span class="add-on">mm</span>
+                              </div>
+                          </div>
+                          <div title="Maximum fan speed" class="input-append" data-bind="visible: !_.isUndefined($data['profile.fan_speed_max']())">
+                              <label class="control-label">Max speed</label>
+                              <div class="controls">
+                                  <input data-bind="numericValue: $data['profile.fan_speed_max']" type="number" min="0" max="100" step="1"></input>
+                                  <span class="add-on">%</span>
+                              </div>
+                          </div>
+                          <div title="Minimum fan speed" class="input-append" data-bind="visible: !_.isUndefined($data['profile.fan_speed']())">
+                              <label class="control-label">Min speed</label>
+                              <div class="controls">
+                                  <input data-bind="numericValue: $data['profile.fan_speed']" type="number" min="0" max="100" step="1"></input>
+                                  <span class="add-on">%</span>
+                              </div>
+                          </div>
+                      </div>
                       <div title="Extrusion Multiplier" class="input-append" data-bind="visible: !_.isUndefined($data['profile.extrusion_multiplier']())">
                           <label class="control-label">Flow Multiplier</label>
                           <div class="controls">

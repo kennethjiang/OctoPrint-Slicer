@@ -53,7 +53,7 @@ export function STLViewPort( canvas, width, depth, height ) {
         directionalLightColor: new THREE.Color("#ffffff"),
     };
 
-    var eventType = { change: "change", add: "add", delete: "delete", split: "split" };
+    var eventType = { change: "change", add: "add", delete: "delete" };
 
     self.init = function() {
 
@@ -176,8 +176,7 @@ export function STLViewPort( canvas, width, depth, height ) {
 
     self.loadSTL = function ( url, afterLoad ) {
         new STLLoader().load(url, function ( geometry ) {
-            var newModel = self.addModelOfGeometry(geometry);
-            self.dispatchEvent( { type: eventType.add, models: [ newModel ] } );
+            self.addModelOfGeometry(geometry);
             // Detect collisions after the event in case the users wants to arrange, for example.
             self.dispatchEvent( { type: eventType.change } );
             resetCollisionDetector();
@@ -210,12 +209,13 @@ export function STLViewPort( canvas, width, depth, height ) {
         model.orientationOptimizer = new OrientationOptimizer(geometry);
         self.recalculateOverhang(model);
 
-        self.scene.add(model);
-
         self.pointerInteractions.objects.push(model);
         self.pointerInteractions.update();
+
+        self.scene.add(model);
         self.selectModel(model);
 
+        self.dispatchEvent( { type: eventType.add, models: [ model ] } );
         return model;
 
     };
@@ -236,8 +236,6 @@ export function STLViewPort( canvas, width, depth, height ) {
     self.selectionChanged = function( event ) {
         if (event.current) {
             self.selectModel( event.current.parent );
-        } else {
-            self.selectModel( null );
         }
     };
 
@@ -338,34 +336,26 @@ export function STLViewPort( canvas, width, depth, height ) {
         resetCollisionDetector();
     };
 
-    self.MruModel = [];
+    var recentSelections = [];
     /**
      * params:
      *    m: model to make active. If m is undefined or not found, select from MRU.
      */
     self.selectModel = function(m) {
         if (self.pointerInteractions.objects.indexOf(m) > -1) {
-            // Update the MRU list so that the most recent is at the end.
-            var index = self.MruModel.indexOf(m);
-            if (index > -1) {
-                self.MruModel.splice(index, 1);
-            }
-            self.MruModel.push(m);
-            // Sets the requested model active.
+            recentSelections.push(m);
             self.transformControls.attach(m);
         } else {
             // Requested model null or not found.  Look for a model to set active.
-            while (self.MruModel.length > 0) {
-                var mru = self.MruModel.pop();
-                if (self.pointerInteractions.objects.indexOf(mru) > -1) {
-                    // Found, set this one active.
-                    self.selectModel(mru);
+            while (recentSelections.length > 0) {
+                var maybe = recentSelections.pop();
+                if (self.pointerInteractions.objects.indexOf(maybe) > -1) {
+                    recentSelections.push(maybe);
+                    self.transformControls.attach(maybe);
                     break;
                 }
             }
-            if (self.MruModel.length == 0) {
-                self.transformControls.detach();
-            }
+            if (recentSelections.length == 0) self.transformControls.detach();
         }
 
         self.onChange();
@@ -430,6 +420,13 @@ export function STLViewPort( canvas, width, depth, height ) {
         tipLoop();
     };
 
+    self.duplicateSelectedModel = function( copies ) {
+        for (var i = 0; i < copies; i++) {
+            var originalModel = self.selectedModel();
+            self.addModelOfGeometry( originalModel.children[0].geometry.clone(), originalModel);
+        }
+    };
+
     self.splitSelectedModel = function() {
         if (!self.selectedModel()) {
             return;
@@ -438,11 +435,13 @@ export function STLViewPort( canvas, width, depth, height ) {
         var originalModel = self.selectedModel()
         var geometry = originalModel.children[0].geometry;
         var newGeometries = BufferGeometryAnalyzer.isolatedGeometries(geometry);
-        var newModels = newGeometries.map( function(geometry) {
-                return self.addModelOfGeometry( geometry, originalModel );
-            });
+
         self.removeModel( originalModel );
-        self.dispatchEvent( { type: eventType.split, from: originalModel, to: newModels } );
+        self.dispatchEvent( { type: eventType.delete, models: [originalModel] } );
+
+        forEach(newGeometries, function(geometry) {
+            self.addModelOfGeometry( geometry, originalModel );
+        });
     };
 
     self.onlyOneOriginalModel = function() {
@@ -476,7 +475,6 @@ export function STLViewPort( canvas, width, depth, height ) {
         var orientation = model.orientationOptimizer.printabilityOfOrientationByRotation( model.rotation );
         self.tintSurfaces(model, null, 255, 255, 255); // Clear tints off the whole model
         self.tintSurfaces(model, orientation.overhang, 128, 16, 16);
-        self.tintSurfaces(model, orientation.bottom, 16, 16, 128);
     };
 
     self.tintSurfaces = function(model, surfaces, r, g, b) {
