@@ -33,6 +33,7 @@ if ( ! isDev() ) {
             "chrome is not defined",
             "You cannot apply bindings multiple times to the same element.",
             "SVG_MATRIX_NOT_INVERTABLE",
+            "The index is not in the allowed range.",
         ],
     }).install();
 }
@@ -346,7 +347,7 @@ function SlicerViewModel(parameters) {
         $("#slicer-viewport button#duplicate").click(function(event) {
             var copies = parseInt( prompt("The number of copies you want to duplicate:", 1) );
             if (copies != NaN) {
-                self.stlViewPort.duplicateSelectedModel(copies);
+                startLongRunning( self.stlViewPort.duplicateSelectedModel.bind(self, copies) );
             }
         });
 
