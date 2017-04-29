@@ -272,7 +272,7 @@ function SlicerViewModel(parameters) {
         $("#slicer-viewport button#duplicate").click(function(event) {
             var copies = parseInt( prompt("The number of copies you want to duplicate:", 1) );
             if (copies != NaN) {
-                self.stlViewPort.duplicateSelectedModel(copies);
+                startLongRunning( self.stlViewPort.duplicateSelectedModel.bind(self, copies) );
             }
         });
 
