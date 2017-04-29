@@ -385,10 +385,15 @@ export function STLViewPort( canvas, width, height ) {
 
     self.recalculateOverhang = function(model) {
         if (!model || !model.orientationOptimizer) return;
+        if ( model.userData.previousRotation && model.rotation.equals(model.userData.previousRotation ) ) {
+            model.userData.previousRotation = model.rotation.clone();
+            return;
+        }
 
         var orientation = model.orientationOptimizer.printabilityOfOrientationByRotation( model.rotation );
         self.tintSurfaces(model, null, 255, 255, 255); // Clear tints off the whole model
         self.tintSurfaces(model, orientation.overhang, 128, 16, 16);
+        model.userData.previousRotation = model.rotation.clone();
     };
 
     self.tintSurfaces = function(model, surfaces, r, g, b) {
