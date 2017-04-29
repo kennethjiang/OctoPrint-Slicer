@@ -26,6 +26,7 @@ import { BufferGeometryAnalyzer, OrbitControls, TransformControls, STLLoader, Po
 import { OrientationOptimizer } from './OrientationOptimizer';
 import { CollisionDetector } from './CollisionDetector';
 import { Tipping } from './Tipping';
+import { Box3FromObject } from './Box3FromObject';
 
 export function STLViewPort( canvas, width, depth, height ) {
 
@@ -197,9 +198,10 @@ export function STLViewPort( canvas, width, depth, height ) {
         var stlModel = new THREE.Mesh( geometry, material );
 
         // center model's origin
-        var center = new THREE.Box3().setFromObject(stlModel).getCenter();
         var model = new THREE.Object3D();
         model.add(stlModel);
+        model.userData.box3FromObject = Box3FromObject(model);
+        var center = model.userData.box3FromObject().getCenter();
         stlModel.position.copy(center.negate());
         if (modelToCopyTransformFrom) {
             model.rotation.copy(modelToCopyTransformFrom.rotation);
