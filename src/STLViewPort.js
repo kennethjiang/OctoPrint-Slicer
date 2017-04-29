@@ -179,7 +179,7 @@ export function STLViewPort( canvas, width, depth, height ) {
             self.dispatchEvent( { type: eventType.add, models: [ newModel ] } );
             // Detect collisions after the event in case the users wants to arrange, for example.
             self.dispatchEvent( { type: eventType.change } );
-            resetCollisionDetector();
+            self.resetCollisionDetector();
         });
     };
 
@@ -308,7 +308,7 @@ export function STLViewPort( canvas, width, depth, height ) {
     }
 
     // Run whenever the collision detection inputs may have changed.
-    var resetCollisionDetector = function () {
+    self.resetCollisionDetector = function () {
         collisionDetector.clearIterator();
         if (LIVE_COLLISION_DETECTOR) {
             setCollisionDetector();
@@ -332,7 +332,7 @@ export function STLViewPort( canvas, width, depth, height ) {
     self.onChange = function() {
         self.dispatchEvent( { type: eventType.change } );
         // Detect collisions after the event in case the users wants to fix Z, for example.
-        resetCollisionDetector();
+        self.resetCollisionDetector();
     };
 
     /**
