@@ -386,7 +386,7 @@ export function STLViewPort( canvas, width, height ) {
     self.recalculateOverhang = function(model) {
         if (!model || !model.orientationOptimizer) return;
         if (model.userData.recalculateOverhangPreviousRotation) {
-            const DEBUGGING = true;
+            const DEBUGGING = false;
             if (model.rotation.equals(model.userData.recalculateOverhangPreviousRotation)) {
                 if (DEBUGGING) {
                     console.log("recalculateOverhang: skipped");
