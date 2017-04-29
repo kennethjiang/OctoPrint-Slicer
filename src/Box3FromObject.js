@@ -1419,7 +1419,7 @@ export function Box3FromObject(object) {
             box3.expandByPoint(childBox3.min);
             box3.expandByPoint(childBox3.max);
         }
-        const DEBUGGING = true; // For debugging but makes performance very slow.
+        const DEBUGGING = false; // For debugging but makes performance very slow.
         if (DEBUGGING) {
             let oldBox3 = new THREE.Box3().setFromObject(object);
             let maxDiff = box3.max.clone().sub(oldBox3.max);
