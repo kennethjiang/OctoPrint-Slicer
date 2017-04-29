@@ -442,7 +442,7 @@ function SlicerViewModel(parameters) {
         }
         var groupCenter = new THREE.Vector3(0,0,0);
         if (group) {
-            groupCenter = group.userData.box3FromObject(group);
+            groupCenter = new THREE.Box3().setFromObject(group).getCenter();
         }
         var data = {
             command: "slice",
@@ -500,7 +500,6 @@ function SlicerViewModel(parameters) {
             forEach(self.stlViewPort.models(), function (model) {
                 group.add(model.clone(true));
             });
-            group.userData.box3FromObject = Box3FromObject(group);
 
             sliceRequestData = self.sliceRequestData(self.slicingViewModel, group);
 
