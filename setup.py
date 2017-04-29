@@ -27,7 +27,7 @@ plugin_author = "Kenneth Jiang"
 plugin_author_email = "kenneth.jiang@gmail.com"
 
 # The plugin's homepage URL. Can be overwritten within OctoPrint's internal data via __plugin_url__ in the plugin module
-plugin_url = "https://github.com/kennethjiang/OctoPrint-Slicer"
+plugin_url = "https://github.com/eyal0/OctoPrint-Slicer"
 
 # The plugin's license. Can be overwritten within OctoPrint's internal data via __plugin_license__ in the plugin module
 plugin_license = "AGPLv3"
