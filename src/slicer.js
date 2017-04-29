@@ -341,7 +341,7 @@ function SlicerViewModel(parameters) {
         }
         var groupCenter = new THREE.Vector3(0,0,0);
         if (group) {
-            groupCenter = new THREE.Box3().setFromObject(group);
+            groupCenter = new THREE.Box3().setFromObject(group).getCenter();
         }
         var data = {
             command: "slice",
