@@ -542,17 +542,22 @@ function SlicerViewModel(parameters) {
 
     // END: Helpers for drawing walls and floor
 
+    let filenames = [];
     self.resetSlicingViewModel = function() {
         self.slicingViewModel.target = undefined;
         self.slicingViewModel.file(undefined);
         self.slicingViewModel.destinationFilename(undefined);
+        filenames = [];
     };
 
     self.setSlicingViewModel = function(target, filename) {
-        if (!self.slicingViewModel.destinationFilename()) {  // A model is added to an empty bed
+        if (!self.slicingViewModel.destinationFilename() ||
+            self.slicingViewModel.destinationFilename() != self.computeDestinationFilename(filenames)) {
+            // No current name or the previous name was unchanged.
+            filesnames.push(filename);
             self.slicingViewModel.target = target;
             self.slicingViewModel.file(filename);
-            self.slicingViewModel.destinationFilename(self.computeDestinationFilename(filename));
+            self.slicingViewModel.destinationFilename(self.computeDestinationFilename(filenames));
         }
     };
 
