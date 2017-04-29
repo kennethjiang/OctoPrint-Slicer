@@ -1,9 +1,11 @@
 'use strict';
 
-// callbackFn is called with a list of true/false results of collisions.
-// Yet unknown results are undefined
+import * as THREE from 'three';
 
-var CollisionDetection = function (callbackFn) {
+// intersecting is a list of true/false results of collisions.  Yet
+// unknown results are undefined
+
+export var CollisionDetector = function () {
     var self = this;
 
     var linesIntersect = function(a1, a2, a3, a4) {
@@ -67,44 +69,25 @@ var CollisionDetection = function (callbackFn) {
         return triangles;
     };
 
-    console.log("getting ready at " + performance.now());
+    var intersecting = [];
     // Report all models that collide with any other model or stick out
     // of the provided boundingBox.
-    var intersecting = [];
-    self.findCollisions = function*(timeoutMilliseconds) {
-        var endTime = undefined;
-        if (timeoutMilliseconds) {
-            endTime = performance.now() + timeoutMilliseconds;
-        }
-
+    self.findCollisions = function*(objects, volume, endTime = Infinity) {
+        endTime = (yield intersecting);
         var geometries = [];
         var geometryBoxes = [];
-        for (var o = 0; o < self.objects.length; o++) {
-            var obj = self.objects[o];
+        for (var o = 0; o < objects.length; o++) {
+            var obj = objects[o];
+            obj.updateMatrixWorld();
             var newGeo = new THREE.Geometry();
-            for (var f=0; f < obj.children[0].geometry.faces.length; f++) {
-                newGeo.faces.push(obj.children[0].geometry.faces[f].clone());
-                if (endTime && performance.now() > endTime) {
-                    timeoutMilliseconds = (yield intersecting);
-                    if (timeoutMilliseconds) {
-                        endTime = performance.now() + timeoutMilliseconds;
-                    } else {
-                        endTime = undefined;
-                    }
-                }
-            }
+            newGeo.faces = obj.children[0].userData.collisionGeometry.faces;
             var newGeoBox = new THREE.Box3();
-            for (var v=0; v < obj.children[0].geometry.vertices.length; v++) {
-                newGeo.vertices.push(obj.children[0].geometry.vertices[v].clone());
+            for (var v=0; v < obj.children[0].userData.collisionGeometry.vertices.length; v++) {
+                newGeo.vertices.push(obj.children[0].userData.collisionGeometry.vertices[v].clone());
                 newGeo.vertices[v].applyMatrix4(obj.children[0].matrixWorld);
                 newGeoBox.expandByPoint(newGeo.vertices[v]);
-                if (endTime && performance.now() > endTime) {
-                    timeoutMilliseconds = (yield intersecting);
-                    if (timeoutMilliseconds) {
-                        endTime = performance.now() + timeoutMilliseconds;
-                    } else {
-                        endTime = undefined;
-                    }
+                if (performance.now() > endTime) {
+                    endTime = (yield intersecting);
                 }
             }
             geometries.push(newGeo);
@@ -120,7 +103,7 @@ var CollisionDetection = function (callbackFn) {
 
         //debugger;
         for (var geometry=0; geometry < geometries.length; geometry++) {
-            if (!self.volume.containsBox(geometryBoxes[geometry])) {
+            if (!volume.containsBox(geometryBoxes[geometry])) {
                 intersecting[geometry] = true;
             }
             for (var otherGeometry=geometry + 1; otherGeometry < geometries.length; otherGeometry++) {
@@ -141,13 +124,8 @@ var CollisionDetection = function (callbackFn) {
                                 t0 = triangles.length; // To force a break.
                                 break;
                             }
-                            if (endTime && performance.now() > endTime) {
-                                timeoutMilliseconds = (yield intersecting);
-                                if (timeoutMilliseconds) {
-                                    endTime = performance.now() + timeoutMilliseconds;
-                                } else {
-                                    endTime = undefined;
-                                }
+                            if (performance.now() > endTime) {
+                                endTime = (yield intersecting);
                             }
                         }
                     }
@@ -159,49 +137,91 @@ var CollisionDetection = function (callbackFn) {
                 intersecting[geometry] = false;
             }
         }
-        return intersecting;
+        yield intersecting;
     };
 
-    self.collisionLoopRunner = null;
+    var timeout = null;
+    var iterator = null;
 
-    // This starts collision detection in a loop on the provided objects
-    // and print volume.  If start is called while it's already running,
-    // it will cancel and restart.  The callback will be called every
-    // timeoutMilliseconds.  If the result has only true and false
-    // values and is as long as the original input, that means that the
-    // collision detection is done.  undefined in the result array means
-    // that the collision status is yet unknown.  timeoutMilliseconds is
-    // how often to pause to do other events on the webpage, for
-    // cooperative multitasking.
-    self.start = function (objects, volume, timeoutMilliseconds) {
-        if (self.collisionLoopRunner) {
-            clearTimeout(self.collisionLoopRunner);
+    // Stops a running collision detector if there is one running.
+    self.stop = function () {
+        if (timeout) {
+            clearTimeout(timeout);
+            timeout = null;
         }
+    };
+
+    // Make a new collision iterator on the objects and volume given.
+    // If one is already running it is stopped and removed.
+    self.makeIterator = function (objects, volume) {
+        self.stop();
         for (var i = 0; i < objects.length; i++) {
-            if (objects[i].children[0].geometry.isBufferGeometry) {
-                objects[i].children[0].geometry =
+            if (!objects[i].children[0].userData.collisionGeometry) {
+                objects[i].children[0].userData.collisionGeometry =
                     new THREE.Geometry().fromBufferGeometry(objects[i].children[0].geometry);
             }
         }
-        self.objects = objects;
-        self.volume = volume;
+        // iterator is a ES6 javascript generator.
         intersecting = [];
-        // collisionDetector is a ES6 javascript generator.
-        var collisionDetector = self.findCollisions(timeoutMilliseconds);
+        iterator = self.findCollisions(objects, volume);
+    };
+
+    // Remove the current iterator, resetting the collision detection.
+    self.clearIterator = function () {
+        self.stop();
+        iterator = null;
+    }
+
+    self.hasIterator = function() {
+        return !!iterator;
+    }
+
+    // starts the collisionIterator in the background.  task_switch_ms
+    // is how often to relinquish control so that the browser can do
+    // other events.  The default is to run 50ms at a time, which
+    // leaves the browser with good responsiveness.  callbackFn is
+    // called with the intersection results which is a list of
+    // true/false/undefined.  true means intersecting, false means not
+    // intersecting, undefined means not yet known.  If it's already
+    // running, it's stopped before being started at the new
+    // task_switch_ms.  It is an error to call this without first
+    // making a collision iterator.
+    self.startBackground = function (callbackFn, task_switch_ms = 50) {
+        self.stop();
         var collisionLoop = function () {
-            self.collisionLoopRunner = setTimeout(function() {
-                var result = collisionDetector.next(timeoutMilliseconds);
-                callbackFn(result.value);
+            timeout = setTimeout(function() {
+                var result = iterator.next(performance.now() + task_switch_ms);
                 if (!result.done) {
+                    callbackFn(result.value);
                     collisionLoop();
+                } else {
+                    timeout = null;  // All done.
                 }
             }, 0);
         };
         collisionLoop();
     };
+
+    // starts the collisionIterator in the foreground.  endTime is
+    // when to stop running and return the current result.  The
+    // default is to run to completion.  The result is from an
+    // iterator with member done set to true if the iterator ran
+    // finished and false if not.  The value member has the
+    // intersection results which is a list of true/false/undefined.
+    // true means intersecting, false means not intersecting,
+    // undefined means not yet known.  If it's already running, it's
+    // stopped before starting in the foreground.  It is an error to
+    // call this without first making a collision iterator.
+    self.start = function (endTime = Infinity) {
+        self.stop();
+        while (!iterator.next(endTime).done) {
+            // Just iterate.
+        }
+        return intersecting;
+    }
 };
 
 // browserify support
 if ( typeof module === 'object' ) {
-    module.exports = CollisionDetection;
+    module.exports = CollisionDetector;
 }
