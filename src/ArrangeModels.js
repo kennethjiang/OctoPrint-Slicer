@@ -18,10 +18,11 @@ export var ArrangeModels = function () {
       var smallestRectangle = {"name": i};
       // Try all rotations of the model from 0 to 90.  No need to try
       // beyond because the packer can already rotate by 90 degrees.
+      var modelClone = model.clone(true);
+      modelClone.rotation.reorder("ZYX");
+      var originalRotation = modelClone.rotation.z;
       for (var rotation = 0; rotation < THREE.Math.degToRad(90); rotation += THREE.Math.degToRad(15)) {
-        var modelClone = model.clone(true);
-        modelClone.rotation.reorder("ZYX");
-        modelClone.rotation.z += rotation;
+        modelClone.rotation.z += originalRotation + rotation;
         var modelBox = new THREE.Box3().setFromObject(modelClone);
         var width = modelBox.max.x - modelBox.min.x + margin;
         var height = modelBox.max.y - modelBox.min.y + margin;
