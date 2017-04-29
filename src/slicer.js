@@ -54,12 +54,16 @@ function SlicerViewModel(parameters) {
     self.overridesViewModel = parameters[1];
     self.printerStateViewModel = parameters[2];
     self.printerProfilesViewModel = parameters[3];
+    self.filesViewModel = parameters[4];
 
     self.lockScale = true;
     self.selectedSTLs = {};
     self.newSession = true;
 
-
+    self.modifierKeys = {ctrlKey: false,
+                         shiftKey: false,
+                         metaKey: false,
+                         altKey: false};
     // Override slicingViewModel.show to surpress default slicing behavior
     self.slicingViewModel.show = function(target, file, force) {
         if (!self.slicingViewModel.enableSlicingDialog() && !force) {
@@ -70,12 +74,59 @@ function SlicerViewModel(parameters) {
         $('a[href="#tab_plugin_slicer"]').tab('show');
 
         self.selectedSTLs[file] = target;
-        if (self.newSession) {
+        if (self.newSession || self.modifierKeys.altKey) {
             self.addToNewSession();
-        } else if (Object.getOwnPropertyNames(self.selectedSTLs).length == 1) {
+        } else if (self.modifierKeys.ctrlKey || self.modifierKeys.metaKey || self.modifierKeys.shiftKey) {
+            self.addToExistingSession();
+        } else {
             $("#plugin-slicer-load-model").modal("show");
         }
     };
+
+    // Override filesViewModel so that we can capture Ctrl and Alt
+    // when drag-n-drop completes.
+    self.originalHandleUploadStart = self.filesViewModel._handleUploadStart;
+    self.filesViewModel._handleUploadStart = function(e, data) {
+        data.modifierKeys = self.modifierKeys;
+        return self.originalHandleUploadStart(e, data);
+    };
+
+    self.originalHandleUploadDone = self.filesViewModel._handleUploadDone;
+    self.filesViewModel._handleUploadDone = function(e, data) {
+        // Save previous modifier keys.
+        var originalModifierKeys = self.modifierKeys;
+        // Copy them from data, where they were stored for upload start.
+        if (data.modifierKeys) {
+            self.modifierKeys = data.modifierKeys;
+        }
+        var result = self.originalHandleUploadDone(e, data);
+        // Restore actual modifier key values.
+        self.modifierKeys = originalModifierKeys;
+        return result;
+    };
+
+    $(".dropzone").on("dragover", function (e) {
+        self.modifierKeys = {ctrlKey: e.ctrlKey,
+                             shiftKey: e.shiftKey,
+                             altKey: e.altKey,
+                             metaKey: e.metaKey};
+        var dataTransfer = e.dataTransfer = e.originalEvent.dataTransfer;
+        // First 4 letters of effectAllowed are "copy" or "move" or
+        // "link".  Whichever one it is, we allow that one.
+        dataTransfer.dropEffect = dataTransfer.effectAllowed.slice(0,4);
+        // To prevent the original _onDragOver in blue imp from
+        // running, because it will set the wrong dropEffect.
+        e.stopImmediatePropagation();
+        e.preventDefault();
+    });
+
+    self.copyModifierKey = ko.computed(function () {
+        if (navigator.platform.indexOf("Mac") > -1) {
+            return "Cmd";
+        } else {
+            return "Ctrl";
+        }
+    });
 
     self.addToNewSession = function() {
         self.stlViewPort.removeAllModels();
@@ -165,10 +216,14 @@ function SlicerViewModel(parameters) {
     var CANVAS_WIDTH = 588,
         CANVAS_HEIGHT = 588;
 
-
     self.init = function() {
         OctoPrint.socket.onMessage("event", self.removeTempFilesAfterSlicing);
-
+        $(document).on('keyup keydown', function(e) {
+            self.modifierKeys = {ctrlKey: e.ctrlKey,
+                                 shiftKey: e.shiftKey,
+                                 altKey: e.altKey,
+                                 metaKey: e.metaKey};
+        });
         $('#tab_plugin_slicer > div.translucent-blocker').hide();
 
         self.slicingViewModel.requestData();
@@ -691,7 +746,7 @@ OCTOPRINT_VIEWMODELS.push([
     SlicerViewModel,
 
     // e.g. loginStateViewModel, settingsViewModel, ...
-    [ "slicingViewModel", "overridesViewModel", "printerStateViewModel", "printerProfilesViewModel" ],
+    [ "slicingViewModel", "overridesViewModel", "printerStateViewModel", "printerProfilesViewModel", "filesViewModel" ],
 
     // e.g. #settings_plugin_slicer, #tab_plugin_slicer, ...
     [ "#slicer" ]
