@@ -24,6 +24,7 @@ import { forEach } from 'lodash-es';
 import * as THREE from 'three';
 import { BufferGeometryAnalyzer, OrbitControls, TransformControls, STLLoader, PointerInteractions } from '3tk';
 import { OrientationOptimizer } from './OrientationOptimizer';
+import { Box3FromObject } from './Box3FromObject';
 
 export function STLViewPort( canvas, width, height ) {
 
@@ -177,9 +178,10 @@ export function STLViewPort( canvas, width, height ) {
         var stlModel = new THREE.Mesh( geometry, material );
 
         // center model's origin
-        var center = new THREE.Box3().setFromObject(stlModel).getCenter();
         var model = new THREE.Object3D();
         model.add(stlModel);
+        model.userData.box3FromObject = Box3FromObject(model);
+        var center = model.userData.box3FromObject().getCenter();
         stlModel.position.copy(center.negate());
         if (modelToCopyTransformFrom) {
             model.rotation.copy(modelToCopyTransformFrom.rotation);

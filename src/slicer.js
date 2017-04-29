@@ -15,6 +15,7 @@ import { OverridesViewModel } from './profile_overrides';
 import { ModelArranger } from './ModelArranger';
 import { CheckerboardMaterial } from './CheckerboardMaterial';
 import { find, forEach, endsWith, some, extend } from 'lodash-es';
+import { Box3FromObject } from './Box3FromObject';
 
 function isDev() {
     return window.location.hostname == "localhost";
@@ -300,7 +301,7 @@ function SlicerViewModel(parameters) {
 
     self.fixZPosition = function ( model ) {
         var bedLowMinZ = 0.0;
-        var boundaryBox = new THREE.Box3().setFromObject(model);
+        var boundaryBox = model.userData.box3FromObject();
         boundaryBox.min.sub(model.position);
         boundaryBox.max.sub(model.position);
         model.position.z -= model.position.z + boundaryBox.min.z - bedLowMinZ;
@@ -340,7 +341,7 @@ function SlicerViewModel(parameters) {
         }
         var groupCenter = new THREE.Vector3(0,0,0);
         if (group) {
-            groupCenter = new THREE.Box3().setFromObject(group).getCenter();
+            groupCenter = group.userData.box3FromObject(group);
         }
         var data = {
             command: "slice",
@@ -392,6 +393,7 @@ function SlicerViewModel(parameters) {
             forEach(self.stlViewPort.models(), function (model) {
                 group.add(model.clone(true));
             });
+            group.userData.box3FromObject = Box3FromObject(group);
 
             sliceRequestData = self.sliceRequestData(self.slicingViewModel, group);
 
@@ -608,7 +610,7 @@ function SlicerViewModel(parameters) {
     function updateSizeInfo() {
         var model = self.stlViewPort.selectedModel();
         if (model) {
-            var size = new THREE.Box3().setFromObject( model ).getSize();
+            var size = model.userData.box3FromObject().getSize();
             $("#slicer-viewport > div.values.scale > div > p > span.size.x").text(size.x.toFixed(1) + "mm");
             $("#slicer-viewport > div.values.scale > div > p > span.size.y").text(size.y.toFixed(1) + "mm");
             $("#slicer-viewport > div.values.scale > div > p > span.size.z").text(size.z.toFixed(1) + "mm");
