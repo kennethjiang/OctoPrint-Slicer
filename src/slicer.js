@@ -772,6 +772,7 @@ function SlicerViewModel(parameters) {
             self.fixZPosition(model);
             updateSizeInfo();
             self.stlViewPort.recalculateOverhang(model);
+            self.stlViewPort.resetCollisionDetector();
         }
     }
 
