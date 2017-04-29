@@ -31,6 +31,7 @@ if ( ! isDev() ) {
             "chrome is not defined",
             "You cannot apply bindings multiple times to the same element.",
             "SVG_MATRIX_NOT_INVERTABLE",
+            "The index is not in the allowed range.",
         ],
     }).install();
 }
