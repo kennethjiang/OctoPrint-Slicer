@@ -20,7 +20,7 @@
 
 'use strict';
 
-import { forEach } from 'lodash-es';
+import { forEach, map } from 'lodash-es';
 import * as THREE from 'three';
 import { BufferGeometryAnalyzer, OrbitControls, TransformControls, STLLoader, PointerInteractions } from '3tk';
 import { OrientationOptimizer } from './OrientationOptimizer';
@@ -160,44 +160,44 @@ export function STLViewPort( canvas, width, height ) {
 
     self.loadSTL = function ( url, onLoad ) {
         new STLLoader().load(url, function ( geometry ) {
-            self.addModelOfGeometry(geometry);
+            self.addModelOfGeometry([geometry]);
         });
     };
 
-    self.addModelOfGeometry = function( geometry, modelToCopyTransformFrom ) {
+    self.addModelOfGeometry = function( geometries, modelToCopyTransformFrom ) {
+        var models = map(geometries, function (geometry) {
+            var material = new THREE.MeshStandardMaterial({
+                color: self.effectController.modelInactiveColor,  // We'll mark it active below.
+                shading: THREE.SmoothShading,
+                side: THREE.DoubleSide,
+                metalness: self.effectController.metalness,
+                roughness: self.effectController.roughness,
+                vertexColors: THREE.VertexColors });
 
-        var material = new THREE.MeshStandardMaterial({
-            color: self.effectController.modelInactiveColor,  // We'll mark it active below.
-            shading: THREE.SmoothShading,
-            side: THREE.DoubleSide,
-            metalness: self.effectController.metalness,
-            roughness: self.effectController.roughness,
-            vertexColors: THREE.VertexColors });
+            var stlModel = new THREE.Mesh( geometry, material );
 
-        var stlModel = new THREE.Mesh( geometry, material );
+            // center model's origin
+            var center = new THREE.Box3().setFromObject(stlModel).getCenter();
+            var model = new THREE.Object3D();
+            model.add(stlModel);
+            stlModel.position.copy(center.negate());
+            if (modelToCopyTransformFrom) {
+                model.rotation.copy(modelToCopyTransformFrom.rotation);
+                model.scale.copy(modelToCopyTransformFrom.scale);
+            }
 
-        // center model's origin
-        var center = new THREE.Box3().setFromObject(stlModel).getCenter();
-        var model = new THREE.Object3D();
-        model.add(stlModel);
-        stlModel.position.copy(center.negate());
-        if (modelToCopyTransformFrom) {
-            model.rotation.copy(modelToCopyTransformFrom.rotation);
-            model.scale.copy(modelToCopyTransformFrom.scale);
-        }
+            model.orientationOptimizer = new OrientationOptimizer(geometry);
+            self.recalculateOverhang(model);
 
-        model.orientationOptimizer = new OrientationOptimizer(geometry);
-        self.recalculateOverhang(model);
+            self.pointerInteractions.objects.push(model);
+            self.pointerInteractions.update();
 
-        self.pointerInteractions.objects.push(model);
-        self.pointerInteractions.update();
-
-        self.scene.add(model);
-        self.selectModel(model);
-
-        self.dispatchEvent( { type: eventType.add, models: [ model ] } );
-        return model;
-
+            self.scene.add(model);
+            self.selectModel(model);
+            return model;
+        });
+        self.dispatchEvent( { type: eventType.add, models: models } );
+        return models;
     };
 
     // self.pointerInteractions is used to keep the source of truth for all models
@@ -335,10 +335,13 @@ export function STLViewPort( canvas, width, height ) {
     };
 
     self.duplicateSelectedModel = function( copies ) {
+        var originalModel = self.selectedModel();
+        var geometries = [];
         for (var i = 0; i < copies; i++) {
-            var originalModel = self.selectedModel();
-            self.addModelOfGeometry( originalModel.children[0].geometry.clone(), originalModel);
+            // Do we really need to clone them?
+            geometries.push(originalModel.children[0].geometry.clone());
         }
+        self.addModelOfGeometry(geometries, originalModel);
     };
 
     self.splitSelectedModel = function() {
@@ -346,16 +349,14 @@ export function STLViewPort( canvas, width, height ) {
             return;
         }
 
-        var originalModel = self.selectedModel()
+        var originalModel = self.selectedModel();
         var geometry = originalModel.children[0].geometry;
         var newGeometries = BufferGeometryAnalyzer.isolatedGeometries(geometry);
 
+        self.addModelOfGeometry( newGeometries, originalModel );
         self.removeModel( originalModel );
         self.dispatchEvent( { type: eventType.delete, models: [originalModel] } );
-
-        forEach(newGeometries, function(geometry) {
-            self.addModelOfGeometry( geometry, originalModel );
-        });
+        self.dispatchEvent( { type: eventType.add, models: [] } );  // To force arranging.
     };
 
     self.onlyOneOriginalModel = function() {
