@@ -130,6 +130,7 @@ function SlicerViewModel(parameters) {
         }
         updateValueInputs();
         updateControlState();
+        new ModelArranger().arrange(self.stlViewPort.models());
     };
 
     self.updatePrinterBed = function(profileName) {
