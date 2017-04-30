@@ -191,7 +191,6 @@ function SlicerViewModel(parameters) {
         $('#tab_plugin_slicer > div.translucent-blocker').hide();
     };
 
-        $('#tab_plugin_slicer > div.translucent-blocker').hide();
     self.updatePrinterBed = function(profileName) {
         if ( profileName) {
             var profile = find(self.printerProfilesViewModel.profiles.items(), function(p) { return p.id == profileName });
