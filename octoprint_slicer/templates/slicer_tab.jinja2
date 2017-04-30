@@ -226,6 +226,27 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
                               <span class="add-on">mm</span>
                           </div>
                       </div>
+                      <div title="First layer temperature" class="input-append" data-bind="visible: !_.isUndefined($data['profile.first_layer_temperature']())">
+                          <label class="control-label">1st layer temperature</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.first_layer_temperature']" type="number" min="0" max="315" step="1"></input>
+                              <span class="add-on">°C</span>
+                          </div>
+                      </div>
+                      <div title="First layer bed temperature" class="input-append" data-bind="visible: !_.isUndefined($data['profile.first_layer_bed_temperature']())">
+                          <label class="control-label">1st layer bed temperature</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.first_layer_bed_temperature']" type="number" min="0" max="110" step="1"></input>
+                              <span class="add-on">°C</span>
+                          </div>
+                      </div>
+                      <div title="Brim width" class="input-append" data-bind="visible: !_.isUndefined($data['profile.brim_width']())">
+                          <label class="control-label">Brim width</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.brim_width']" type="number" min="0" max="30" step="0.1"></input>
+                              <span class="add-on">mm</span>
+                          </div>
+                      </div>
                   </div>
                   <div class="span3">
                       <div title="Platform adhesion type" class="input-append" data-bind="visible: !_.isUndefined($data['profile.platform_adhesion']())">
