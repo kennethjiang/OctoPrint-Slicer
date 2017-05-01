@@ -20,7 +20,7 @@
 
 'use strict';
 
-import { forEach } from 'lodash-es';
+import { forEach, map } from 'lodash-es';
 import * as THREE from 'three';
 import { BufferGeometryAnalyzer, OrbitControls, TransformControls, STLLoader, PointerInteractions } from '3tk';
 import { OrientationOptimizer } from './OrientationOptimizer';
@@ -160,7 +160,7 @@ export function STLViewPort( canvas, width, height ) {
 
     self.loadSTL = function ( url, onLoad ) {
         new STLLoader().load(url, function ( geometry ) {
-            self.addModelOfGeometry(geometry);
+            onLoad(self.addModelOfGeometry(geometry));
         });
     };
 
@@ -335,10 +335,12 @@ export function STLViewPort( canvas, width, height ) {
     };
 
     self.duplicateSelectedModel = function( copies ) {
+        var models = [];
+        var originalModel = self.selectedModel();
         for (var i = 0; i < copies; i++) {
-            var originalModel = self.selectedModel();
-            self.addModelOfGeometry( originalModel.children[0].geometry.clone(), originalModel);
+            models.push(self.addModelOfGeometry( originalModel.children[0].geometry.clone(), originalModel));
         }
+        return models;
     };
 
     self.splitSelectedModel = function() {
@@ -350,8 +352,8 @@ export function STLViewPort( canvas, width, height ) {
         var geometry = originalModel.children[0].geometry;
         var newGeometries = BufferGeometryAnalyzer.isolatedGeometries(geometry);
 
-        forEach(newGeometries, function(geometry) {
-            self.addModelOfGeometry( geometry, originalModel );
+        return map(newGeometries, function(geometry) {
+            return self.addModelOfGeometry( geometry, originalModel );
         });
 
         self.removeModel( originalModel );

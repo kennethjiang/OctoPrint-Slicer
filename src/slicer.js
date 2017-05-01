@@ -14,7 +14,7 @@ import { STLViewPort } from './STLViewPort';
 import { OverridesViewModel } from './profile_overrides';
 import { ModelArranger } from './ModelArranger';
 import { CheckerboardMaterial } from './CheckerboardMaterial';
-import { find, forEach, endsWith, some, extend } from 'lodash-es';
+import { find, forEach, endsWith, some, extend, map } from 'lodash-es';
 
 function isDev() {
     return window.location.hostname == "localhost";
@@ -106,7 +106,10 @@ function SlicerViewModel(parameters) {
     self.addSTL = function(target, file) {
         self.newSession = false;
         $('#tab_plugin_slicer > div.translucent-blocker').show();
-        self.stlViewPort.loadSTL(BASEURL + "downloads/files/" + target + "/" + file);
+        self.stlViewPort.loadSTL(BASEURL + "downloads/files/" + target + "/" + file, function (model) {
+            model.userData.filename = file;
+            self.setDestinationFilename();
+        });
     }
 
     self.onModelAdd = function(event) {
@@ -128,6 +131,7 @@ function SlicerViewModel(parameters) {
         if (self.stlViewPort.models().length == 0) {
             self.resetToDefault();
         }
+        self.setDestinationFilename();
         updateValueInputs();
         updateControlState();
         new ModelArranger().arrange(self.stlViewPort.models());
@@ -267,14 +271,32 @@ function SlicerViewModel(parameters) {
         });
 
         $("#slicer-viewport button#split").click(function(event) {
-            startLongRunning( self.stlViewPort.splitSelectedModel );
+            var originalFilename = self.stlViewPort.selectedModel().userData.filename;
+            var models = startLongRunning( self.stlViewPort.splitSelectedModel );
+            var partNumber = 1;
+            forEach(models, function (model) {
+                if (models.length < 2) {
+                    model.userData.filename = originalFilename;
+                } else {
+                    model.userData.filename =
+                        originalFilename.substr(0, originalFilename.lastIndexOf(".")) +
+                        "_split" + partNumber++ +
+                        originalFilename.substr(originalFilename.lastIndexOf(".") + 1);
+                }
+            });
+            self.setDestinationFilename();
         });
 
         $("#slicer-viewport button#duplicate").click(function(event) {
             var copies = parseInt( prompt("The number of copies you want to duplicate:", 1) );
             if (copies != NaN) {
-                startLongRunning( self.stlViewPort.duplicateSelectedModel.bind(self, copies) );
+                let originalFilename = self.stlViewPoint.selectedModel().userData.filename;
+                var models = startLongRunning( self.stlViewPort.duplicateSelectedModel.bind(self, copies) );
+                forEach(models, function (model) {
+                    model.userData.filename = originalFilename;
+                });
             }
+            self.setDestinationFilename();
         });
 
         $("#slicer-viewport button#lay-flat").click(function(event) {
@@ -550,27 +572,68 @@ function SlicerViewModel(parameters) {
         filenames = [];
     };
 
-    self.setSlicingViewModel = function(target, filename) {
+    let previousDestinationFilename = "";
+    self.setDestinationFilename = function() {
         if (!self.slicingViewModel.destinationFilename() ||
-            self.slicingViewModel.destinationFilename() != self.computeDestinationFilename(filenames)) {
-            // No current name or the previous name was unchanged.
-            filesnames.push(filename);
-            self.slicingViewModel.target = target;
-            self.slicingViewModel.file(filename);
-            self.slicingViewModel.destinationFilename(self.computeDestinationFilename(filenames));
+            self.slicingViewModel.destinationFilename() == previousDestinationFilename) {
+            // No previous destination filename or it was unchanged.
+            let filenames = map(self.stlViewPort.models(), function (model) {
+                return model.userData.filename;
+            });
+            previousDestinationFilename = self.computeDestinationFilename(filenames);
+            self.slicingViewModel.destinationFilename(previousDestinationFilename);
         }
+    }
+
+    self.setSlicingViewModel = function(target, filename) {
+        self.slicingViewModel.target = target;
+        self.slicingViewModel.file(filename);
     };
 
     // Returns the destination filename based on which models are loaded.
     // The destination filename is without the final .gco on it because
     // that will depend on the slicer.
-    self.computeDestinationFilename = function(inputFilename) {
-        // TODO: For now, just use the first model's name.
-        var destinationFilename = inputFilename.substr(0, inputFilename.lastIndexOf("."));
-        if (destinationFilename.lastIndexOf("/") != 0) {
-            destinationFilename = destinationFilename.substr(destinationFilename.lastIndexOf("/") + 1);
+    self.computeDestinationFilename = function(inputFilenames) {
+        if (inputFilenames.length == 0) {
+            return "";
         }
-        return destinationFilename;
+        // First, sanitize the filenames to extract the file name.
+        var destFilenames = map(inputFilenames, function(inputFilename) {
+            let destFilename = inputFilename.substr(0, inputFilename.lastIndexOf("."));
+            if (destFilename.lastIndexOf("/") != 0) {
+                destFilename = destFilename.substr(destFilename.lastIndexOf("/") + 1);
+            }
+            return destFilename;
+        });
+
+        // Find the common prefix.
+        let first = destFilenames[0];
+        let last = destFilenames[0];
+        for (let destFilename of destFilenames) {
+            if (destFilename < first) {
+                first = destFilename;
+            }
+            if (destFilename > last) {
+                last = destFilename;
+            }
+        }
+        if (first == last) {
+            // 1 or more of the same file.
+            if (destFilenames.length == 1) {
+                return destFilenames[0];
+            } else {
+                return destFilenames[0] + "x" + destFilenames.length;
+            }
+        }
+        let commonPrefixLength = 0;
+        while (first[commonPrefixLength] == last[commonPrefixLength] && commonPrefixLength <= first.length) {
+            commonPrefixLength++;
+        }
+        if (commonPrefixLength > 2) {
+            // If the common prefix is significant in length, use it.
+            return first.slice(0, commonPrefixLength) + "_Various";
+        }
+        return destFilenames[0];  // Default, return the first file.
     };
 
     self.tempSTLFilename = function() {
@@ -589,8 +652,9 @@ function SlicerViewModel(parameters) {
     function startLongRunning( func ) {
         $('#tab_plugin_slicer > div.translucent-blocker').show();
         setTimeout( function() {
-            func();
+            let result = func();
             $('#tab_plugin_slicer > div.translucent-blocker').hide();
+            return result;
         }, 25);
     }
 
