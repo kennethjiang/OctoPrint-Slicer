@@ -212,18 +212,20 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
                               <input type="checkbox" data-bind="checked: $data['profile.retraction_enable']"></input>
                           </div>
                       </div>
-                      <div title="Filament retraction speed" class="input-append" data-bind="visible: !_.isUndefined($data['profile.retraction_enable']())">
-                          <label class="control-label">Retraction speed</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.retraction_speed'], enable: $data['profile.retraction_enable']" type="number" min="0" max="300" step="1"></input>
-                              <span class="add-on">mm/s</span>
+                      <div data-bind="visible: $data['profile.retraction_enable']">
+                          <div title="Filament retraction speed" class="input-append" data-bind="visible: !_.isUndefined($data['profile.retraction_enable']())">
+                              <label class="control-label">Retraction speed</label>
+                              <div class="controls">
+                                  <input data-bind="numericValue: $data['profile.retraction_speed']" type="number" min="0" max="300" step="1"></input>
+                                  <span class="add-on">mm/s</span>
+                              </div>
                           </div>
-                      </div>
-                      <div title="Filament retraction distance" class="input-append" data-bind="visible: !_.isUndefined($data['profile.retraction_enable']())">
-                          <label class="control-label">Retraction distance</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.retraction_amount'], enable: $data['profile.retraction_enable']" type="number" min="0" max="30" step="0.1"></input>
-                              <span class="add-on">mm</span>
+                          <div title="Filament retraction distance" class="input-append" data-bind="visible: !_.isUndefined($data['profile.retraction_enable']())">
+                              <label class="control-label">Retraction distance</label>
+                              <div class="controls">
+                                  <input data-bind="numericValue: $data['profile.retraction_amount']" type="number" min="0" max="30" step="0.1"></input>
+                                  <span class="add-on">mm</span>
+                              </div>
                           </div>
                       </div>
                       <div title="First layer temperature" class="input-append" data-bind="visible: !_.isUndefined($data['profile.first_layer_temperature']())">
