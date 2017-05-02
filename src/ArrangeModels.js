@@ -22,7 +22,7 @@ export var ArrangeModels = function () {
       modelClone.rotation.reorder("ZYX");
       var originalRotation = modelClone.rotation.z;
       for (var rotation = 0; rotation < THREE.Math.degToRad(90); rotation += THREE.Math.degToRad(15)) {
-        modelClone.rotation.z += originalRotation + rotation;
+        modelClone.rotation.z = originalRotation + rotation;
         var modelBox = new THREE.Box3().setFromObject(modelClone);
         var width = modelBox.max.x - modelBox.min.x + margin;
         var height = modelBox.max.y - modelBox.min.y + margin;
