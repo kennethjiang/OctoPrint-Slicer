@@ -281,7 +281,7 @@ function SlicerViewModel(parameters) {
                     for (var model of models) {
                         model.userData.filename =
                             originalFilename.substr(0, originalFilename.lastIndexOf(".")) +
-                            "_split" + partNumber +
+                            "_Split" + partNumber +
                             originalFilename.substr(originalFilename.lastIndexOf("."));
                         partNumber++;
                     }
@@ -622,8 +622,10 @@ function SlicerViewModel(parameters) {
         if (first == last) {
             // 1 or more of the same file.
             if (destFilenames.length == 1) {
+                // Just one file.
                 return destFilenames[0];
             } else {
+                // More than 1 of the same file.
                 return destFilenames[0] + "x" + destFilenames.length;
             }
         }
