@@ -112,13 +112,13 @@ export function Box3FromObject(object) {
         // the rotation in matrixWorld.  So we can just apply the
         // matrixces to the points to get the correct locations.
         if (!previousBox3.isEmpty()) {
-            let invertedPreviousMatrixWorld = new THREE.Matrix4().getInverse(previousMatrixWorld);
+            let previousToCurrentMatrixWorld = new THREE.Matrix4()
+                .getInverse(previousMatrixWorld)
+                .premultiply(object.matrixWorld);
             box3.expandByPoint(previousBox3.min.clone()
-                               .applyMatrix4(invertedPreviousMatrixWorld)
-                               .applyMatrix4(object.matrixWorld));
+                               .applyMatrix4(previousToCurrentMatrixWorld));
             box3.expandByPoint(previousBox3.max.clone()
-                               .applyMatrix4(invertedPreviousMatrixWorld)
-                               .applyMatrix4(object.matrixWorld));
+                               .applyMatrix4(previousToCurrentMatrixWorld));
         }
         for (let child of object.children) {
             if (!child.userData.box3FromObject) {
