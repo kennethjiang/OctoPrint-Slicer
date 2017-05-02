@@ -18,21 +18,23 @@ export var ArrangeModels = function () {
       var smallestRectangle = {"name": i};
       // Try all rotations of the model from 0 to 90.  No need to try
       // beyond because the packer can already rotate by 90 degrees.
-      var modelClone = model.clone(true);
-      modelClone.rotation.reorder("ZYX");
-      var originalRotation = modelClone.rotation.z;
+      var originalRotationOrder = model.rotation.order;
+      model.rotation.reorder("ZYX");
+      var originalRotation = model.rotation.z;
       for (var rotation = 0; rotation < THREE.Math.degToRad(90); rotation += THREE.Math.degToRad(15)) {
-        modelClone.rotation.z = originalRotation + rotation;
-        var modelBox = new THREE.Box3().setFromObject(modelClone);
+        model.rotation.z = originalRotation + rotation;
+        var modelBox = model.userData.box3FromObject();
         var width = modelBox.max.x - modelBox.min.x + margin;
         var height = modelBox.max.y - modelBox.min.y + margin;
         if (!smallestRectangle.hasOwnProperty("prerotation") ||
             width * height < smallestRectangle.width * smallestRectangle.height) {
           smallestRectangle["width"] = width;
           smallestRectangle["height"] = height;
-          smallestRectangle["prerotation"] = modelClone.rotation.z;
+          smallestRectangle["prerotation"] = model.rotation.z;
         }
       }
+      model.rotation.z = originalRotation;
+      model.rotation.order = originalRotationOrder;
       dimensions.push(smallestRectangle.height);
       dimensions.push(smallestRectangle.width);
       rectangles.push(smallestRectangle);
