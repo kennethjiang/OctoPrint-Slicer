@@ -34,7 +34,7 @@ export var ArrangeModels = function () {
         }
       }
       model.rotation.z = originalRotation;
-      model.rotation.order = originalRotationOrder;
+      model.rotation.reorder(originalRotationOrder);
       dimensions.push(smallestRectangle.height);
       dimensions.push(smallestRectangle.width);
       rectangles.push(smallestRectangle);
