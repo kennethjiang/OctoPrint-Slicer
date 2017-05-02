@@ -274,15 +274,15 @@ function SlicerViewModel(parameters) {
         $("#slicer-viewport button#split").click(function(event) {
             var originalFilename = self.stlViewPort.selectedModel().userData.filename;
             startLongRunning( self.stlViewPort.splitSelectedModel, function (models) {
-                var partNumber = 1;
-                for (var model of models) {
-                    if (models.length < 2) {
-                        model.userData.filename = originalFilename;
-                    } else {
+                if (models.length == 1) {
+                    models[0].userData.filename = originalFilename;
+                } else {
+                    var partNumber = 1;
+                    for (var model of models) {
                         model.userData.filename =
                             originalFilename.substr(0, originalFilename.lastIndexOf(".")) +
                             "_split" + partNumber +
-                        originalFilename.substr(originalFilename.lastIndexOf("."));
+                            originalFilename.substr(originalFilename.lastIndexOf("."));
                         partNumber++;
                     }
                 }
@@ -568,12 +568,15 @@ function SlicerViewModel(parameters) {
 
     // END: Helpers for drawing walls and floor
 
-    let filenames = [];
     self.resetSlicingViewModel = function() {
         self.slicingViewModel.target = undefined;
         self.slicingViewModel.file(undefined);
         self.slicingViewModel.destinationFilename(undefined);
-        filenames = [];
+    };
+
+    self.setSlicingViewModel = function(target, filename) {
+        self.slicingViewModel.target = target;
+        self.slicingViewModel.file(filename);
     };
 
     let previousDestinationFilename = "";
@@ -588,11 +591,6 @@ function SlicerViewModel(parameters) {
             self.slicingViewModel.destinationFilename(previousDestinationFilename);
         }
     }
-
-    self.setSlicingViewModel = function(target, filename) {
-        self.slicingViewModel.target = target;
-        self.slicingViewModel.file(filename);
-    };
 
     // Returns the destination filename based on which models are loaded.
     // The destination filename is without the final .gco on it because
