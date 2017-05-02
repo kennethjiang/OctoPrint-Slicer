@@ -58,13 +58,17 @@ export function OverridesViewModel(parameters, array_keys, enum_keys, item_keys,
             "fan_full_height",
             "fan_speed",
             "fan_speed_max",
+            "first_layer_temperature",
+            "first_layer_bed_temperature",
+            "brim_width",
         ],
         BOOLEAN_KEYS = [
             "support_material",
             "overhangs",
             "retraction_enable",
             "fan_enabled",
-            "cooling"
+            "cooling",
+            "fan_always_on"
         ];
     var ALL_KEYS = BOOLEAN_KEYS.concat(ITEM_KEYS).concat(ARRAY_KEYS).concat(Object.keys(ENUM_KEYS));
 

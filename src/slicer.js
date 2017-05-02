@@ -21,9 +21,9 @@ function isDev() {
     return window.location.hostname == "localhost";
 }
 
-if ( ! isDev() ) {
+if ( ! isDev() && typeof(Raven) !== 'undefined' ) {
     Raven.config('https://85bd9314656d40da9249aec5a32a2b52@sentry.io/141297', {
-        release: '1.2.5',
+        release: '1.2.6',
         ignoreErrors: [
             "Failed to execute 'arc' on 'CanvasRenderingContext2D': The radius provided",
             "Cannot read property 'highlightFill' of undefined",
@@ -32,6 +32,7 @@ if ( ! isDev() ) {
             "chrome is not defined",
             "You cannot apply bindings multiple times to the same element.",
             "SVG_MATRIX_NOT_INVERTABLE",
+            "The index is not in the allowed range.",
         ],
     }).install();
 }
@@ -130,6 +131,7 @@ function SlicerViewModel(parameters) {
         }
         updateValueInputs();
         updateControlState();
+        new ModelArranger().arrange(self.stlViewPort.models());
     };
 
     self.updatePrinterBed = function(profileName) {
@@ -272,7 +274,7 @@ function SlicerViewModel(parameters) {
         $("#slicer-viewport button#duplicate").click(function(event) {
             var copies = parseInt( prompt("The number of copies you want to duplicate:", 1) );
             if (copies != NaN) {
-                self.stlViewPort.duplicateSelectedModel(copies);
+                startLongRunning( self.stlViewPort.duplicateSelectedModel.bind(self, copies) );
             }
         });
 
