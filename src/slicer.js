@@ -131,7 +131,6 @@ function SlicerViewModel(parameters) {
         if (self.stlViewPort.models().length == 0) {
             self.resetToDefault();
         }
-        self.setDestinationFilename();
         updateValueInputs();
         updateControlState();
         new ModelArranger().arrange(self.stlViewPort.models());
@@ -259,6 +258,7 @@ function SlicerViewModel(parameters) {
 
         $("#slicer-viewport button.remove").click(function(event) {
             self.stlViewPort.removeSelectedModel();
+            self.setDestinationFilename();
         });
 
         $("#slicer-viewport button.more").click(function(event) {
@@ -268,35 +268,39 @@ function SlicerViewModel(parameters) {
         $("#slicer-viewport button#clear").click(function(event) {
             self.stlViewPort.removeAllModels();
             self.resetToDefault();
+            self.setDestinationFilename();
         });
 
         $("#slicer-viewport button#split").click(function(event) {
             var originalFilename = self.stlViewPort.selectedModel().userData.filename;
-            var models = startLongRunning( self.stlViewPort.splitSelectedModel );
-            var partNumber = 1;
-            forEach(models, function (model) {
-                if (models.length < 2) {
-                    model.userData.filename = originalFilename;
-                } else {
-                    model.userData.filename =
-                        originalFilename.substr(0, originalFilename.lastIndexOf(".")) +
-                        "_split" + partNumber++ +
-                        originalFilename.substr(originalFilename.lastIndexOf(".") + 1);
+            startLongRunning( self.stlViewPort.splitSelectedModel, function (models) {
+                var partNumber = 1;
+                for (var model of models) {
+                    if (models.length < 2) {
+                        model.userData.filename = originalFilename;
+                    } else {
+                        model.userData.filename =
+                            originalFilename.substr(0, originalFilename.lastIndexOf(".")) +
+                            "_split" + partNumber +
+                        originalFilename.substr(originalFilename.lastIndexOf("."));
+                        partNumber++;
+                    }
                 }
+                self.setDestinationFilename();
             });
-            self.setDestinationFilename();
         });
 
         $("#slicer-viewport button#duplicate").click(function(event) {
             var copies = parseInt( prompt("The number of copies you want to duplicate:", 1) );
             if (copies != NaN) {
-                let originalFilename = self.stlViewPoint.selectedModel().userData.filename;
-                var models = startLongRunning( self.stlViewPort.duplicateSelectedModel.bind(self, copies) );
-                forEach(models, function (model) {
-                    model.userData.filename = originalFilename;
+                let originalFilename = self.stlViewPort.selectedModel().userData.filename;
+                startLongRunning( self.stlViewPort.duplicateSelectedModel.bind(self, copies), function (models) {
+                    forEach(models, function (model) {
+                        model.userData.filename = originalFilename;
+                    });
+                    self.setDestinationFilename();
                 });
             }
-            self.setDestinationFilename();
         });
 
         $("#slicer-viewport button#lay-flat").click(function(event) {
@@ -649,12 +653,12 @@ function SlicerViewModel(parameters) {
     // internal functions
     ///////////////////////
 
-    function startLongRunning( func ) {
+    function startLongRunning( func, callback ) {
         $('#tab_plugin_slicer > div.translucent-blocker').show();
         setTimeout( function() {
             let result = func();
             $('#tab_plugin_slicer > div.translucent-blocker').hide();
-            return result;
+            callback(result);
         }, 25);
     }
 

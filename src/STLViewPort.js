@@ -352,12 +352,13 @@ export function STLViewPort( canvas, width, height ) {
         var geometry = originalModel.children[0].geometry;
         var newGeometries = BufferGeometryAnalyzer.isolatedGeometries(geometry);
 
-        return map(newGeometries, function(geometry) {
+        var newModels =  map(newGeometries, function(geometry) {
             return self.addModelOfGeometry( geometry, originalModel );
         });
 
         self.removeModel( originalModel );
         self.dispatchEvent( { type: eventType.delete, models: [originalModel] } );
+        return newModels;
     };
 
     self.onlyOneOriginalModel = function() {
