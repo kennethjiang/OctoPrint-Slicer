@@ -22,9 +22,9 @@ function isDev() {
     return window.location.hostname == "localhost";
 }
 
-if ( ! isDev() ) {
+if ( ! isDev() && typeof(Raven) !== 'undefined' ) {
     Raven.config('https://85bd9314656d40da9249aec5a32a2b52@sentry.io/141297', {
-        release: '1.2.5',
+        release: '1.2.6',
         ignoreErrors: [
             "Failed to execute 'arc' on 'CanvasRenderingContext2D': The radius provided",
             "Cannot read property 'highlightFill' of undefined",
