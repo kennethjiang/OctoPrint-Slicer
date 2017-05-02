@@ -149,6 +149,9 @@ function SlicerViewModel(parameters) {
                 self.ORIGIN_OFFSET_X_MM = 0;
                 self.ORIGIN_OFFSET_Y_MM = 0;
             }
+            self.stlViewPort.canvasWidth = self.BEDSIZE_X_MM;
+            self.stlViewPort.canvasDepth = self.BEDSIZE_Y_MM;
+            self.stlViewPort.canvasHeight = self.BEDSIZE_Z_MM;
         }
         self.drawBedFloor(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM, self.BED_FORM_FACTOR);
         self.drawWalls(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM, self.BEDSIZE_Z_MM, self.BED_FORM_FACTOR);
@@ -164,6 +167,7 @@ function SlicerViewModel(parameters) {
     self.ORIGIN_OFFSET_Y_MM = 0;
 
     var CANVAS_WIDTH = 588,
+        CANVAS_DEPTH = 588,
         CANVAS_HEIGHT = 588;
 
 
@@ -174,7 +178,7 @@ function SlicerViewModel(parameters) {
 
         self.slicingViewModel.requestData();
 
-        self.stlViewPort = new STLViewPort(self.canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
+        self.stlViewPort = new STLViewPort(self.canvas, CANVAS_WIDTH, CANVAS_DEPTH, CANVAS_HEIGHT);
         self.stlViewPort.addEventListener( "change", self.onModelChange );
         self.stlViewPort.addEventListener( "add", self.onModelAdd );
         self.stlViewPort.addEventListener( "delete", self.onModelDelete );
@@ -376,9 +380,15 @@ function SlicerViewModel(parameters) {
         });
     };
 
-    self.slice = function() {
+    self.slice = function(ignoreCollisions = false) {
         mixpanel.track("Slice Model");
-
+        $('#tab_plugin_slicer > div.translucent-blocker').show();
+        var hasCollisions = self.stlViewPort.hasCollisions();
+        $('#tab_plugin_slicer > div.translucent-blocker').hide();
+        if (!ignoreCollisions && hasCollisions) {
+            $("#plugin-slicer-slice-collisions").modal("show");
+            return;
+        }
         var target = self.slicingViewModel.target;
         var sliceRequestData;
 
@@ -667,6 +677,7 @@ function SlicerViewModel(parameters) {
             self.fixZPosition(model);
             updateSizeInfo();
             self.stlViewPort.recalculateOverhang(model);
+            self.stlViewPort.resetCollisionDetector();
         }
     }
 

@@ -20,25 +20,34 @@
 
 'use strict';
 
-import { forEach } from 'lodash-es';
+import { forEach, isUndefined } from 'lodash-es';
 import * as THREE from 'three';
 import { BufferGeometryAnalyzer, OrbitControls, TransformControls, STLLoader, PointerInteractions } from '3tk';
 import { OrientationOptimizer } from './OrientationOptimizer';
+import { CollisionDetector } from './CollisionDetector';
 
-export function STLViewPort( canvas, width, height ) {
+export function STLViewPort( canvas, width, depth, height ) {
 
     var self = this;
 
     self.canvas = canvas;
     self.canvasWidth = width;
+    self.canvasDepth = depth;
     self.canvasHeight = height;
 
     self.effectController = {
         metalness: 0.5,
         roughness: 0.5,
-        modelInactiveColor: new THREE.Color("#60715b"),
-        modelActiveColor: new THREE.Color("#34bf0d"),
-        modelHoverColor: new THREE.Color("#84f25c"),
+        modelNonCollidingColors: {
+            inactive: new THREE.Color("hsl(106, 20%, 40%)"),
+            active: new THREE.Color("hsl(106, 87%, 40%)"),
+            hover: new THREE.Color("hsl(106, 87%, 65%)"),
+        },
+        modelCollidingColors: {
+            inactive: new THREE.Color("hsl(0, 20%, 40%)"),
+            active: new THREE.Color("hsl(0, 87%, 40%)"),
+            hover: new THREE.Color("hsl(0, 87%, 65%)"),
+        },
         ambientLightColor: new THREE.Color("#2b2b2b"),
         directionalLightColor: new THREE.Color("#ffffff"),
     };
@@ -70,7 +79,7 @@ export function STLViewPort( canvas, width, height ) {
         self.renderer = new THREE.WebGLRenderer( { canvas: self.canvas, antialias: true } );
 
         self.renderer.setClearColor( 0xd8d8d8 );
-        self.renderer.setSize( self.canvasWidth, self.canvasHeight );
+        self.renderer.setSize( self.canvasWidth, self.canvasDepth );
         self.renderer.setPixelRatio( window.devicePixelRatio );
 
         self.renderer.gammaInput = true;
@@ -139,19 +148,25 @@ export function STLViewPort( canvas, width, height ) {
     };
 
     self.update = function() {
+        for( var index = 0;
+             index < self.pointerInteractions.objects.length;
+             index++ ) {
+            var model = self.pointerInteractions.objects[index];
+            var effectController =
+                self.currentCollisions[index] ?
+                self.effectController.modelCollidingColors :
+                self.effectController.modelNonCollidingColors;
 
-        forEach( self.pointerInteractions.objects, function( model ) {
             if (model == self.selectedModel()) {
-                model.children[0].material.color.copy(self.effectController.modelActiveColor);
+                model.children[0].material.color.copy(effectController.active);
             } else if ( self.pointerInteractions.hoveredObject && model == self.pointerInteractions.hoveredObject.parent ) {
                 if ( self.transformControls.getMode() == "translate" ) {
-                    model.children[0].material.color.copy(self.effectController.modelHoverColor);
+                    model.children[0].material.color.copy(effectController.hover);
                 }
             } else {
-                model.children[0].material.color.copy(self.effectController.modelInactiveColor);
+                model.children[0].material.color.copy(effectController.inactive);
             }
-        });
-
+        }
     };
 
     self.render = function() {
@@ -161,13 +176,16 @@ export function STLViewPort( canvas, width, height ) {
     self.loadSTL = function ( url, onLoad ) {
         new STLLoader().load(url, function ( geometry ) {
             self.addModelOfGeometry(geometry);
+            // Detect collisions after the event in case the users wants to arrange, for example.
+            self.dispatchEvent( { type: eventType.change } );
+            self.resetCollisionDetector();
         });
     };
 
     self.addModelOfGeometry = function( geometry, modelToCopyTransformFrom ) {
 
         var material = new THREE.MeshStandardMaterial({
-            color: self.effectController.modelInactiveColor,  // We'll mark it active below.
+            color: self.effectController.modelNonCollidingColors.inactive,  // We'll mark it active below.
             shading: THREE.SmoothShading,
             side: THREE.DoubleSide,
             metalness: self.effectController.metalness,
@@ -258,8 +276,62 @@ export function STLViewPort( canvas, width, height ) {
         }
     };
 
+    // collisions is an array of true/false/undefined.  true means
+    // colliding, false means no, undefined means that we haven't
+    // figured it out yet.
+    self.currentCollisions = [];
+    self.markCollidingModels = function (collisions) {
+        var updateNeeded = false;
+        for (var i = 0; i < collisions.length; i++) {
+            if (!isUndefined(collisions[i]) && collisions[i] !== self.currentCollisions[i]) {
+                self.currentCollisions[i] = collisions[i];
+                updateNeeded = true;
+            }
+        }
+        if (updateNeeded) {
+            self.animate();
+        }
+    };
+
+    // true to do live collision detection.  Collision Detection is
+    // always run to completion right before slicing, regardless this
+    // value.
+    const LIVE_COLLISION_DETECTOR = false;
+    var collisionDetector = new CollisionDetector();
+    var setCollisionDetector = function() {
+        var EPSILON_Z = 0.0001;  // To deal with rounding error after fixZ.
+        var printVolume = new THREE.Box3(
+            new THREE.Vector3(-self.canvasWidth/2, -self.canvasDepth/2, -EPSILON_Z),
+            new THREE.Vector3(self.canvasWidth/2, self.canvasDepth/2, self.canvasHeight));
+        collisionDetector.makeIterator(self.models(), printVolume);
+    }
+
+    // Run whenever the collision detection inputs may have changed.
+    self.resetCollisionDetector = function () {
+        collisionDetector.clearIterator();
+        if (LIVE_COLLISION_DETECTOR) {
+            setCollisionDetector();
+            var TASK_SWITCH_MS = 50;
+            collisionDetector.startBackground(self.markCollidingModels, TASK_SWITCH_MS);
+        }
+    };
+
+    // If the collision detector is not already running, make the
+    // iterator and start it to run until it's done.  Otherwise,
+    // complete the current collision detector.
+    self.hasCollisions = function () {
+        if (!collisionDetector.hasIterator()) {
+            setCollisionDetector();
+        }
+        var collisions = collisionDetector.start(Infinity);
+        self.markCollidingModels(collisions);
+        return collisions.findIndex(function (collides) { return collides; }) > -1;
+    }
+
     self.onChange = function() {
         self.dispatchEvent( { type: eventType.change } );
+        // Detect collisions after the event in case the users wants to fix Z, for example.
+        self.resetCollisionDetector();
     };
 
     var recentSelections = [];
