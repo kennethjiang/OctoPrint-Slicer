@@ -15,7 +15,6 @@ import { OverridesViewModel } from './profile_overrides';
 import { ModelArranger } from './ModelArranger';
 import { CheckerboardMaterial } from './CheckerboardMaterial';
 import { find, forEach, endsWith, some, extend } from 'lodash-es';
-import { Box3FromObject } from './Box3FromObject';
 
 function isDev() {
     return window.location.hostname == "localhost";
