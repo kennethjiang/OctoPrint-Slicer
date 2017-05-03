@@ -177,11 +177,11 @@ export function STLViewPort( canvas, width, depth, height ) {
 
     self.loadSTL = function ( url, afterLoad ) {
         new STLLoader().load(url, function ( geometry ) {
-            self.addModelOfGeometry([geometry]);
+            var newModels = self.addModelOfGeometry([geometry]);
             // Detect collisions after the event in case the users wants to arrange, for example.
             self.dispatchEvent( { type: eventType.change } );
             self.resetCollisionDetector();
-            afterLoad();
+            afterLoad(newModels[0]);
         });
     };
 
@@ -429,7 +429,7 @@ export function STLViewPort( canvas, width, depth, height ) {
             // Do we really need to clone them?
             geometries.push(originalModel.children[0].geometry.clone());
         }
-        self.addModelOfGeometry(geometries, originalModel);
+        return self.addModelOfGeometry(geometries, originalModel);
     };
 
     self.splitSelectedModel = function() {
@@ -441,10 +441,11 @@ export function STLViewPort( canvas, width, depth, height ) {
         var geometry = originalModel.children[0].geometry;
         var newGeometries = BufferGeometryAnalyzer.isolatedGeometries(geometry);
 
-        self.addModelOfGeometry( newGeometries, originalModel );
+        var newModels = self.addModelOfGeometry( newGeometries, originalModel );
         self.removeModel( originalModel );
         self.dispatchEvent( { type: eventType.delete, models: [originalModel] } );
         self.dispatchEvent( { type: eventType.add, models: [] } );  // To force arranging.
+        return newModels;
     };
 
     self.onlyOneOriginalModel = function() {
