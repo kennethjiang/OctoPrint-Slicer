@@ -329,7 +329,7 @@ function SlicerViewModel(parameters) {
         }
     }
 
-    self.sliceRequestData = function(slicingVM, group) {
+    self.sliceRequestData = function(slicingVM, groupCenter) {
         var destinationFilename = slicingVM._sanitize(slicingVM.destinationFilename());
 
         var destinationExtensions = slicingVM.data[slicingVM.slicer()] && slicingVM.data[slicingVM.slicer()].extensions && slicingVM.data[slicingVM.slicer()].extensions.destination
@@ -340,9 +340,8 @@ function SlicerViewModel(parameters) {
         })) {
             destinationFilename = destinationFilename + "." + destinationExtensions[0];
         }
-        var groupCenter = new THREE.Vector3(0,0,0);
-        if (group) {
-            groupCenter = new THREE.Box3().setFromObject(group).getCenter();
+        if (!groupCenter) {
+            groupCenter = new THREE.Vector3(0,0,0);
         }
         var data = {
             command: "slice",
@@ -391,11 +390,25 @@ function SlicerViewModel(parameters) {
 
             var form = new FormData();
             var group = new THREE.Group();
+            let groupBox3 = new THREE.Box3();
             forEach(self.stlViewPort.models(), function (model) {
                 group.add(model.clone(true));
+                groupBox3.expandByPoint(model.userData.box3FromObject().min);
+                groupBox3.expandByPoint(model.userData.box3FromObject().max);
             });
+            let DEBUGGING = false;
+            if (DEBUGGING) {
+                var oldBox3 = new THREE.Box3().setFromObject(group);
+                var maxDiff = groupBox3.max.clone().sub(oldBox3.max);
+                var minDiff = groupBox3.min.clone().sub(oldBox3.min);
+                var EPSILON = 0.0001; // Set this to 0 to see even microscopic differences.
+                if (maxDiff.x > EPSILON || maxDiff.y > EPSILON || maxDiff.z > EPSILON || minDiff.x > EPSILON || minDiff.y > EPSILON || minDiff.z > EPSILON) {
+                    console.log("new - old: " + JSON.stringify(groupBox3.max.clone().sub(oldBox3.max)) + "," + JSON.stringify(groupBox3.min.clone().sub(oldBox3.min)));
+                    console.log("new, old: " + JSON.stringify(groupBox3) + "," + JSON.stringify(oldBox3));
+                }
+            }
 
-            sliceRequestData = self.sliceRequestData(self.slicingViewModel, group);
+            sliceRequestData = self.sliceRequestData(self.slicingViewModel, groupBox3.getCenter());
 
             var tempFilename = self.tempSTLFilename();
             form.append("file", self.blobFromModel(group), tempFilename);
