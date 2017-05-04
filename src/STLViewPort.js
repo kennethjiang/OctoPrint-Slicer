@@ -309,13 +309,16 @@ export function STLViewPort( canvas, width, height ) {
         self.dispatchEvent( { type: eventType.delete, models: arrayCopy} );
     };
 
-    var tipping = new Tipping();
     self.laySelectedModelFlat = function(doneFn) {
         var model = self.selectedModel();
         if (! model) return;
 
+        if (!model.userData.tipping) {
+            model.userData.tipping = new Tipping(model);
+        }
+        var tipping = model.userData.tipping;
         const TASK_SWITCH_MS = 250;
-        var tipIterator = tipping.tipObject(model, Date.now() + TASK_SWITCH_MS);
+        var tipIterator = tipping.tipObject(Date.now() + TASK_SWITCH_MS);
         var tipLoop = function() {
             setTimeout(function() {
                 var tipResult = tipIterator.next(Date.now() + TASK_SWITCH_MS);
@@ -325,7 +328,7 @@ export function STLViewPort( canvas, width, height ) {
                     model.quaternion.premultiply(tippingQuaternion);
                     self.dispatchEvent( { type: eventType.change } );  // We need this for the fixZ.
                     // There might be more to do, make a new iterator.
-                    tipIterator = tipping.tipObject(model, Date.now() + TASK_SWITCH_MS);
+                    tipIterator = tipping.tipObject(Date.now() + TASK_SWITCH_MS);
                     tipLoop();
                 } else if (!tipDone) {
                     // No quaternion yet but still not done, keep going.
