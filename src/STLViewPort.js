@@ -25,6 +25,7 @@ import * as THREE from 'three';
 import { BufferGeometryAnalyzer, OrbitControls, TransformControls, STLLoader, PointerInteractions } from '3tk';
 import { OrientationOptimizer } from './OrientationOptimizer';
 import { Tipping } from './Tipping';
+import { Box3FromObject } from './Box3FromObject';
 
 export function STLViewPort( canvas, width, height ) {
 
@@ -44,7 +45,7 @@ export function STLViewPort( canvas, width, height ) {
         directionalLightColor: new THREE.Color("#ffffff"),
     };
 
-    var eventType = { change: "change", add: "add", delete: "delete", split: "split" };
+    var eventType = { change: "change", add: "add", delete: "delete" };
 
     self.init = function() {
 
@@ -161,8 +162,7 @@ export function STLViewPort( canvas, width, height ) {
 
     self.loadSTL = function ( url, onLoad ) {
         new STLLoader().load(url, function ( geometry ) {
-            var newModel = self.addModelOfGeometry(geometry);
-            self.dispatchEvent( { type: eventType.add, models: [ newModel ] } );
+            self.addModelOfGeometry(geometry);
         });
     };
 
@@ -179,9 +179,10 @@ export function STLViewPort( canvas, width, height ) {
         var stlModel = new THREE.Mesh( geometry, material );
 
         // center model's origin
-        var center = new THREE.Box3().setFromObject(stlModel).getCenter();
         var model = new THREE.Object3D();
         model.add(stlModel);
+        model.userData.box3FromObject = Box3FromObject(model);
+        var center = model.userData.box3FromObject().getCenter();
         stlModel.position.copy(center.negate());
         if (modelToCopyTransformFrom) {
             model.rotation.copy(modelToCopyTransformFrom.rotation);
@@ -191,11 +192,13 @@ export function STLViewPort( canvas, width, height ) {
         model.orientationOptimizer = new OrientationOptimizer(geometry);
         self.recalculateOverhang(model);
 
-        self.scene.add(model);
-
         self.pointerInteractions.objects.push(model);
         self.pointerInteractions.update();
 
+        self.scene.add(model);
+        self.selectModel(model);
+
+        self.dispatchEvent( { type: eventType.add, models: [ model ] } );
         return model;
 
     };
@@ -216,8 +219,6 @@ export function STLViewPort( canvas, width, height ) {
     self.selectionChanged = function( event ) {
         if (event.current) {
             self.selectModel( event.current.parent );
-        } else {
-            self.selectModel( null );
         }
     };
 
@@ -264,17 +265,26 @@ export function STLViewPort( canvas, width, height ) {
         self.dispatchEvent( { type: eventType.change } );
     };
 
+    var recentSelections = [];
     /**
      * params:
-     *    m: model to make active. Clear active model if m is undefined
+     *    m: model to make active. If m is undefined or not found, select from MRU.
      */
     self.selectModel = function(m) {
-
-        // Sets one file active and inactivates all the others.
-        if (m) {
+        if (self.pointerInteractions.objects.indexOf(m) > -1) {
+            recentSelections.push(m);
             self.transformControls.attach(m);
         } else {
-            self.transformControls.detach();
+            // Requested model null or not found.  Look for a model to set active.
+            while (recentSelections.length > 0) {
+                var maybe = recentSelections.pop();
+                if (self.pointerInteractions.objects.indexOf(maybe) > -1) {
+                    recentSelections.push(maybe);
+                    self.transformControls.attach(maybe);
+                    break;
+                }
+            }
+            if (recentSelections.length == 0) self.transformControls.detach();
         }
 
         self.onChange();
@@ -342,6 +352,13 @@ export function STLViewPort( canvas, width, height ) {
         tipLoop();
     };
 
+    self.duplicateSelectedModel = function( copies ) {
+        for (var i = 0; i < copies; i++) {
+            var originalModel = self.selectedModel();
+            self.addModelOfGeometry( originalModel.children[0].geometry.clone(), originalModel);
+        }
+    };
+
     self.splitSelectedModel = function() {
         if (!self.selectedModel()) {
             return;
@@ -350,11 +367,13 @@ export function STLViewPort( canvas, width, height ) {
         var originalModel = self.selectedModel()
         var geometry = originalModel.children[0].geometry;
         var newGeometries = BufferGeometryAnalyzer.isolatedGeometries(geometry);
-        var newModels = newGeometries.map( function(geometry) {
-                return self.addModelOfGeometry( geometry, originalModel );
-            });
+
+        forEach(newGeometries, function(geometry) {
+            self.addModelOfGeometry( geometry, originalModel );
+        });
+
         self.removeModel( originalModel );
-        self.dispatchEvent( { type: eventType.split, from: originalModel, to: newModels } );
+        self.dispatchEvent( { type: eventType.delete, models: [originalModel] } );
     };
 
     self.onlyOneOriginalModel = function() {
@@ -384,11 +403,15 @@ export function STLViewPort( canvas, width, height ) {
 
     self.recalculateOverhang = function(model) {
         if (!model || !model.orientationOptimizer) return;
+        if ( model.userData.previousRotation && model.rotation.equals(model.userData.previousRotation ) ) {
+            model.userData.previousRotation = model.rotation.clone();
+            return;
+        }
 
         var orientation = model.orientationOptimizer.printabilityOfOrientationByRotation( model.rotation );
         self.tintSurfaces(model, null, 255, 255, 255); // Clear tints off the whole model
         self.tintSurfaces(model, orientation.overhang, 128, 16, 16);
-        self.tintSurfaces(model, orientation.bottom, 16, 16, 128);
+        model.userData.previousRotation = model.rotation.clone();
     };
 
     self.tintSurfaces = function(model, surfaces, r, g, b) {

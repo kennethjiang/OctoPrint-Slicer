@@ -212,17 +212,40 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
                               <input type="checkbox" data-bind="checked: $data['profile.retraction_enable']"></input>
                           </div>
                       </div>
-                      <div title="Filament retraction speed" class="input-append" data-bind="visible: !_.isUndefined($data['profile.retraction_enable']())">
-                          <label class="control-label">Retraction speed</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.retraction_speed'], enable: $data['profile.retraction_enable']" type="number" min="0" max="300" step="1"></input>
-                              <span class="add-on">mm/s</span>
+                      <div data-bind="visible: $data['profile.retraction_enable']">
+                          <div title="Filament retraction speed" class="input-append" data-bind="visible: !_.isUndefined($data['profile.retraction_enable']())">
+                              <label class="control-label">Retraction speed</label>
+                              <div class="controls">
+                                  <input data-bind="numericValue: $data['profile.retraction_speed']" type="number" min="0" max="300" step="1"></input>
+                                  <span class="add-on">mm/s</span>
+                              </div>
+                          </div>
+                          <div title="Filament retraction distance" class="input-append" data-bind="visible: !_.isUndefined($data['profile.retraction_enable']())">
+                              <label class="control-label">Retraction distance</label>
+                              <div class="controls">
+                                  <input data-bind="numericValue: $data['profile.retraction_amount']" type="number" min="0" max="30" step="0.1"></input>
+                                  <span class="add-on">mm</span>
+                              </div>
                           </div>
                       </div>
-                      <div title="Filament retraction distance" class="input-append" data-bind="visible: !_.isUndefined($data['profile.retraction_enable']())">
-                          <label class="control-label">Retraction distance</label>
+                      <div title="First layer temperature" class="input-append" data-bind="visible: !_.isUndefined($data['profile.first_layer_temperature']())">
+                          <label class="control-label">1st layer temperature</label>
                           <div class="controls">
-                              <input data-bind="numericValue: $data['profile.retraction_amount'], enable: $data['profile.retraction_enable']" type="number" min="0" max="30" step="0.1"></input>
+                              <input data-bind="numericValue: $data['profile.first_layer_temperature']" type="number" min="0" max="315" step="1"></input>
+                              <span class="add-on">°C</span>
+                          </div>
+                      </div>
+                      <div title="First layer bed temperature" class="input-append" data-bind="visible: !_.isUndefined($data['profile.first_layer_bed_temperature']())">
+                          <label class="control-label">1st layer bed temperature</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.first_layer_bed_temperature']" type="number" min="0" max="110" step="1"></input>
+                              <span class="add-on">°C</span>
+                          </div>
+                      </div>
+                      <div title="Brim width" class="input-append" data-bind="visible: !_.isUndefined($data['profile.brim_width']())">
+                          <label class="control-label">Brim width</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.brim_width']" type="number" min="0" max="30" step="0.1"></input>
                               <span class="add-on">mm</span>
                           </div>
                       </div>
@@ -254,16 +277,45 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
                               <input type="checkbox" data-bind="checked: $data['profile.fan_enabled']"></input>
                           </div>
                       </div>
+                      <div data-bind="visible: $data['profile.fan_enabled']">
+                          <div title="Full fan on height" class="input-append" data-bind="visible: !_.isUndefined($data['profile.fan_full_height']())">
+                              <label class="control-label">Full at height</label>
+                              <div class="controls">
+                                  <input data-bind="numericValue: $data['profile.fan_full_height']" type="number" min="0" max="2000" step="0.1"></input>
+                                  <span class="add-on">mm</span>
+                              </div>
+                          </div>
+                          <div title="Maximum fan speed" class="input-append" data-bind="visible: !_.isUndefined($data['profile.fan_speed_max']())">
+                              <label class="control-label">Max speed</label>
+                              <div class="controls">
+                                  <input data-bind="numericValue: $data['profile.fan_speed_max']" type="number" min="0" max="100" step="1"></input>
+                                  <span class="add-on">%</span>
+                              </div>
+                          </div>
+                          <div title="Minimum fan speed" class="input-append" data-bind="visible: !_.isUndefined($data['profile.fan_speed']())">
+                              <label class="control-label">Min speed</label>
+                              <div class="controls">
+                                  <input data-bind="numericValue: $data['profile.fan_speed']" type="number" min="0" max="100" step="1"></input>
+                                  <span class="add-on">%</span>
+                              </div>
+                          </div>
+                      </div>
                       <div title="Extrusion Multiplier" class="input-append" data-bind="visible: !_.isUndefined($data['profile.extrusion_multiplier']())">
                           <label class="control-label">Flow Multiplier</label>
                           <div class="controls">
                               <input data-bind="numericValue: $data['profile.extrusion_multiplier']" type="number" min="0" max="2" step="0.001"></input>
                           </div>
                       </div>
-                      <div title="Cooling" class="input-append" data-bind="visible: !_.isUndefined($data['profile.cooling']())">
+                      <div title="Enable auto cooling" class="input-append" data-bind="visible: !_.isUndefined($data['profile.cooling']())">
                           <label class="control-label">Cooling</label>
                           <div class="controls checkbox">
                               <input type="checkbox" data-bind="checked: $data['profile.cooling']"></input>
+                          </div>
+                      </div>
+                      <div title="Keep fan always on" class="input-append" data-bind="visible: !_.isUndefined($data['profile.fan_always_on']())">
+                          <label class="control-label">Fan always on</label>
+                          <div class="controls checkbox">
+                              <input type="checkbox" data-bind="checked: $data['profile.fan_always_on']"></input>
                           </div>
                       </div>
                   </div>
