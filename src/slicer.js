@@ -396,7 +396,7 @@ function SlicerViewModel(parameters) {
                 groupBox3.expandByPoint(model.userData.box3FromObject().min);
                 groupBox3.expandByPoint(model.userData.box3FromObject().max);
             });
-            let DEBUGGING = false;
+            const DEBUGGING = false;
             if (DEBUGGING) {
                 var oldBox3 = new THREE.Box3().setFromObject(group);
                 var maxDiff = groupBox3.max.clone().sub(oldBox3.max);
