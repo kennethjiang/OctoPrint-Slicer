@@ -11,63 +11,62 @@ import { ConvexGeometry } from '3tk';
 // (including its children), accounting for both the object's, and
 // children's, world transforms
 
-// Initialize with a object.  It will run on that object
-export function Box3FromObject(object) {
-
-    // Gets the points that make up the hull of the geometry, with no
-    // transfomrations.
-    let hullPointsFromGeometry = function(geometry) {
-        // Traverses the ponts in a geometry.
-        let traversePoints = function(traverseFn) {
-            // Taken from Box3.expandByObject
-            let v1 = new THREE.Vector3();
-            if ( geometry.isGeometry ) {
-                let vertices = geometry.vertices;
-                for ( i = 0, l = vertices.length; i < l; i ++ ) {
-                    v1.copy(vertices[ i ] );
+// Gets the points that make up the hull of the geometry, with no
+// transfomrations.
+export function hullPointsFromGeometry(geometry) {
+    // Traverses the ponts in a geometry.
+    let traversePoints = function(traverseFn) {
+        // Taken from Box3.expandByObject
+        let v1 = new THREE.Vector3();
+        if ( geometry.isGeometry ) {
+            let vertices = geometry.vertices;
+            for ( i = 0, l = vertices.length; i < l; i ++ ) {
+                v1.copy(vertices[ i ] );
+                traverseFn(v1);
+            }
+        } else if ( geometry.isBufferGeometry ) {
+            let attribute = geometry.attributes.position;
+            if ( attribute !== undefined ) {
+                for ( let i = 0, l = attribute.count; i < l; i ++ ) {
+                    v1.fromBufferAttribute( attribute, i );
                     traverseFn(v1);
                 }
-            } else if ( geometry.isBufferGeometry ) {
-                let attribute = geometry.attributes.position;
-                if ( attribute !== undefined ) {
-                    for ( let i = 0, l = attribute.count; i < l; i ++ ) {
-                        v1.fromBufferAttribute( attribute, i );
-                        traverseFn(v1);
-                    }
-                }
-            }
-        };
-
-        let allPoints = [];
-        traversePoints(function (point) { allPoints.push(point.clone()); });
-        // allPoint has all points from the geometry
-        let convexHull = new ConvexGeometry(allPoints);
-        let hullMap = {};
-        for (let face of convexHull.faces) {
-            for (let vertexIndex of [face.a, face.b, face.c]) {
-                let hullPoint = convexHull.vertices[vertexIndex];
-                if (!hullMap[hullPoint.x]) {
-                    hullMap[hullPoint.x] = {};
-                }
-                if (!hullMap[hullPoint.x][hullPoint.y]) {
-                    hullMap[hullPoint.x][hullPoint.y] = {};
-                }
-                if (!hullMap[hullPoint.x][hullPoint.y][hullPoint.z]) {
-                    hullMap[hullPoint.x][hullPoint.y][hullPoint.z] = {};
-                }
             }
         }
-        let hullPoints = [];
-        for (const x in hullMap) {
-            for (const y in hullMap[x]) {
-                for (const z in hullMap[x][y]) {
-                    hullPoints.push(new THREE.Vector3(x,y,z));
-                }
-            }
-        }
-        return hullPoints;
     };
 
+    let allPoints = [];
+    traversePoints(function (point) { allPoints.push(point.clone()); });
+    // allPoint has all points from the geometry
+    let convexHull = new ConvexGeometry(allPoints);
+    let hullMap = {};
+    for (let face of convexHull.faces) {
+        for (let vertexIndex of [face.a, face.b, face.c]) {
+            let hullPoint = convexHull.vertices[vertexIndex];
+            if (!hullMap[hullPoint.x]) {
+                hullMap[hullPoint.x] = {};
+            }
+            if (!hullMap[hullPoint.x][hullPoint.y]) {
+                hullMap[hullPoint.x][hullPoint.y] = {};
+            }
+            if (!hullMap[hullPoint.x][hullPoint.y][hullPoint.z]) {
+                hullMap[hullPoint.x][hullPoint.y][hullPoint.z] = {};
+            }
+        }
+    }
+    let hullPoints = [];
+    for (const x in hullMap) {
+        for (const y in hullMap[x]) {
+            for (const z in hullMap[x][y]) {
+                hullPoints.push(new THREE.Vector3(x,y,z));
+            }
+        }
+    }
+    return hullPoints;
+};
+
+// Initialize with a object.  It will run on that object
+export function Box3FromObject(object) {
     let previousMatrixWorld = null;
     let previousBox3 = null;
 /*    object.traverse(function (node) {

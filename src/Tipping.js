@@ -1,6 +1,7 @@
 'use strict';
 
 import * as THREE from 'three';
+import { hullPointsFromGeometry } from './Box3FromObject';
 
 export var Tipping = function (object_) {
     var self = this;
@@ -185,23 +186,19 @@ export var Tipping = function (object_) {
         var positions = object.children[0].geometry.getAttribute("position").array;
         var bottomPoints = [];
         const EPSILON = 0.0001;
-        for (var i = 0; i < positions.length; i+=9) {
-            let a = new THREE.Vector3(positions[i], positions[i+1], positions[i+2])
+        if (!object.children[0].userData.hullPoints) {
+            object.children[0].userData.hullPoints = hullPointsFromGeometry(object.children[0].geometry);
+        }
+        // Includes only points on hull of geometry that aren't on the bottom.
+        var notBottomHullPoints = [];
+        for (var hullPoint of object.children[0].userData.hullPoints) {
+            let worldHullPoint = hullPoint.clone()
                 .applyMatrix4(object.children[0].matrixWorld);
-            let b = new THREE.Vector3(positions[i+3], positions[i+4], positions[i+5])
-                .applyMatrix4(object.children[0].matrixWorld);
-            let c = new THREE.Vector3(positions[i+6], positions[i+7], positions[i+8])
-                .applyMatrix4(object.children[0].matrixWorld);
-            if (a.z < EPSILON) {
-                bottomPoints.push(new THREE.Vector2(a.x, a.y));
+            if (worldHullPoint.z < EPSILON) {
+                bottomPoints.push(new THREE.Vector2(worldHullPoint.x, worldHullPoint.y));
+            } else {
+                notBottomHullPoints.push(worldHullPoint);
             }
-            if (b.z < EPSILON) {
-                bottomPoints.push(new THREE.Vector2(b.x, b.y));
-            }
-            if (c.z < EPSILON) {
-                bottomPoints.push(new THREE.Vector2(c.x, c.y));
-            }
-            faces.push(new THREE.Triangle(a,b,c));
             if (Date.now() > endTime) {
                 endTime = yield;
             }
@@ -227,23 +224,15 @@ export var Tipping = function (object_) {
         // platform hits the platform.
         // debugger;
         var smallestRotationAngle = Infinity;
-        for (var face of faces) {
-            for (var vertex of [face.a, face.b, face.c]) {
-                if (vertex.z < EPSILON) {
-                    continue; // It's already on the bottom.
-                }
-                // How far is that vertex from being rotated to the platform?
-                var rotationAngle = vertex.clone().sub(projectedCentroid3).projectOnPlane(rotationPlane.normal).angleTo(bottomCentroid3.clone().sub(projectedCentroid3))
-                if (rotationAngle < smallestRotationAngle && rotationAngle > 0) {
-                    smallestRotationAngle = rotationAngle;
-                }
+        for (var vertex of notBottomHullPoints) {
+            // How far is that vertex from being rotated to the platform?
+            var rotationAngle = vertex.clone().sub(projectedCentroid3).projectOnPlane(rotationPlane.normal).angleTo(bottomCentroid3.clone().sub(projectedCentroid3))
+            if (rotationAngle < smallestRotationAngle && rotationAngle > 0) {
+                smallestRotationAngle = rotationAngle;
             }
             if (Date.now() > endTime) {
                 endTime = yield;
             }
-        }
-        if (smallestRotationAngle > Math.PI/180) {
-            //smallestRotationAngle = Math.PI/180; // limiting tipping to 1 degree
         }
         yield new THREE.Quaternion().setFromAxisAngle(rotationPlane.normal.clone().normalize(), smallestRotationAngle);
     }
