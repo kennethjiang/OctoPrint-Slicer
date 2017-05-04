@@ -193,13 +193,11 @@ export var Tipping = function () {
             }
         }
         var bottomPoints = [];
-        var originalBottomPoints = [];
         const EPSILON = 0.0001;
         for (var face of faces) {
             for (var vertex of [face.a, face.b, face.c]) {
                 if (vertex.z < EPSILON) {
                     bottomPoints.push(new THREE.Vector2(vertex.x, vertex.y));
-                    originalBottomPoints.push(vertex);
                 }
             }
             if (Date.now() > endTime) {
