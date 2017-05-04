@@ -179,27 +179,25 @@ export var Tipping = function () {
         // Manually convert BufferGeometry to Geometry
         var faces = [];
         var positions = object.children[0].geometry.getAttribute("position").array;
-        for (var i = 0; i < positions.length; i+=9) {
-            faces.push(
-                new THREE.Triangle(
-                    new THREE.Vector3(positions[i], positions[i+1], positions[i+2])
-                        .applyMatrix4(object.children[0].matrixWorld),
-                    new THREE.Vector3(positions[i+3], positions[i+4], positions[i+5])
-                        .applyMatrix4(object.children[0].matrixWorld),
-                    new THREE.Vector3(positions[i+6], positions[i+7], positions[i+8])
-                        .applyMatrix4(object.children[0].matrixWorld)));
-            if (Date.now() > endTime) {
-                endTime = yield;
-            }
-        }
         var bottomPoints = [];
         const EPSILON = 0.0001;
-        for (var face of faces) {
-            for (var vertex of [face.a, face.b, face.c]) {
-                if (vertex.z < EPSILON) {
-                    bottomPoints.push(new THREE.Vector2(vertex.x, vertex.y));
-                }
+        for (var i = 0; i < positions.length; i+=9) {
+            let a = new THREE.Vector3(positions[i], positions[i+1], positions[i+2])
+                .applyMatrix4(object.children[0].matrixWorld);
+            let b = new THREE.Vector3(positions[i+3], positions[i+4], positions[i+5])
+                .applyMatrix4(object.children[0].matrixWorld);
+            let c = new THREE.Vector3(positions[i+6], positions[i+7], positions[i+8])
+                .applyMatrix4(object.children[0].matrixWorld);
+            if (a.z < EPSILON) {
+                bottomPoints.push(new THREE.Vector2(a.x, a.y));
             }
+            if (b.z < EPSILON) {
+                bottomPoints.push(new THREE.Vector2(b.x, b.y));
+            }
+            if (c.z < EPSILON) {
+                bottomPoints.push(new THREE.Vector2(c.x, c.y));
+            }
+            faces.push(new THREE.Triangle(a,b,c));
             if (Date.now() > endTime) {
                 endTime = yield;
             }
