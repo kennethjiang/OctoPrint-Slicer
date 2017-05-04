@@ -2,8 +2,9 @@
 
 import * as THREE from 'three';
 
-export var Tipping = function () {
+export var Tipping = function (object_) {
     var self = this;
+    var object = object_;
 
     // Find closest point on line to vw to point p.  All arguments are
     // Vector2.
@@ -124,22 +125,25 @@ export var Tipping = function () {
         return findHull3(points, rightmostPoint, leftmostPoint, rightmostPoint);
     };
 
-    // Finds the center of mass of a geometry.
-    self.centroid = function(faces) {
-        // Volume = magnitude(a*(b cross c))/6
+    // Stores the centroid of the geometry without matrixWorld
+    // applied.
+    self.centroid = (function(geometry) {
+        // Finds the center of mass of a geometry.
+        // Volume = magnitude(a dot (b cross c))/6
         var totalVolume = 0;
         var totalCentroid = new THREE.Vector3();
-        for (var face of faces) {
-            var a = face.a;
-            var b = face.b;
-            var c = face.c;
+        var positions = geometry.getAttribute("position").array;
+        for (var i = 0; i < positions.length; i += 9) {
+            let a = new THREE.Vector3(positions[i], positions[i+1], positions[i+2]);
+            let b = new THREE.Vector3(positions[i+3], positions[i+4], positions[i+5]);
+            let c = new THREE.Vector3(positions[i+6], positions[i+7], positions[i+8]);
             var volume = b.clone().cross(c).dot(a)/6;
             var centroid = a.clone().add(b).add(c).divideScalar(4);
             totalVolume += volume;
             totalCentroid.add(centroid.multiplyScalar(volume));
         }
         return totalCentroid.divideScalar(totalVolume);
-    };
+    })(object.children[0].geometry);
 
     // Given a Vector2 point and a list of Vector2 that describe a
     // closed shape, check if the point is inside the shape.
@@ -174,40 +178,36 @@ export var Tipping = function () {
         return closestPoint;
     };
 
-    self.tipObject = function*(object, endTime) {
+    self.tipObject = function*(endTime) {
         object.updateMatrixWorld();
         // Manually convert BufferGeometry to Geometry
         var faces = [];
         var positions = object.children[0].geometry.getAttribute("position").array;
+        var bottomPoints = [];
+        const EPSILON = 0.0001;
         for (var i = 0; i < positions.length; i+=9) {
-            faces.push(
-                new THREE.Triangle(
-                    new THREE.Vector3(positions[i], positions[i+1], positions[i+2])
-                        .applyMatrix4(object.children[0].matrixWorld),
-                    new THREE.Vector3(positions[i+3], positions[i+4], positions[i+5])
-                        .applyMatrix4(object.children[0].matrixWorld),
-                    new THREE.Vector3(positions[i+6], positions[i+7], positions[i+8])
-                        .applyMatrix4(object.children[0].matrixWorld)));
-            if (performance.now() > endTime) {
+            let a = new THREE.Vector3(positions[i], positions[i+1], positions[i+2])
+                .applyMatrix4(object.children[0].matrixWorld);
+            let b = new THREE.Vector3(positions[i+3], positions[i+4], positions[i+5])
+                .applyMatrix4(object.children[0].matrixWorld);
+            let c = new THREE.Vector3(positions[i+6], positions[i+7], positions[i+8])
+                .applyMatrix4(object.children[0].matrixWorld);
+            if (a.z < EPSILON) {
+                bottomPoints.push(new THREE.Vector2(a.x, a.y));
+            }
+            if (b.z < EPSILON) {
+                bottomPoints.push(new THREE.Vector2(b.x, b.y));
+            }
+            if (c.z < EPSILON) {
+                bottomPoints.push(new THREE.Vector2(c.x, c.y));
+            }
+            faces.push(new THREE.Triangle(a,b,c));
+            if (Date.now() > endTime) {
                 endTime = yield;
             }
         }
-        var bottomPoints = [];
-        var originalBottomPoints = [];
-        const EPSILON = 0.0001;
-        for (var face of faces) {
-            for (var vertex of [face.a, face.b, face.c]) {
-                if (vertex.z < EPSILON) {
-                    bottomPoints.push(new THREE.Vector2(vertex.x, vertex.y));
-                    originalBottomPoints.push(vertex);
-                }
-                if (performance.now() > endTime) {
-                    endTime = yield;
-                }
-            }
-        }
         var baseHull = self.convexHull(bottomPoints);
-        var centroid = self.centroid(faces);
+        var centroid = self.centroid.clone().applyMatrix4(object.children[0].matrixWorld);
         var bottomCentroid = new THREE.Vector2(centroid.x, centroid.y);
         if (self.pointInShape(bottomCentroid, baseHull)) {
             return; // No tipping needed.
@@ -227,7 +227,6 @@ export var Tipping = function () {
         // platform hits the platform.
         // debugger;
         var smallestRotationAngle = Infinity;
-        var vertexToPlatform;
         for (var face of faces) {
             for (var vertex of [face.a, face.b, face.c]) {
                 if (vertex.z < EPSILON) {
@@ -237,11 +236,10 @@ export var Tipping = function () {
                 var rotationAngle = vertex.clone().sub(projectedCentroid3).projectOnPlane(rotationPlane.normal).angleTo(bottomCentroid3.clone().sub(projectedCentroid3))
                 if (rotationAngle < smallestRotationAngle && rotationAngle > 0) {
                     smallestRotationAngle = rotationAngle;
-                    vertexToPlatform = vertex;
                 }
-                if (performance.now() > endTime) {
-                    endTime = yield;
-                }
+            }
+            if (Date.now() > endTime) {
+                endTime = yield;
             }
         }
         if (smallestRotationAngle > Math.PI/180) {
