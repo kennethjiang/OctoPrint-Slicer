@@ -188,7 +188,7 @@ export var Tipping = function () {
                         .applyMatrix4(object.children[0].matrixWorld),
                     new THREE.Vector3(positions[i+6], positions[i+7], positions[i+8])
                         .applyMatrix4(object.children[0].matrixWorld)));
-            if (performance.now() > endTime) {
+            if (Date.now() > endTime) {
                 endTime = yield;
             }
         }
@@ -201,9 +201,9 @@ export var Tipping = function () {
                     bottomPoints.push(new THREE.Vector2(vertex.x, vertex.y));
                     originalBottomPoints.push(vertex);
                 }
-                if (performance.now() > endTime) {
-                    endTime = yield;
-                }
+            }
+            if (Date.now() > endTime) {
+                endTime = yield;
             }
         }
         var baseHull = self.convexHull(bottomPoints);
@@ -227,7 +227,6 @@ export var Tipping = function () {
         // platform hits the platform.
         // debugger;
         var smallestRotationAngle = Infinity;
-        var vertexToPlatform;
         for (var face of faces) {
             for (var vertex of [face.a, face.b, face.c]) {
                 if (vertex.z < EPSILON) {
@@ -237,11 +236,10 @@ export var Tipping = function () {
                 var rotationAngle = vertex.clone().sub(projectedCentroid3).projectOnPlane(rotationPlane.normal).angleTo(bottomCentroid3.clone().sub(projectedCentroid3))
                 if (rotationAngle < smallestRotationAngle && rotationAngle > 0) {
                     smallestRotationAngle = rotationAngle;
-                    vertexToPlatform = vertex;
                 }
-                if (performance.now() > endTime) {
-                    endTime = yield;
-                }
+            }
+            if (Date.now() > endTime) {
+                endTime = yield;
             }
         }
         if (smallestRotationAngle > Math.PI/180) {
