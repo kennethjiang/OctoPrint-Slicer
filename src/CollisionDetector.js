@@ -120,11 +120,11 @@ export var CollisionDetector = function () {
         return triangles;
     }
 
-    let intersectsBox2D = function (box1, box2) {
+    let intersectBox2D = function (box1, box2) {
         // Convert boxes to 2D before checking intersection.
         var b1 = new THREE.Box2().copy(box1);
         var b2 = new THREE.Box2().copy(box2);
-        return b1.intersectsBox(b2);
+        return b1.intersect(b2);
     };
 
     var intersecting = [];
@@ -152,8 +152,8 @@ export var CollisionDetector = function () {
                 }
                 var box1 = objects[geometry].children[0].userData.box3FromObject();
                 var box2 = objects[otherGeometry].children[0].userData.box3FromObject();
-                if (!intersectsBox2D(objects[geometry].children[0].userData.box3FromObject(),
-                                     objects[otherGeometry].children[0].userData.box3FromObject())) {
+                var intersectionBox = intersectBox2D(box1, box2);
+                if (intersectionBox.isEmpty()) {
                     // Can skip this pair because there is no intersection.
                     continue;
                 }
@@ -179,6 +179,9 @@ export var CollisionDetector = function () {
                 var geo1 = bottomTriangles[geometry];
                 var geo2 = bottomTriangles[otherGeometry];
                 for (var g1 = 0; g1 < geo1.length; g1++) {
+                    if (!geo1[g1].boundingBox.intersectsBox(intersectionBox)) {
+                        continue;  // Skip this triangle.
+                    }
                     for (var g2 = 0; g2 < geo2.length; g2++) {
                         if (performance.now() > endTime) {
                             endTime = (yield intersecting);
