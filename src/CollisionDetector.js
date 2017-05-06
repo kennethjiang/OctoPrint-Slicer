@@ -2,6 +2,7 @@
 
 import * as THREE from 'three';
 import { isUndefined } from 'lodash-es';
+import { Box3FromObject } from './Box3FromObject';
 
 // intersecting is a list of true/false results of collisions.  Yet
 // unknown results are undefined
@@ -113,7 +114,7 @@ export var CollisionDetector = function () {
             let bottomTriangle = {a:a, b:b, c:c,
                                   boundingBox: new THREE.Box2().setFromPoints([a,b,c])};
             triangles.push(bottomTriangle);
-            if (performance.now() > endTime) {
+            if (Date.now() > endTime) {
                 endTime = (yield intersecting);
             }
         }
@@ -176,14 +177,15 @@ export var CollisionDetector = function () {
                     }
                     bottomTriangles[otherGeometry] = result.value;
                 }
-                var geo1 = bottomTriangles[geometry];
-                var geo2 = bottomTriangles[otherGeometry];
+                var geo1 = bottomTriangles[geometry].filter(function (triangle) {
+                    return triangle.boundingBox.intersectsBox(intersectionBox);
+                });
+                var geo2 = bottomTriangles[otherGeometry].filter(function (triangle) {
+                    return triangle.boundingBox.intersectsBox(intersectionBox);
+                });
                 for (var g1 = 0; g1 < geo1.length; g1++) {
-                    if (!geo1[g1].boundingBox.intersectsBox(intersectionBox)) {
-                        continue;  // Skip this triangle.
-                    }
                     for (var g2 = 0; g2 < geo2.length; g2++) {
-                        if (performance.now() > endTime) {
+                        if (Date.now() > endTime) {
                             endTime = (yield intersecting);
                         }
                         if (geo1[g1].boundingBox.intersectsBox(geo2[g2].boundingBox) &&
@@ -196,7 +198,7 @@ export var CollisionDetector = function () {
                     }
                 }
             }
-            if (intersecting[geometry] === undefined) {
+            if (isUndefined(intersecting[geometry])) {
                 // No collision yet and there won't be one so mark this one
                 // as known.
                 intersecting[geometry] = false;
@@ -255,7 +257,7 @@ export var CollisionDetector = function () {
         self.stop();
         var collisionLoop = function () {
             timeout = setTimeout(function() {
-                var result = iterator.next(performance.now() + task_switch_ms);
+                var result = iterator.next(Date.now() + task_switch_ms);
                 if (!result.done) {
                     callbackFn(result.value);
                     collisionLoop();
