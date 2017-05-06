@@ -8,35 +8,35 @@ import * as THREE from 'three';
 export var CollisionDetector = function () {
     var self = this;
 
-    var linesIntersect = function(a1, a2, a3, a4) {
-        var x12 = a1.x - a2.x;
-        var x34 = a3.x - a4.x;
-        var y12 = a1.y - a2.y;
-        var y34 = a3.y - a4.y;
-        var c = x12*y34 - y12 * x34;
-        if (c==0) {
-            return false;
-        }
-        var a = a1.x*a2.y - a1.y*a2.x;
-        var b = a3.x*a4.y - a3.y*a4.x;
-        var x = (a * x34 - b * x12) / c;
-        var y = (a * y34 - b * y12) / c;
-        return ((Math.min(a1.x, a2.x) < x && x < Math.max(a1.x, a2.x) &&
-                 Math.min(a3.x, a4.x) < x && x < Math.max(a3.x, a4.x)) ||
-                (Math.min(a1.y, a2.y) < y && y < Math.max(a1.y, a2.y) &&
-                 Math.min(a3.y, a4.y) < y && y < Math.max(a3.y, a4.y)));
+    // Given 3 points a, b, c, find the angle of abc.  The result is
+    // the rotation to apply to the ray ba to get a ray from b through
+    // c.  positive is counterclockwise.  result is between -PI and PI.
+    let angle3 = function(a, b, c) {
+        var diffAngle = c.clone().sub(b).angle() - a.clone().sub(b).angle();
+        // angle() returns between 0 and 2pi so diffAngle is between -2pi and 2pi.
+        if (diffAngle < -Math.PI) diffAngle += 2 * Math.PI;
+        if (diffAngle > Math.PI) diffAngle -= 2 * Math.PI;
+        return diffAngle;
+    }
+
+    // Given a Vector2 point and a triangle of Vector2 that describes
+    // a closed shape, check if the point is inside the shape.
+    let pointInTriangle = function(point, triangle) {
+        var totalAngle = 0;
+        totalAngle += angle3(triangle.a, point, triangle.b);
+        totalAngle += angle3(triangle.b, point, triangle.c);
+        totalAngle += angle3(triangle.c, point, triangle.a);
+        const EPSILON = 0.0001;
+        return totalAngle > EPSILON || totalAngle < EPSILON;
     };
 
     var trianglesIntersect = function(t0,t1) {
-        return (linesIntersect(t0.a, t0.b, t1.a, t1.b) ||
-                linesIntersect(t0.a, t0.b, t1.b, t1.c) ||
-                linesIntersect(t0.a, t0.b, t1.c, t1.a) ||
-                linesIntersect(t0.b, t0.c, t1.a, t1.b) ||
-                linesIntersect(t0.b, t0.c, t1.b, t1.c) ||
-                linesIntersect(t0.b, t0.c, t1.c, t1.a) ||
-                linesIntersect(t0.c, t0.a, t1.a, t1.b) ||
-                linesIntersect(t0.c, t0.a, t1.b, t1.c) ||
-                linesIntersect(t0.c, t0.a, t1.c, t1.a));
+        return (pointInTriangle(t0.a, t1) ||
+                pointInTriangle(t1.a, t0) ||
+                pointInTriangle(t0.b, t1) ||
+                pointInTriangle(t1.b, t0) ||
+                pointInTriangle(t0.c, t1) ||
+                pointInTriangle(t1.c, t0));
     };
 
     // Only trust the true output.  False means maybe.
@@ -54,9 +54,9 @@ export var CollisionDetector = function () {
         var triangles = [];
         for (var f=0; f < geo.faces.length; f++) {
             var face = geo.faces[f];
-            var tri = {a: geo.vertices[face.a],
-                       b: geo.vertices[face.b],
-                       c: geo.vertices[face.c]};
+            var tri = {a: new THREE.Vector2().copy(geo.vertices[face.a]),
+                       b: new THREE.Vector2().copy(geo.vertices[face.b]),
+                       c: new THREE.Vector2().copy(geo.vertices[face.c])};
             tri.boundingBox = new THREE.Box2().setFromPoints(
                 [tri.a,
                  tri.b,
