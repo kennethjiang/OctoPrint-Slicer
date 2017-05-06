@@ -1,6 +1,7 @@
 'use strict';
 
 import * as THREE from 'three';
+import { isUndefined } from 'lodash-es';
 
 // intersecting is a list of true/false results of collisions.  Yet
 // unknown results are undefined
@@ -30,13 +31,36 @@ export var CollisionDetector = function () {
         return totalAngle > EPSILON || totalAngle < EPSILON;
     };
 
+    var linesIntersect = function(a1, a2, a3, a4) {
+        var x12 = a1.x - a2.x;
+        var x34 = a3.x - a4.x;
+        var y12 = a1.y - a2.y;
+        var y34 = a3.y - a4.y;
+        var c = x12*y34 - y12 * x34;
+        if (c==0) {
+            return false;
+        }
+        var a = a1.x*a2.y - a1.y*a2.x;
+        var b = a3.x*a4.y - a3.y*a4.x;
+        var x = (a * x34 - b * x12) / c;
+        var y = (a * y34 - b * y12) / c;
+        return ((Math.min(a1.x, a2.x) < x && x < Math.max(a1.x, a2.x) &&
+                 Math.min(a3.x, a4.x) < x && x < Math.max(a3.x, a4.x)) ||
+                (Math.min(a1.y, a2.y) < y && y < Math.max(a1.y, a2.y) &&
+                 Math.min(a3.y, a4.y) < y && y < Math.max(a3.y, a4.y)));
+    }
+
     var trianglesIntersect = function(t0,t1) {
-        return (pointInTriangle(t0.a, t1) ||
-                pointInTriangle(t1.a, t0) ||
-                pointInTriangle(t0.b, t1) ||
-                pointInTriangle(t1.b, t0) ||
-                pointInTriangle(t0.c, t1) ||
-                pointInTriangle(t1.c, t0));
+        return (linesIntersect(t0.a, t0.b, t1.a, t1.b) ||
+                linesIntersect(t0.a, t0.b, t1.b, t1.c) ||
+                linesIntersect(t0.a, t0.b, t1.c, t1.a) ||
+                linesIntersect(t0.b, t0.c, t1.a, t1.b) ||
+                linesIntersect(t0.b, t0.c, t1.b, t1.c) ||
+                linesIntersect(t0.b, t0.c, t1.c, t1.a) ||
+                linesIntersect(t0.c, t0.a, t1.a, t1.b) ||
+                linesIntersect(t0.c, t0.a, t1.b, t1.c) ||
+                pointInTriangle(t0.a, t1) ||
+                pointInTriangle(t1.a, t0));
     };
 
     // Only trust the true output.  False means maybe.
@@ -69,64 +93,102 @@ export var CollisionDetector = function () {
         return triangles;
     };
 
+    let getBottomTriangles = function*(obj) {
+        let endTime = Infinity;
+        endTime = (yield intersecting);
+        obj.updateMatrixWorld();
+        var triangles = [];
+        var posAttr = obj.children[0].geometry.getAttribute('position');
+        var count = posAttr.count;
+        for (var v=0; v < count; v += 3) {
+            let a = new THREE.Vector2().copy(
+                new THREE.Vector3().fromBufferAttribute(posAttr, v    )
+                    .applyMatrix4(obj.children[0].matrixWorld));
+            let b = new THREE.Vector2().copy(
+                new THREE.Vector3().fromBufferAttribute(posAttr, v + 1)
+                    .applyMatrix4(obj.children[0].matrixWorld));
+            let c = new THREE.Vector2().copy(
+                new THREE.Vector3().fromBufferAttribute(posAttr, v + 2)
+                    .applyMatrix4(obj.children[0].matrixWorld));
+            let bottomTriangle = {a:a, b:b, c:c,
+                                  boundingBox: new THREE.Box2().setFromPoints([a,b,c])};
+            triangles.push(bottomTriangle);
+            if (performance.now() > endTime) {
+                endTime = (yield intersecting);
+            }
+        }
+        return triangles;
+    }
+
+    let intersectsBox2D = function (box1, box2) {
+        // Convert boxes to 2D before checking intersection.
+        var b1 = new THREE.Box2().copy(box1);
+        var b2 = new THREE.Box2().copy(box2);
+        return b1.intersectsBox(b2);
+    };
+
     var intersecting = [];
     // Report all models that collide with any other model or stick out
     // of the provided boundingBox.
-    self.findCollisions = function*(objects, volume, endTime = Infinity) {
+    self.findCollisions = function*(objects, volume) {
+        let endTime = Infinity;
         endTime = (yield intersecting);
-        var geometries = [];
-        var geometryBoxes = [];
-        for (var o = 0; o < objects.length; o++) {
-            var obj = objects[o];
-            obj.updateMatrixWorld();
-            var newGeo = new THREE.Geometry();
-            newGeo.faces = obj.children[0].userData.collisionGeometry.faces;
-            var newGeoBox = new THREE.Box3();
-            for (var v=0; v < obj.children[0].userData.collisionGeometry.vertices.length; v++) {
-                newGeo.vertices.push(obj.children[0].userData.collisionGeometry.vertices[v].clone());
-                newGeo.vertices[v].applyMatrix4(obj.children[0].matrixWorld);
-                newGeoBox.expandByPoint(newGeo.vertices[v]);
-                if (performance.now() > endTime) {
-                    endTime = (yield intersecting);
-                }
+        let bottomTriangles = [];
+        // First mark all boxes that are out of bounds.
+        for (var geometry=0; geometry < objects.length; geometry++) {
+            if (!objects[geometry].children[0].userData.box3FromObject) {
+                objects[geometry].children[0].userData.box3FromObject = Box3FromObject(objects[geometry].children[0]);
             }
-            geometries.push(newGeo);
-            geometryBoxes.push(newGeoBox);
-        }
-
-        var intersectsBox2D = function (box1, box2) {
-            // Convert boxes to 2D before checking intersection.
-            var b1 = new THREE.Box2().copy(box1);
-            var b2 = new THREE.Box2().copy(box2);
-            return b1.intersectsBox(b2);
-        }
-
-        //debugger;
-        for (var geometry=0; geometry < geometries.length; geometry++) {
-            if (!volume.containsBox(geometryBoxes[geometry])) {
+            if (!volume.containsBox(objects[geometry].children[0].userData.box3FromObject())) {
                 intersecting[geometry] = true;
             }
-            for (var otherGeometry=geometry + 1; otherGeometry < geometries.length; otherGeometry++) {
-                if (intersectsBox2D(geometryBoxes[geometry], geometryBoxes[otherGeometry])) {
-                    var geo1 = geometries[geometry];
-                    var geo2 = geometries[otherGeometry];
-                    var box1 = geometryBoxes[geometry];
-                    var box2 = geometryBoxes[otherGeometry];
-                    var intersectionBox = box1.clone().intersect(box2);
-                    var triangles = getTrianglesFromGeometry(geo1, intersectionBox);
-                    var otherTriangles = getTrianglesFromGeometry(geo2, intersectionBox);
-                    for (var t0 = 0; t0 < triangles.length; t0++) {
-                        for (var t1 = 0; t1 < otherTriangles.length; t1++) {
-                            if (triangles[t0].boundingBox.intersectsBox(otherTriangles[t1].boundingBox) &&
-                                trianglesIntersect(triangles[t0], otherTriangles[t1])) {
-                                intersecting[geometry] = true;
-                                intersecting[otherGeometry] = true;
-                                t0 = triangles.length; // To force a break.
-                                break;
-                            }
-                            if (performance.now() > endTime) {
-                                endTime = (yield intersecting);
-                            }
+        }
+        // Now look for colliding objects.
+        for (var geometry=0; geometry < objects.length; geometry++) {
+            for (var otherGeometry=geometry + 1; otherGeometry < objects.length; otherGeometry++) {
+                if (!isUndefined(intersecting[geometry]) && !isUndefined(intersecting[otherGeometry])) {
+                    // Already marked can ignore.
+                    continue;
+                }
+                var box1 = objects[geometry].children[0].userData.box3FromObject();
+                var box2 = objects[otherGeometry].children[0].userData.box3FromObject();
+                if (!intersectsBox2D(objects[geometry].children[0].userData.box3FromObject(),
+                                     objects[otherGeometry].children[0].userData.box3FromObject())) {
+                    // Can skip this pair because there is no intersection.
+                    continue;
+                }
+                // We need all the bottom triangles of each object.
+                if (!bottomTriangles[geometry]) {
+                    let bottomTrianglesIterator = getBottomTriangles(objects[geometry]);
+                    let result = bottomTrianglesIterator.next(endTime);
+                    while (!result.done) {
+                        endTime = (yield result.value);
+                        result = bottomTrianglesIterator.next(endTime)
+                    }
+                    bottomTriangles[geometry] = result.value;
+                }
+                if (!bottomTriangles[otherGeometry]) {
+                    let bottomTrianglesIterator = getBottomTriangles(objects[otherGeometry]);
+                    let result = bottomTrianglesIterator.next(endTime);
+                    while (!result.done) {
+                        endTime = (yield result.value);
+                        result = bottomTrianglesIterator.next(endTime)
+                    }
+                    bottomTriangles[otherGeometry] = result.value;
+                }
+                var geo1 = bottomTriangles[geometry];
+                var geo2 = bottomTriangles[otherGeometry];
+                for (var g1 = 0; g1 < geo1.length; g1++) {
+                    for (var g2 = 0; g2 < geo2.length; g2++) {
+                        if (performance.now() > endTime) {
+                            endTime = (yield intersecting);
+                        }
+                        if (geo1[g1].boundingBox.intersectsBox(geo2[g2].boundingBox) &&
+                            trianglesIntersect(geo1[g1], geo2[g2])) {
+                            intersecting[geometry] = true;
+                            intersecting[otherGeometry] = true;
+                            g1 = geo1.length; // To force a break.
+                            break;
                         }
                     }
                 }
