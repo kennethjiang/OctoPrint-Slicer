@@ -396,17 +396,6 @@ function SlicerViewModel(parameters) {
                 groupBox3.expandByPoint(model.userData.box3FromObject().min);
                 groupBox3.expandByPoint(model.userData.box3FromObject().max);
             });
-            const DEBUGGING = false;
-            if (DEBUGGING) {
-                var oldBox3 = new THREE.Box3().setFromObject(group);
-                var maxDiff = groupBox3.max.clone().sub(oldBox3.max);
-                var minDiff = groupBox3.min.clone().sub(oldBox3.min);
-                var EPSILON = 0.0001; // Set this to 0 to see even microscopic differences.
-                if (maxDiff.x > EPSILON || maxDiff.y > EPSILON || maxDiff.z > EPSILON || minDiff.x > EPSILON || minDiff.y > EPSILON || minDiff.z > EPSILON) {
-                    console.log("new - old: " + JSON.stringify(groupBox3.max.clone().sub(oldBox3.max)) + "," + JSON.stringify(groupBox3.min.clone().sub(oldBox3.min)));
-                    console.log("new, old: " + JSON.stringify(groupBox3) + "," + JSON.stringify(oldBox3));
-                }
-            }
 
             sliceRequestData = self.sliceRequestData(self.slicingViewModel, groupBox3.getCenter());
 
