@@ -378,6 +378,7 @@ function SlicerViewModel(parameters) {
             $('#tab_plugin_slicer > div.translucent-blocker').show();
             self.stlViewPort.laySelectedModelFlat(function () {
                 $('#tab_plugin_slicer > div.translucent-blocker').hide();
+                self.stlViewPort.resetCollisionDetector();
             });
         });
 
@@ -425,6 +426,7 @@ function SlicerViewModel(parameters) {
                     arrangeLoop();
                 } else {
                     $('#tab_plugin_slicer > div.translucent-blocker').hide();
+                    self.stlViewPort.resetCollisionDetector();
                 }
             }, 0);
         };
