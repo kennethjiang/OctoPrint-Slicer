@@ -247,12 +247,6 @@ export var CollisionDetector = function () {
     // If one is already running it is stopped and removed.
     self.makeIterator = function (objects, volume) {
         self.stop();
-        for (var i = 0; i < objects.length; i++) {
-            if (!objects[i].children[0].userData.collisionGeometry) {
-                objects[i].children[0].userData.collisionGeometry =
-                    new THREE.Geometry().fromBufferGeometry(objects[i].children[0].geometry);
-            }
-        }
         // iterator is a ES6 javascript generator.
         intersecting = [];
         iterator = self.findCollisions(objects, volume);
