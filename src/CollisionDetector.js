@@ -126,7 +126,7 @@ export var CollisionDetector = function () {
         var currentMatrixWorld = obj.children[0].matrixWorld;
         var previousMatrixWorld =
             obj.children[0].userData.collisionDetectorMatrixWorld;
-        if (previousMatrixWorld &
+        if (previousMatrixWorld &&
             previousMatrixWorld.equals(currentMatrixWorld)) {
             return obj.children[0].userData.collisionDetectorBottomTriangles;
         }
