@@ -123,6 +123,13 @@ export var CollisionDetector = function () {
         let endTime = Infinity;
         endTime = (yield intersecting);
         obj.updateMatrixWorld();
+        var currentMatrixWorld = obj.children[0].matrixWorld;
+        var previousMatrixWorld =
+            obj.children[0].userData.collisionDetectorMatrixWorld;
+        if (previousMatrixWorld &
+            previousMatrixWorld.equals(currentMatrixWorld)) {
+            return obj.children[0].userData.collisionDetectorBottomTriangles;
+        }
         var triangles = [];
         var posAttr = obj.children[0].geometry.getAttribute('position');
         var count = posAttr.count;
@@ -143,8 +150,10 @@ export var CollisionDetector = function () {
                 endTime = (yield intersecting);
             }
         }
+        obj.children[0].userData.collisionDetectorMatrixWorld = currentMatrixWorld;
+        obj.children[0].userData.collisionDetectorBottomTriangles = triangles;
         return triangles;
-    }
+    };
 
     let intersectBox2D = function (box1, box2) {
         // Convert boxes to 2D before checking intersection.
@@ -247,8 +256,8 @@ export var CollisionDetector = function () {
     // If one is already running it is stopped and removed.
     self.makeIterator = function (objects, volume) {
         self.stop();
-        // iterator is a ES6 javascript generator.
         intersecting = [];
+        // iterator is a ES6 javascript generator.
         iterator = self.findCollisions(objects, volume);
     };
 
