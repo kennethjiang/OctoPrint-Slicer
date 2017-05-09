@@ -1,12 +1,47 @@
 'use strict';
 
 import * as THREE from 'three';
+import { isUndefined } from 'lodash-es';
+import { Box3FromObject } from './Box3FromObject';
 
 // intersecting is a list of true/false results of collisions.  Yet
 // unknown results are undefined
 
 export var CollisionDetector = function () {
     var self = this;
+
+    // Given a Vector2 point and a triangle of Vector2 that describes
+    // a closed shape, check if the point is inside the shape.  Taken
+    // from https://jsperf.com/point-in-triangle .
+    let pointInTriangle = function(point, triangle) {
+        var a = triangle.a;
+        var b = triangle.b;
+        var c = triangle.c;
+
+        var ax = a.x;
+        var ay = a.y;
+
+        // Compute vectors
+        var v0x = c.x - ax;
+        var v0y = c.y - ay;
+        var v1x = b.x - ax;
+        var v1y = b.y - ay;
+        var v2x = point.x - ax;
+        var v2y = point.y - ay;
+
+        var dot00 = v0x * v0x + v0y * v0y;
+        var dot01 = v0x * v1x + v0y * v1y;
+        var dot02 = v0x * v2x + v0y * v2y;
+        var dot11 = v1x * v1x + v1y * v1y;
+        var dot12 = v1x * v2x + v1y * v2y;
+
+        var denom = dot00 * dot11 - dot01 * dot01;
+        var u = (dot11 * dot02 - dot01 * dot12) / denom;
+        var v = (dot00 * dot12 - dot01 * dot02) /denom;
+
+        // Check if point is in triangle
+        return (u >= 0) && (v >= 0) && (u + v < 1);
+    }
 
     var linesIntersect = function(a1, a2, a3, a4) {
         var x12 = a1.x - a2.x;
@@ -25,18 +60,33 @@ export var CollisionDetector = function () {
                  Math.min(a3.x, a4.x) < x && x < Math.max(a3.x, a4.x)) ||
                 (Math.min(a1.y, a2.y) < y && y < Math.max(a1.y, a2.y) &&
                  Math.min(a3.y, a4.y) < y && y < Math.max(a3.y, a4.y)));
-    };
+    }
 
     var trianglesIntersect = function(t0,t1) {
-        return (linesIntersect(t0.a, t0.b, t1.a, t1.b) ||
-                linesIntersect(t0.a, t0.b, t1.b, t1.c) ||
-                linesIntersect(t0.a, t0.b, t1.c, t1.a) ||
-                linesIntersect(t0.b, t0.c, t1.a, t1.b) ||
-                linesIntersect(t0.b, t0.c, t1.b, t1.c) ||
-                linesIntersect(t0.b, t0.c, t1.c, t1.a) ||
-                linesIntersect(t0.c, t0.a, t1.a, t1.b) ||
-                linesIntersect(t0.c, t0.a, t1.b, t1.c) ||
-                linesIntersect(t0.c, t0.a, t1.c, t1.a));
+        return linesIntersect(t0.a, t0.b, t1.a, t1.b) ||
+            linesIntersect(t0.a, t0.b, t1.b, t1.c) ||
+            linesIntersect(t0.a, t0.b, t1.c, t1.a) ||
+            linesIntersect(t0.b, t0.c, t1.a, t1.b) ||
+            linesIntersect(t0.b, t0.c, t1.b, t1.c) ||
+            linesIntersect(t0.b, t0.c, t1.c, t1.a) ||
+            linesIntersect(t0.c, t0.a, t1.a, t1.b) ||
+            linesIntersect(t0.c, t0.a, t1.b, t1.c) ||
+            pointInTriangle(t0.a, t1) ||
+            pointInTriangle(t1.a, t0);
+    };
+
+    // Alternate algorithm.
+    var trianglesIntersect2 = function(t0,t1) {
+        return linesIntersect(t0.a, t0.b, t1.a, t1.b) ||
+            linesIntersect(t0.a, t0.b, t1.b, t1.c) ||
+            linesIntersect(t0.a, t0.b, t1.c, t1.a) ||
+            linesIntersect(t0.b, t0.c, t1.a, t1.b) ||
+            linesIntersect(t0.b, t0.c, t1.b, t1.c) ||
+            linesIntersect(t0.b, t0.c, t1.c, t1.a) ||
+            pointInTriangle(t0.a, t1) ||
+            pointInTriangle(t1.a, t0) ||
+            pointInTriangle(t1.b, t0) ||
+            pointInTriangle(t1.c, t0);
     };
 
     // Only trust the true output.  False means maybe.
@@ -54,9 +104,9 @@ export var CollisionDetector = function () {
         var triangles = [];
         for (var f=0; f < geo.faces.length; f++) {
             var face = geo.faces[f];
-            var tri = {a: geo.vertices[face.a],
-                       b: geo.vertices[face.b],
-                       c: geo.vertices[face.c]};
+            var tri = {a: new THREE.Vector2().copy(geo.vertices[face.a]),
+                       b: new THREE.Vector2().copy(geo.vertices[face.b]),
+                       c: new THREE.Vector2().copy(geo.vertices[face.c])};
             tri.boundingBox = new THREE.Box2().setFromPoints(
                 [tri.a,
                  tri.b,
@@ -69,69 +119,120 @@ export var CollisionDetector = function () {
         return triangles;
     };
 
+    let getBottomTriangles = function*(obj) {
+        let endTime = Infinity;
+        endTime = (yield intersecting);
+        obj.updateMatrixWorld();
+        var currentMatrixWorld = obj.children[0].matrixWorld;
+        var previousMatrixWorld =
+            obj.children[0].userData.collisionDetectorMatrixWorld;
+        if (previousMatrixWorld &&
+            previousMatrixWorld.equals(currentMatrixWorld)) {
+            return obj.children[0].userData.collisionDetectorBottomTriangles;
+        }
+        var triangles = [];
+        var posAttr = obj.children[0].geometry.getAttribute('position');
+        var count = posAttr.count;
+        for (var v=0; v < count; v += 3) {
+            let a = new THREE.Vector2().copy(
+                new THREE.Vector3().fromBufferAttribute(posAttr, v    )
+                    .applyMatrix4(obj.children[0].matrixWorld));
+            let b = new THREE.Vector2().copy(
+                new THREE.Vector3().fromBufferAttribute(posAttr, v + 1)
+                    .applyMatrix4(obj.children[0].matrixWorld));
+            let c = new THREE.Vector2().copy(
+                new THREE.Vector3().fromBufferAttribute(posAttr, v + 2)
+                    .applyMatrix4(obj.children[0].matrixWorld));
+            let bottomTriangle = {a:a, b:b, c:c,
+                                  boundingBox: new THREE.Box2().setFromPoints([a,b,c])};
+            triangles.push(bottomTriangle);
+            if (Date.now() > endTime) {
+                endTime = (yield intersecting);
+            }
+        }
+        obj.children[0].userData.collisionDetectorMatrixWorld = currentMatrixWorld;
+        obj.children[0].userData.collisionDetectorBottomTriangles = triangles;
+        return triangles;
+    };
+
+    let intersectBox2D = function (box1, box2) {
+        // Convert boxes to 2D before checking intersection.
+        var b1 = new THREE.Box2().copy(box1);
+        var b2 = new THREE.Box2().copy(box2);
+        return b1.intersect(b2);
+    };
+
     var intersecting = [];
     // Report all models that collide with any other model or stick out
     // of the provided boundingBox.
-    self.findCollisions = function*(objects, volume, endTime = Infinity) {
+    self.findCollisions = function*(objects, volume) {
+        let endTime = Infinity;
         endTime = (yield intersecting);
-        var geometries = [];
-        var geometryBoxes = [];
-        for (var o = 0; o < objects.length; o++) {
-            var obj = objects[o];
-            obj.updateMatrixWorld();
-            var newGeo = new THREE.Geometry();
-            newGeo.faces = obj.children[0].userData.collisionGeometry.faces;
-            var newGeoBox = new THREE.Box3();
-            for (var v=0; v < obj.children[0].userData.collisionGeometry.vertices.length; v++) {
-                newGeo.vertices.push(obj.children[0].userData.collisionGeometry.vertices[v].clone());
-                newGeo.vertices[v].applyMatrix4(obj.children[0].matrixWorld);
-                newGeoBox.expandByPoint(newGeo.vertices[v]);
-                if (performance.now() > endTime) {
-                    endTime = (yield intersecting);
-                }
+        let bottomTriangles = [];
+        // First mark all boxes that are out of bounds.
+        for (var geometry=0; geometry < objects.length; geometry++) {
+            if (!objects[geometry].children[0].userData.box3FromObject) {
+                objects[geometry].children[0].userData.box3FromObject = Box3FromObject(objects[geometry].children[0]);
             }
-            geometries.push(newGeo);
-            geometryBoxes.push(newGeoBox);
-        }
-
-        var intersectsBox2D = function (box1, box2) {
-            // Convert boxes to 2D before checking intersection.
-            var b1 = new THREE.Box2().copy(box1);
-            var b2 = new THREE.Box2().copy(box2);
-            return b1.intersectsBox(b2);
-        }
-
-        //debugger;
-        for (var geometry=0; geometry < geometries.length; geometry++) {
-            if (!volume.containsBox(geometryBoxes[geometry])) {
+            if (!volume.containsBox(objects[geometry].children[0].userData.box3FromObject())) {
                 intersecting[geometry] = true;
             }
-            for (var otherGeometry=geometry + 1; otherGeometry < geometries.length; otherGeometry++) {
-                if (intersectsBox2D(geometryBoxes[geometry], geometryBoxes[otherGeometry])) {
-                    var geo1 = geometries[geometry];
-                    var geo2 = geometries[otherGeometry];
-                    var box1 = geometryBoxes[geometry];
-                    var box2 = geometryBoxes[otherGeometry];
-                    var intersectionBox = box1.clone().intersect(box2);
-                    var triangles = getTrianglesFromGeometry(geo1, intersectionBox);
-                    var otherTriangles = getTrianglesFromGeometry(geo2, intersectionBox);
-                    for (var t0 = 0; t0 < triangles.length; t0++) {
-                        for (var t1 = 0; t1 < otherTriangles.length; t1++) {
-                            if (triangles[t0].boundingBox.intersectsBox(otherTriangles[t1].boundingBox) &&
-                                trianglesIntersect(triangles[t0], otherTriangles[t1])) {
-                                intersecting[geometry] = true;
-                                intersecting[otherGeometry] = true;
-                                t0 = triangles.length; // To force a break.
-                                break;
-                            }
-                            if (performance.now() > endTime) {
-                                endTime = (yield intersecting);
-                            }
+        }
+        // Now look for colliding objects.
+        for (var geometry=0; geometry < objects.length; geometry++) {
+            for (var otherGeometry=geometry + 1; otherGeometry < objects.length; otherGeometry++) {
+                if (!isUndefined(intersecting[geometry]) && !isUndefined(intersecting[otherGeometry])) {
+                    // Already marked can ignore.
+                    continue;
+                }
+                var box1 = objects[geometry].children[0].userData.box3FromObject();
+                var box2 = objects[otherGeometry].children[0].userData.box3FromObject();
+                var intersectionBox = intersectBox2D(box1, box2);
+                if (intersectionBox.isEmpty()) {
+                    // Can skip this pair because there is no intersection.
+                    continue;
+                }
+                // We need all the bottom triangles of each object.
+                if (!bottomTriangles[geometry]) {
+                    let bottomTrianglesIterator = getBottomTriangles(objects[geometry]);
+                    let result = bottomTrianglesIterator.next(endTime);
+                    while (!result.done) {
+                        endTime = (yield result.value);
+                        result = bottomTrianglesIterator.next(endTime)
+                    }
+                    bottomTriangles[geometry] = result.value;
+                }
+                if (!bottomTriangles[otherGeometry]) {
+                    let bottomTrianglesIterator = getBottomTriangles(objects[otherGeometry]);
+                    let result = bottomTrianglesIterator.next(endTime);
+                    while (!result.done) {
+                        endTime = (yield result.value);
+                        result = bottomTrianglesIterator.next(endTime)
+                    }
+                    bottomTriangles[otherGeometry] = result.value;
+                }
+                var geo1 = bottomTriangles[geometry].filter(function (triangle) {
+                    return triangle.boundingBox.intersectsBox(intersectionBox);
+                });
+                var geo2 = bottomTriangles[otherGeometry].filter(function (triangle) {
+                    return triangle.boundingBox.intersectsBox(intersectionBox);
+                });
+                for (var g1 = 0; g1 < geo1.length; g1++) {
+                    for (var g2 = 0; g2 < geo2.length; g2++) {
+                        if (Date.now() > endTime) {
+                            endTime = (yield intersecting);
+                        }
+                        if (geo1[g1].boundingBox.intersectsBox(geo2[g2].boundingBox) &&
+                            trianglesIntersect(geo1[g1], geo2[g2])) {
+                            intersecting[geometry] = true;
+                            intersecting[otherGeometry] = true;
+                            g1 = geo1.length; // To force a break.
+                            break;
                         }
                     }
                 }
             }
-            if (intersecting[geometry] === undefined) {
+            if (isUndefined(intersecting[geometry])) {
                 // No collision yet and there won't be one so mark this one
                 // as known.
                 intersecting[geometry] = false;
@@ -155,14 +256,8 @@ export var CollisionDetector = function () {
     // If one is already running it is stopped and removed.
     self.makeIterator = function (objects, volume) {
         self.stop();
-        for (var i = 0; i < objects.length; i++) {
-            if (!objects[i].children[0].userData.collisionGeometry) {
-                objects[i].children[0].userData.collisionGeometry =
-                    new THREE.Geometry().fromBufferGeometry(objects[i].children[0].geometry);
-            }
-        }
-        // iterator is a ES6 javascript generator.
         intersecting = [];
+        // iterator is a ES6 javascript generator.
         iterator = self.findCollisions(objects, volume);
     };
 
@@ -190,7 +285,7 @@ export var CollisionDetector = function () {
         self.stop();
         var collisionLoop = function () {
             timeout = setTimeout(function() {
-                var result = iterator.next(performance.now() + task_switch_ms);
+                var result = iterator.next(Date.now() + task_switch_ms);
                 if (!result.done) {
                     callbackFn(result.value);
                     collisionLoop();
