@@ -8,7 +8,7 @@ plugins:
       _important:
         read_until: 1478614200
   cura:
-    cura_engine: /usr/bin/CuraEngine
+    cura_engine: /usr/local/bin/cura_engine
   discovery:
     upnpUuid: e7f6ce9b-2ec8-4049-b753-8ed6c4917bc2
   slic3r:
