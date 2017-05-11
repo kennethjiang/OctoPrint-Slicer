@@ -23,7 +23,6 @@
 import { forEach, isUndefined, map } from 'lodash-es';
 import * as THREE from 'three';
 import { BufferGeometryAnalyzer, OrbitControls, TransformControls, STLLoader, PointerInteractions } from '3tk';
-import { OrientationOptimizer } from './OrientationOptimizer';
 import { CollisionDetector } from './CollisionDetector';
 import { Tipping } from './Tipping';
 import { Box3FromObject } from './Box3FromObject';
@@ -208,7 +207,6 @@ export function STLViewPort( canvas, width, depth, height ) {
                 model.scale.copy(modelToCopyTransformFrom.scale);
             }
 
-            model.orientationOptimizer = new OrientationOptimizer(geometry);
             self.recalculateOverhang(model);
 
             self.pointerInteractions.objects.push(model);
@@ -477,52 +475,40 @@ export function STLViewPort( canvas, width, depth, height ) {
     };
 
     self.recalculateOverhang = function(model) {
-        if (!model || !model.orientationOptimizer) return;
+        if (!model) return;
         if ( model.userData.previousRotation && model.rotation.equals(model.userData.previousRotation ) ) {
             model.userData.previousRotation = model.rotation.clone();
             return;
         }
-
-        var orientation = model.orientationOptimizer.printabilityOfOrientationByRotation( model.rotation );
-        self.tintSurfaces(model, null, 255, 255, 255); // Clear tints off the whole model
-        self.tintSurfaces(model, orientation.overhang, 128, 16, 16);
-        model.userData.previousRotation = model.rotation.clone();
-    };
-
-    self.tintSurfaces = function(model, surfaces, r, g, b) {
-
-        var geometry = model.children[0].geometry;
-        var colors = geometry.attributes.color !== undefined ? geometry.attributes.color.array : [];
-
-        if (surfaces) {
-
-            for ( var i = 0; i < surfaces.length; i++) {
-                for ( var index of surfaces[i].faceIndices ) {
-                    colors[index] = r/255;
-                    colors[index+1] = g/255;
-                    colors[index+2] = b/255;
-                    colors[index+3] = r/255;
-                    colors[index+4] = g/255;
-                    colors[index+5] = b/255;
-                    colors[index+6] = r/255;
-                    colors[index+7] = g/255;
-                    colors[index+8] = b/255;
-                }
-            }
-
-        } else {
-
-            for ( var i = 0; i < geometry.attributes.position.array.length; i++ ) colors[i] = 1;
-
+        var normalAttr =  model.children[0].geometry.getAttribute('normal');
+        var count = normalAttr.count;
+        var colorAttr = model.children[0].geometry.getAttribute('color');
+        if (!colorAttr) {
+            model.children[0].geometry.addAttribute('color', new THREE.BufferAttribute(new Float32Array( count*3 ), 3));
+            colorAttr = model.children[0].geometry.getAttribute('color');
         }
-        setGeometryColors(geometry, colors);
+
+        model.updateMatrixWorld();
+        var matrixWorld = model.children[0].matrixWorld;
+        var worldRotation = new THREE.Matrix4().extractRotation(matrixWorld);
+        var inverseWorldRotation = new THREE.Matrix4().getInverse(worldRotation);
+        var rotatedGravity = new THREE.Vector3(0,0,-1).applyMatrix4(inverseWorldRotation);
+        var v = new THREE.Vector3();
+        const STEEP = 30*Math.PI/180;
+        for (var i = 0; i < count; i+=3) {
+            v.fromBufferAttribute(normalAttr, i);
+            if (v.angleTo(rotatedGravity) < STEEP) {
+                colorAttr.setXYZ(i  , 0.5, 0.0625, 0.0625); // Reddish.
+                colorAttr.setXYZ(i+1, 0.5, 0.0625, 0.0625); // Reddish.
+                colorAttr.setXYZ(i+2, 0.5, 0.0625, 0.0625); // Reddish.
+            } else {
+                colorAttr.setXYZ(i  , 1, 1, 1);  // No tint.
+                colorAttr.setXYZ(i+1, 1, 1, 1);  // No tint.
+                colorAttr.setXYZ(i+2, 1, 1, 1);  // No tint.
+            }
+        }
+        colorAttr.needsUpdate = true;
     };
-
-    function setGeometryColors(geometry, colors) {
-        geometry.removeAttribute( 'color' );
-        geometry.addAttribute( 'color', new THREE.BufferAttribute( new Float32Array( colors ), 3 ) );
-    }
-
 }
 STLViewPort.prototype = Object.create( THREE.EventDispatcher.prototype );
 STLViewPort.prototype.constructor = STLViewPort;
