@@ -167,19 +167,19 @@ function SlicerViewModel(parameters) {
         // TODO: it's not DRY. mix of prez code and logics. need to figure out a better way
         $("#slicer-viewport").empty().append('<div class="report"><span>Got issues or suggestions? <a target="_blank" href="https://goo.gl/forms/P9Vw2fZRYJCy7RAn1">Click here!</a></span></div>\
                   <div class="model">\
-                    <button class="rotate disabled" title="Rotate"><img src="'
+                    <button class="rotate disabled btn" title="Rotate"><img src="'
                         + PLUGIN_BASEURL
                         + 'slicer/static/img/rotate.png"></button>\
-                    <button class="scale disabled" title="Scale"><img src="'
+                    <button class="scale disabled btn" title="Scale"><img src="'
                         + PLUGIN_BASEURL
                         + 'slicer/static/img/scale.png"></button>\
-                    <button class="remove disabled" title="Remove"><img src="'
+                    <button class="remove disabled btn" title="Remove"><img src="'
                         + PLUGIN_BASEURL
                         + 'slicer/static/img/remove.png"></button>\
-                    <button class="removeall disabled" title="Remove all"><img src="'
+                    <button class="removeall disabled btn" title="Remove all"><img src="'
                         + PLUGIN_BASEURL
                         + 'slicer/static/img/remove.png"></button>\
-                    <button class="more disabled" title="More..."><img src="'
+                    <button class="more disabled btn" title="More..."><img src="'
                         + PLUGIN_BASEURL
                         + 'slicer/static/img/more.png"></button>\
                 </div>\
