@@ -56,8 +56,6 @@ function SlicerViewModel(parameters) {
     self.printerProfilesViewModel = parameters[3];
 
     self.lockScale = true;
-    self.selectedSTLs = {};
-    self.newSession = true;
 
 
     // Override slicingViewModel.show to surpress default slicing behavior
@@ -69,34 +67,12 @@ function SlicerViewModel(parameters) {
 
         $('a[href="#tab_plugin_slicer"]').tab('show');
 
-        self.selectedSTLs[file] = target;
-        if (self.newSession) {
-            self.addToNewSession();
-        } else if (Object.getOwnPropertyNames(self.selectedSTLs).length == 1) {
-            $("#plugin-slicer-load-model").modal("show");
-        }
-    };
-
-    self.addToNewSession = function() {
-        self.stlViewPort.removeAllModels();
-        self.resetToDefault();
-        self.addToExistingSession();
-    };
-
-    self.addToExistingSession = function() {
-        forEach( Object.getOwnPropertyNames(self.selectedSTLs), function(file) {
-            var target = self.selectedSTLs[file];
-            self.setSlicingViewModel(target, file);
-            self.addSTL(target, file);
-            delete self.selectedSTLs[file];
-        });
-
-        $("#plugin-slicer-load-model").modal("hide");
+        self.setSlicingViewModelIfNeeded(target, file);
+        self.addSTL(target, file);
     };
 
     self.resetToDefault = function() {
         self.resetSlicingViewModel();
-        self.newSession = true;
 
         // hide all value inputs
         $("#slicer-viewport .values div").removeClass("show");
@@ -104,7 +80,6 @@ function SlicerViewModel(parameters) {
     }
 
     self.addSTL = function(target, file) {
-        self.newSession = false;
         $('#tab_plugin_slicer > div.translucent-blocker').show();
         self.stlViewPort.loadSTL(BASEURL + "downloads/files/" + target + "/" + file);
     }
@@ -201,6 +176,9 @@ function SlicerViewModel(parameters) {
                     <button class="remove disabled" title="Remove"><img src="'
                         + PLUGIN_BASEURL
                         + 'slicer/static/img/remove.png"></button>\
+                    <button class="removeall disabled" title="Remove all"><img src="'
+                        + PLUGIN_BASEURL
+                        + 'slicer/static/img/remove.png"></button>\
                     <button class="more disabled" title="More..."><img src="'
                         + PLUGIN_BASEURL
                         + 'slicer/static/img/more.png"></button>\
@@ -228,8 +206,7 @@ function SlicerViewModel(parameters) {
                </div>\
                <div class="values more">\
                    <div>\
-                        <a class="close"><i class="icon-remove-sign" /></a>\
-                       <p><button id="clear" class="btn"><i class="icon-trash" /><span>&nbsp;Clear bed</span></button></p>\
+                       <a class="close"><i class="icon-remove-sign" /></a>\
                        <p><button id="split" class="btn"><i class="icon-unlink" /><span>&nbsp;Split into parts</span></button></p>\
                        <p><button id="duplicate" class="btn"><i class="icon-copy" /><span>&nbsp;Duplicate</span></button></p>\
                        <span></span>\
@@ -259,7 +236,7 @@ function SlicerViewModel(parameters) {
             toggleValueInputs($("#slicer-viewport .more.values div"));
         });
 
-        $("#slicer-viewport button#clear").click(function(event) {
+        $("#slicer-viewport button.removeall").click(function(event) {
             self.stlViewPort.removeAllModels();
             self.resetToDefault();
         });
@@ -548,7 +525,7 @@ function SlicerViewModel(parameters) {
         self.slicingViewModel.destinationFilename(undefined);
     };
 
-    self.setSlicingViewModel = function(target, filename) {
+    self.setSlicingViewModelIfNeeded = function(target, filename) {
         if (!self.slicingViewModel.destinationFilename()) {  // A model is added to an empty bed
             self.slicingViewModel.target = target;
             self.slicingViewModel.file(filename);
