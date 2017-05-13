@@ -192,9 +192,11 @@ function SlicerViewModel(parameters) {
         $('#tab_plugin_slicer > div.translucent-blocker').hide();
     };
 
-    self.updatePrinterBed = function(profileName) {
-        if ( profileName) {
-            var profile = find(self.printerProfilesViewModel.profiles.items(), function(p) { return p.id == profileName });
+    ko.computed(function() {
+        var profileName = self.slicingViewModel.printerProfile();
+        if (profileName) {
+            var profile = find(self.printerProfilesViewModel.profiles.items(), function(p) {
+                return p.id == profileName });
 
             var dim = profile.volume;
             self.BEDSIZE_X_MM = Math.max(dim.width, 0.1); // Safari will error if rectShape has dimensions being 0
@@ -211,12 +213,10 @@ function SlicerViewModel(parameters) {
             self.stlViewPort.canvasWidth = self.BEDSIZE_X_MM;
             self.stlViewPort.canvasDepth = self.BEDSIZE_Y_MM;
             self.stlViewPort.canvasHeight = self.BEDSIZE_Z_MM;
+            self.drawBedFloor(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM, self.BED_FORM_FACTOR);
+            self.drawWalls(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM, self.BEDSIZE_Z_MM, self.BED_FORM_FACTOR);
         }
-        self.drawBedFloor(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM, self.BED_FORM_FACTOR);
-        self.drawWalls(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM, self.BEDSIZE_Z_MM, self.BED_FORM_FACTOR);
-    }
-
-    self.slicingViewModel.printerProfile.subscribe( self.updatePrinterBed );
+    });
 
     self.BEDSIZE_X_MM = 200;
     self.BEDSIZE_Y_MM = 200;
@@ -252,8 +252,6 @@ function SlicerViewModel(parameters) {
         self.floor = new THREE.Object3D();
         self.stlViewPort.scene.add(self.walls);
         self.stlViewPort.scene.add(self.floor);
-
-        self.updatePrinterBed();
 
         ko.applyBindings(self.slicingViewModel, $('#slicing-settings')[0]);
 
@@ -646,9 +644,9 @@ function SlicerViewModel(parameters) {
 
         if (formFactor == "circular") {
 
-            var cylGeometry = new THREE.CylinderGeometry(width/2, width/2, self.BEDSIZE_Z_MM, 60, 1, true);
+            var cylGeometry = new THREE.CylinderGeometry(width/2, width/2, height, 60, 1, true);
             // Move the walls up to the floor
-            cylGeometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, self.BEDSIZE_Z_MM / 2, 0));
+            cylGeometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, height / 2, 0));
             var wall = new THREE.Mesh(cylGeometry, wallMaterial);
             //rotate the walls so they are upright
             wall.rotation.x = Math.PI / 2;
