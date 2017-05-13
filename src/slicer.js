@@ -135,12 +135,10 @@ function SlicerViewModel(parameters) {
 
     ko.computed(function() {
         var profileName = self.slicingViewModel.printerProfile();
-        if (!profileName) {
-            return;
-        }
-        var profile = find(self.printerProfilesViewModel.profiles.items(),
-                           function(p) { return p.id == profileName });
-        if (profile) {
+        if (profileName) {
+            var profile = find(self.printerProfilesViewModel.profiles.items(), function(p) {
+                return p.id == profileName });
+
             var dim = profile.volume;
             self.BEDSIZE_X_MM = Math.max(dim.width, 0.1); // Safari will error if rectShape has dimensions being 0
             self.BEDSIZE_Y_MM = Math.max(dim.depth, 0.1);
