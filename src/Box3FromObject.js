@@ -69,14 +69,7 @@ export function hullPointsFromGeometry(geometry) {
 export function Box3FromObject(object) {
     let previousMatrixWorld = null;
     let previousBox3 = null;
-/*    object.traverse(function (node) {
-        if (node.geometry && !node.userData.hullPoints) {
-            node.userData.hullPoints = hullPointsFromGeometry(node.geometry);
-        }
-        if (!node.userData.box3FromObject) {
-            node.userData.box3FromObject = Box3FromObject(node);
-        }
-    });*/
+
     return function() {
         object.updateMatrixWorld();
         let box3 = new THREE.Box3();
