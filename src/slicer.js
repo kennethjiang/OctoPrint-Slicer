@@ -215,6 +215,7 @@ function SlicerViewModel(parameters) {
             self.stlViewPort.canvasHeight = self.BEDSIZE_Z_MM;
             self.drawBedFloor(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM, self.BED_FORM_FACTOR);
             self.drawWalls(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM, self.BEDSIZE_Z_MM, self.BED_FORM_FACTOR);
+            self.stlViewPort.resetCollisionDetector();
         }
     });
 
