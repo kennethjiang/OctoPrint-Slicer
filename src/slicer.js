@@ -22,7 +22,7 @@ function isDev() {
 
 if ( ! isDev() && typeof(Raven) !== 'undefined' ) {
     Raven.config('https://85bd9314656d40da9249aec5a32a2b52@sentry.io/141297', {
-        release: '1.2.7',
+        release: '1.2.8',
         ignoreErrors: [
             "Failed to execute 'arc' on 'CanvasRenderingContext2D': The radius provided",
             "Cannot read property 'highlightFill' of undefined",
@@ -178,7 +178,7 @@ function SlicerViewModel(parameters) {
                         + 'slicer/static/img/remove.png"></button>\
                     <button class="removeall disabled btn" title="Remove all"><img src="'
                         + PLUGIN_BASEURL
-                        + 'slicer/static/img/remove.png"></button>\
+                        + 'slicer/static/img/removeall.png"></button>\
                     <button class="more disabled btn" title="More..."><img src="'
                         + PLUGIN_BASEURL
                         + 'slicer/static/img/more.png"></button>\
