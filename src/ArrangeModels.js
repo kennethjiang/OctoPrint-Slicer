@@ -9,35 +9,46 @@ export var ArrangeModels = function () {
   // bit to make the bounding boxes smaller.  If any lengths are very
   // similar (within 1%), round up the smaller (to save computation
   // time when trying all possibilities).  All rectangles are
-  // increased in size by margin.
+  // increased in size by margin.  Returns a list that is the same
+  // length as the list of stlFiles.  Each element is a possible
+  // width/height/rotation.  Any rotatiion that is strictly worse than
+  // all the ones already found is not reported.
   var getSmallestRectangles = function () {
     var rectangles = [];
     var dimensions = []; // A list of all the widths and heights that we've encountered.
     for (var i = 0; i < stlFiles.length; i++ ) {
       var model = stlFiles[i];
-      var smallestRectangle = {"name": i};
-      // Try all rotations of the model from 0 to 90.  No need to try
-      // beyond because the packer can already rotate by 90 degrees.
+      var currentRectangles = []
+      // Try all rotations of the model from 0 to 90, then swap
+      // dimensions to add 90 degrees.  No need to try beyond 180,
+      // which has no effect on the dimensions of the rectangle.
       var originalRotationOrder = model.rotation.order;
       model.rotation.reorder("ZYX");
       var originalRotation = model.rotation.z;
-      for (var rotation = 0; rotation < THREE.Math.degToRad(90); rotation += THREE.Math.degToRad(15)) {
+      for (var rotationDegrees = 0; rotationDegrees < 90;
+           rotationDegrees += 15) {
+        let rotation = THREE.Math.degToRad(rotationDegrees);
         model.rotation.z = originalRotation + rotation;
         var modelBox = model.userData.box3FromObject();
         var width = modelBox.max.x - modelBox.min.x + margin;
         var height = modelBox.max.y - modelBox.min.y + margin;
-        if (!smallestRectangle.hasOwnProperty("prerotation") ||
-            width * height < smallestRectangle.width * smallestRectangle.height) {
-          smallestRectangle["width"] = width;
-          smallestRectangle["height"] = height;
-          smallestRectangle["prerotation"] = model.rotation.z;
-        }
+        currentRectangles.push(
+          {"name": i,
+           "width": width,
+           "height": height,
+           "prerotation": model.rotation.z});
+        // also insert at -90 degrees
+        currentRectangles.push(
+          {"name": i,
+           "width": height,
+           "height": width,
+           "prerotation": model.rotation.z - THREE.Math.degToRad(90)});
+        dimensions.push(width);
+        dimensions.push(height);
       }
       model.rotation.z = originalRotation;
       model.rotation.reorder(originalRotationOrder);
-      dimensions.push(smallestRectangle.height);
-      dimensions.push(smallestRectangle.width);
-      rectangles.push(smallestRectangle);
+      rectangles.push(currentRectangles);
     }
 
     // Round up dimensions if needed.  Having fewer unique lengths
@@ -54,10 +65,36 @@ export var ArrangeModels = function () {
         }
         dimensionsMap[dimensions[i]] = current;
       }
-      for (var i=0; i < rectangles.length; i++) {
-        rectangles[i].width = dimensionsMap[rectangles[i].width];
-        rectangles[i].height = dimensionsMap[rectangles[i].height];
+      for (let variants of rectangles) {
+        for (let rectangle of variants) {
+          rectangle.width = dimensionsMap[rectangle.width];
+          rectangle.height = dimensionsMap[rectangle.height];
+        }
       }
+      // Now remove rectangles that are strictly worse than the others
+      // in their own list.
+      rectangles = rectangles.map(function (variants) {
+        variants.sort(function (r0, r1) {
+          return r0.height - r1.height;
+        });
+        // heights are increasing.
+        let currentWidth = Infinity;
+        let newVariants = [];
+        for (let i = 0; i < variants.length; i++) {
+          if (variants[i].width < currentWidth) {
+            newVariants.push(variants[i]);
+            currentWidth = variants[i].width;
+          }
+        }
+        return newVariants;
+      });
+      // Finally, sort them by area because smallest area will
+      // probably be best.
+      rectangles.forEach(function (variants) {
+        variants.sort(function (r0, r1) {
+          return r0.width*r0.height - r1.width*r1.height;
+        });
+      });
     }
 
     return rectangles;
@@ -94,15 +131,15 @@ export var ArrangeModels = function () {
       var model = stlFiles[i];
       var oldOrder = model.rotation.order;
       model.rotation.reorder("ZYX");
-      model.rotation.z = rectangles[i].prerotation + THREE.Math.degToRad(packResult.placements[i].rotation);
+      model.rotation.z = packResult.placements[i].prerotation;
       model.rotation.reorder(oldOrder);
       // i is the name in the placements and also the index in the
       // stlFiles.  The RectanglePacker assumes the back left corner
       // is 0,0 and y grows downward, which is opposite from the
       // printer so y needs to be negative.
-      var width =  packResult.placements[i].rotation == 0 ? rectangles[i].width  : rectangles[i].height;
-      var height = packResult.placements[i].rotation == 0 ? rectangles[i].height : rectangles[i].width ;
-      model.position.x =   packResult.placements[i].x + (width  - packResult.width) /2;
+      var width =  packResult.placements[i].width;
+      var height = packResult.placements[i].height;
+      model.position.x =   packResult.placements[i].x + (width  - packResult.width )/2;
       model.position.y = -(packResult.placements[i].y + (height - packResult.height)/2);
     }
   };
@@ -124,6 +161,7 @@ export var ArrangeModels = function () {
       return true;
     }
     for (var i = 0; i < stlFiles.length; i++) {
+      // TODO: Don't compute boundingbox, use Box3
       stlFiles[i].children[0].geometry.computeBoundingBox();
       if (!stlFiles[i].position.equals(modelPositions[i].position) ||
           !stlFiles[i].rotation.equals(modelPositions[i].rotation) ||

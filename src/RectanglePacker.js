@@ -456,39 +456,12 @@ export var RectanglePacker = {
     });
   },
 
-  // Convert a list of rectangles to a list of lists where is
-  // rectangle is possibly listed also as rotated by 90 degrees.
-  rotateRectangles: function(rectangles) {
-    var rotatedRectangles = [];
-    for (var i = 0; i < rectangles.length; i++) {
-      rectangles[i].rotation = 0;
-      var forms = [rectangles[i]];
-      if (rectangles[i].width != rectangles[i].height) {
-        // Make a copy of the rectangle.
-        var rotatedRectangle = rectangles[i].constructor();
-        for (var attr in rectangles[i]) {
-          if (rectangles[i].hasOwnProperty(attr)) {
-            rotatedRectangle[attr] = rectangles[i][attr];
-          }
-        }
-        var temp = rotatedRectangle.width
-        // Rotate by 90 degrees.
-        rotatedRectangle.width = rotatedRectangle.height;
-        rotatedRectangle.height = temp;
-        rotatedRectangle.rotation = 90;
-        forms.push(rotatedRectangle);
-      }
-      rotatedRectangles.push(forms);
-    }
-    return rotatedRectangles;
-  },
-
-  /* Packs rectangles as above but tries all combinations of rotating
-   * or not rotating elements by 90 degrees, which might improve
-   * packing. The result is the same as pack above but with an extra
-   * member, rotation, alongside x and y in the placements.  */
+  /* Packs rectangles as above but the input is a list of lists with
+   * all the relavant rotations. The result is the same as pack above
+   * but with an extra member, rotation, alongside x and y in the
+   * placements.  */
   packWithRotation: function*(rectangles, skipFn) {
-    var rotatedRectangles = RectanglePacker.rotateRectangles(rectangles);
+    var rotatedRectangles = rectangles;
     var memoizedPacker = RectanglePacker.memoize(
       RectanglePacker.packWithoutRotation,
       function (rectangles) {
@@ -504,11 +477,13 @@ export var RectanglePacker = {
       };
       for (var permutation of RectanglePacker.permute(combinationCopy, skipPermutation)) {
         for (var packResult of memoizedPacker(permutation, skipFn)) {
-          // Put the rotations into the placements.
+          // Copy the members from the original object.
           for (var i=0; i < permutation.length; i++) {
             if (packResult.placements.hasOwnProperty(permutation[i].name)) {
-              packResult.placements[permutation[i].name].rotation =
-                  permutation[i].rotation;
+              for (let prop of Object.getOwnPropertyNames(permutation[i])) {
+                packResult.placements[permutation[i].name][prop] =
+                  permutation[i][prop];
+              }
             }
           }
           yield packResult;
@@ -519,16 +494,15 @@ export var RectanglePacker = {
 
   // Pack rectangles into as small a space as possible.
   //
-  // rectangles is a list of objects.  Each must have height, width,
-  // and a unique name which is a simple data type, like a string or
-  // number.  pack will yield a packResult for every
-  // unique combination and permutation of packing.  The packResult
-  // includes a placement object which maps from rectangle name to x,y
-  // coordinates for the top-left corner of the rectangle and also a
-  // rotation parameter which will be in degrees and only 0 or 90.
-  // packResult also has a placementCount which is the number of
-  // successfully placed rectangles and placementSuccess, which
-  // indicates if placement of all rectangles was successful.
+  // rectangles is a list of a list of objects.  Each object must have
+  // height, width, and a name which is a simple data type, like a
+  // string or number.  pack will yield a packResult for every unique
+  // combination and permutation of packing.  The packResult includes
+  // a placement object which maps from rectangle name to x,y
+  // coordinates for the top-left corner of the rectangle.  packResult
+  // also has a placementCount which is the number of successfully
+  // placed rectangles and placementSuccess, which indicates if
+  // placement of all rectangles was successful.
   pack: function*(rectangles) {
     var bestHW = {}
     var skipFn = function (w,h) {
