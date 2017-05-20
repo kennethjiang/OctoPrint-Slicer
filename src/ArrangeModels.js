@@ -139,8 +139,9 @@ export var ArrangeModels = function () {
       // printer so y needs to be negative.
       var width =  packResult.placements[i].width;
       var height = packResult.placements[i].height;
-      model.position.x =   packResult.placements[i].x + (width  - packResult.width )/2;
-      model.position.y = -(packResult.placements[i].y + (height - packResult.height)/2);
+      var modelBox3 = model.userData.box3FromObject();
+      model.position.x +=  packResult.placements[i].x - (packResult.width /2) + packResult.placements[i].width/2 - (modelBox3.max.x + modelBox3.min.x)/2;
+      model.position.y += -packResult.placements[i].y + (packResult.height /2) - packResult.placements[i].height/2 - (modelBox3.max.y + modelBox3.min.y)/2;
     }
   };
 
