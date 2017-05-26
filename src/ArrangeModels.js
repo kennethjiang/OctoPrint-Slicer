@@ -162,12 +162,10 @@ export var ArrangeModels = function () {
       return true;
     }
     for (var i = 0; i < stlFiles.length; i++) {
-      // TODO: Don't compute boundingbox, use Box3
-      stlFiles[i].children[0].geometry.computeBoundingBox();
       if (!stlFiles[i].position.equals(modelPositions[i].position) ||
           !stlFiles[i].rotation.equals(modelPositions[i].rotation) ||
           !stlFiles[i].scale.equals(modelPositions[i].scale) ||
-          !stlFiles[i].children[0].geometry.boundingBox.equals(modelPositions[i].boundingBox)) {
+          !stlFiles[i].userData.box3FromObject().equals(modelPositions[i].boundingBox)) {
         return true;
       }
     }
@@ -180,12 +178,11 @@ export var ArrangeModels = function () {
     // where we left off or if we must start over.
     var modelPositions = [];
     for (var i = 0; i < stlFiles.length; i++) {
-      stlFiles[i].children[0].geometry.computeBoundingBox();
       modelPositions.push({
         position: stlFiles[i].position.clone(),
         rotation: stlFiles[i].rotation.clone(),
         scale: stlFiles[i].scale.clone(),
-        boundingBox: stlFiles[i].children[0].geometry.boundingBox.clone()
+        boundingBox: stlFiles[i].userData.box3FromObject().clone()
       });
     }
     return modelPositions;
