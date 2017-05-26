@@ -77,7 +77,7 @@ export var ArrangeModels = function () {
         variants.sort(function (r0, r1) {
           return r0.height - r1.height;
         });
-        // heights are increasing.
+        // heights are non-decreasing.
         let currentWidth = Infinity;
         let newVariants = [];
         for (let i = 0; i < variants.length; i++) {
@@ -141,7 +141,7 @@ export var ArrangeModels = function () {
       var height = packResult.placements[i].height;
       var modelBox3 = model.userData.box3FromObject();
       model.position.x +=  packResult.placements[i].x - (packResult.width /2) + packResult.placements[i].width/2 - (modelBox3.max.x + modelBox3.min.x)/2;
-      model.position.y += -packResult.placements[i].y + (packResult.height /2) - packResult.placements[i].height/2 - (modelBox3.max.y + modelBox3.min.y)/2;
+      model.position.y += -packResult.placements[i].y + (packResult.height/2) - packResult.placements[i].height/2 - (modelBox3.max.y + modelBox3.min.y)/2;
     }
   };
 
