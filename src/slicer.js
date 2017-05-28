@@ -23,7 +23,7 @@ function isDev() {
 
 if ( ! isDev() && typeof(Raven) !== 'undefined' ) {
     Raven.config('https://85bd9314656d40da9249aec5a32a2b52@sentry.io/141297', {
-        release: '1.2.7',
+        release: '1.2.8',
         ignoreErrors: [
             "Failed to execute 'arc' on 'CanvasRenderingContext2D': The radius provided",
             "Cannot read property 'highlightFill' of undefined",
@@ -58,8 +58,6 @@ function SlicerViewModel(parameters) {
     self.filesViewModel = parameters[4];
 
     self.lockScale = true;
-    self.selectedSTLs = {};
-    self.newSession = true;
 
     self.modifierKeys = {ctrlKey: false,
                          shiftKey: false,
@@ -74,81 +72,12 @@ function SlicerViewModel(parameters) {
 
         $('a[href="#tab_plugin_slicer"]').tab('show');
 
-        self.selectedSTLs[file] = target;
-        if (self.newSession || self.modifierKeys.altKey) {
-            self.addToNewSession();
-        } else if (self.modifierKeys.ctrlKey || self.modifierKeys.metaKey || self.modifierKeys.shiftKey) {
-            self.addToExistingSession();
-        } else {
-            $("#plugin-slicer-load-model").modal("show");
-        }
-    };
-
-    // Override filesViewModel so that we can capture Ctrl and Alt
-    // when drag-n-drop completes.
-    self.originalHandleUploadStart = self.filesViewModel._handleUploadStart;
-    self.filesViewModel._handleUploadStart = function(e, data) {
-        data.modifierKeys = self.modifierKeys;
-        return self.originalHandleUploadStart(e, data);
-    };
-
-    self.originalHandleUploadDone = self.filesViewModel._handleUploadDone;
-    self.filesViewModel._handleUploadDone = function(e, data) {
-        // Save previous modifier keys.
-        var originalModifierKeys = self.modifierKeys;
-        // Copy them from data, where they were stored for upload start.
-        if (data.modifierKeys) {
-            self.modifierKeys = data.modifierKeys;
-        }
-        var result = self.originalHandleUploadDone(e, data);
-        // Restore actual modifier key values.
-        self.modifierKeys = originalModifierKeys;
-        return result;
-    };
-
-    $(".dropzone").on("dragover", function (e) {
-        self.modifierKeys = {ctrlKey: e.ctrlKey,
-                             shiftKey: e.shiftKey,
-                             altKey: e.altKey,
-                             metaKey: e.metaKey};
-        var dataTransfer = e.dataTransfer = e.originalEvent.dataTransfer;
-        // First 4 letters of effectAllowed are "copy" or "move" or
-        // "link".  Whichever one it is, we allow that one.
-        dataTransfer.dropEffect = dataTransfer.effectAllowed.slice(0,4);
-        // To prevent the original _onDragOver in blue imp from
-        // running, because it will set the wrong dropEffect.
-        e.stopImmediatePropagation();
-        e.preventDefault();
-    });
-
-    self.copyModifierKey = ko.computed(function () {
-        if (navigator.platform.indexOf("Mac") > -1) {
-            return "Cmd";
-        } else {
-            return "Ctrl";
-        }
-    });
-
-    self.addToNewSession = function() {
-        self.stlViewPort.removeAllModels();
-        self.resetToDefault();
-        self.addToExistingSession();
-    };
-
-    self.addToExistingSession = function() {
-        forEach( Object.getOwnPropertyNames(self.selectedSTLs), function(file) {
-            var target = self.selectedSTLs[file];
-            self.setSlicingViewModel(target, file);
-            self.addSTL(target, file);
-            delete self.selectedSTLs[file];
-        });
-
-        $("#plugin-slicer-load-model").modal("hide");
+        self.setSlicingViewModelIfNeeded(target, file);
+        self.addSTL(target, file);
     };
 
     self.resetToDefault = function() {
         self.resetSlicingViewModel();
-        self.newSession = true;
 
         // hide all value inputs
         $("#slicer-viewport .values div").removeClass("show");
@@ -156,7 +85,6 @@ function SlicerViewModel(parameters) {
     }
 
     self.addSTL = function(target, file) {
-        self.newSession = false;
         $('#tab_plugin_slicer > div.translucent-blocker').show();
         self.stlViewPort.loadSTL(
             BASEURL + "downloads/files/" + target + "/" + file,
@@ -192,9 +120,11 @@ function SlicerViewModel(parameters) {
         $('#tab_plugin_slicer > div.translucent-blocker').hide();
     };
 
-    self.updatePrinterBed = function(profileName) {
-        if ( profileName) {
-            var profile = find(self.printerProfilesViewModel.profiles.items(), function(p) { return p.id == profileName });
+    ko.computed(function() {
+        var profileName = self.slicingViewModel.printerProfile();
+        if (profileName) {
+            var profile = find(self.printerProfilesViewModel.profiles.items(), function(p) {
+                return p.id == profileName });
 
             var dim = profile.volume;
             self.BEDSIZE_X_MM = Math.max(dim.width, 0.1); // Safari will error if rectShape has dimensions being 0
@@ -211,12 +141,11 @@ function SlicerViewModel(parameters) {
             self.stlViewPort.canvasWidth = self.BEDSIZE_X_MM;
             self.stlViewPort.canvasDepth = self.BEDSIZE_Y_MM;
             self.stlViewPort.canvasHeight = self.BEDSIZE_Z_MM;
+            self.drawBedFloor(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM, self.BED_FORM_FACTOR);
+            self.drawWalls(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM, self.BEDSIZE_Z_MM, self.BED_FORM_FACTOR);
+            self.stlViewPort.resetCollisionDetector();
         }
-        self.drawBedFloor(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM, self.BED_FORM_FACTOR);
-        self.drawWalls(self.BEDSIZE_X_MM, self.BEDSIZE_Y_MM, self.BEDSIZE_Z_MM, self.BED_FORM_FACTOR);
-    }
-
-    self.slicingViewModel.printerProfile.subscribe( self.updatePrinterBed );
+    });
 
     self.BEDSIZE_X_MM = 200;
     self.BEDSIZE_Y_MM = 200;
@@ -253,27 +182,28 @@ function SlicerViewModel(parameters) {
         self.stlViewPort.scene.add(self.walls);
         self.stlViewPort.scene.add(self.floor);
 
-        self.updatePrinterBed();
-
         ko.applyBindings(self.slicingViewModel, $('#slicing-settings')[0]);
 
         // Buttons on the canvas, and their behaviors.
         // TODO: it's not DRY. mix of prez code and logics. need to figure out a better way
         $("#slicer-viewport").empty().append('<div class="report"><span>Got issues or suggestions? <a target="_blank" href="https://goo.gl/forms/P9Vw2fZRYJCy7RAn1">Click here!</a></span></div>\
                   <div class="model">\
-                    <button class="rotate disabled" title="Rotate"><img src="'
+                    <button class="rotate disabled btn" title="Rotate"><img src="'
                         + PLUGIN_BASEURL
                         + 'slicer/static/img/rotate.png"></button>\
-                    <button class="scale disabled" title="Scale"><img src="'
+                    <button class="scale disabled btn" title="Scale"><img src="'
                         + PLUGIN_BASEURL
                         + 'slicer/static/img/scale.png"></button>\
-                    <button class="remove disabled" title="Remove"><img src="'
+                    <button class="remove disabled btn" title="Remove"><img src="'
                         + PLUGIN_BASEURL
                         + 'slicer/static/img/remove.png"></button>\
-                    <button class="arrange disabled" title="Arrange"><img src="'
+                    <button class="removeall disabled btn" title="Remove all"><img src="'
+                        + PLUGIN_BASEURL
+                        + 'slicer/static/img/removeall.png"></button>\
+                    <button class="arrange disabled btn" title="Arrange"><img src="'
                         + PLUGIN_BASEURL
                         + 'slicer/static/img/arrange.png"></button>\
-                    <button class="more disabled" title="More..."><img src="'
+                    <button class="more disabled btn" title="More..."><img src="'
                         + PLUGIN_BASEURL
                         + 'slicer/static/img/more.png"></button>\
                 </div>\
@@ -300,8 +230,7 @@ function SlicerViewModel(parameters) {
                </div>\
                <div class="values more">\
                    <div>\
-                        <a class="close"><i class="icon-remove-sign" /></a>\
-                       <p><button id="clear" class="btn"><i class="icon-trash" /><span>&nbsp;Clear bed</span></button></p>\
+                       <a class="close"><i class="icon-remove-sign" /></a>\
                        <p><button id="split" class="btn"><i class="icon-unlink" /><span>&nbsp;Split into parts</span></button></p>\
                        <p><button id="duplicate" class="btn"><i class="icon-copy" /><span>&nbsp;Duplicate</span></button></p>\
                        <span></span>\
@@ -336,7 +265,7 @@ function SlicerViewModel(parameters) {
             toggleValueInputs($("#slicer-viewport .more.values div"));
         });
 
-        $("#slicer-viewport button#clear").click(function(event) {
+        $("#slicer-viewport button.removeall").click(function(event) {
             self.stlViewPort.removeAllModels();
             self.resetToDefault();
             self.setDestinationFilename();
@@ -646,9 +575,9 @@ function SlicerViewModel(parameters) {
 
         if (formFactor == "circular") {
 
-            var cylGeometry = new THREE.CylinderGeometry(width/2, width/2, self.BEDSIZE_Z_MM, 60, 1, true);
+            var cylGeometry = new THREE.CylinderGeometry(width/2, width/2, height, 60, 1, true);
             // Move the walls up to the floor
-            cylGeometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, self.BEDSIZE_Z_MM / 2, 0));
+            cylGeometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, height / 2, 0));
             var wall = new THREE.Mesh(cylGeometry, wallMaterial);
             //rotate the walls so they are upright
             wall.rotation.x = Math.PI / 2;
@@ -681,7 +610,7 @@ function SlicerViewModel(parameters) {
         self.slicingViewModel.destinationFilename(undefined);
     };
 
-    self.setSlicingViewModel = function(target, filename) {
+    self.setSlicingViewModelIfNeeded = function(target, filename) {
         self.slicingViewModel.target = target;
         self.slicingViewModel.file(filename);
     };
