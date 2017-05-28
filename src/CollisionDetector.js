@@ -150,7 +150,7 @@ export var CollisionDetector = function () {
                 endTime = (yield intersecting);
             }
         }
-        obj.children[0].userData.collisionDetectorMatrixWorld = currentMatrixWorld;
+        obj.children[0].userData.collisionDetectorMatrixWorld = currentMatrixWorld.clone();
         obj.children[0].userData.collisionDetectorBottomTriangles = triangles;
         return triangles;
     };
