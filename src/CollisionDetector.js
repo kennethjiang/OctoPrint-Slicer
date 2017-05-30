@@ -11,71 +11,42 @@ import { ConvexHull2D } from './ConvexHull2D';
 export var CollisionDetector = function () {
     var self = this;
 
-    // Given a Vector2 point and a triangle of Vector2 that describes
-    // a closed shape, check if the point is inside the shape.  Taken
-    // from https://jsperf.com/point-in-triangle .
-    // Also from http://blackpawn.com/texts/pointinpoly/ .
-    // https://jsfiddle.net/eyal/gupjwg11/
-    let pointInTriangle = function(point, triangle) {
-      	var p = point;
+    // Check that points.a and points.b and points.c are outside triangle
+    // and all on the same side of one side of the triangle.  Returns true
+    // if all points are outside on the same side of triangle.
+    var pointsOutsideTriangle = function(points, triangle) {
+        var pa = points.a;
+        var pb = points.b;
+        var pc = points.c;
         var p0 = triangle.a;
         var p1 = triangle.b;
         var p2 = triangle.c;
-        var dX = p.x-p2.x;
-        var dY = p.y-p2.y;
-        var dX21 = p2.x-p1.x;
-        var dY12 = p1.y-p2.y;
-        var D = dY12*(p0.x-p2.x) + dX21*(p0.y-p2.y);
-        var s = dY12*dX + dX21*dY;
-        var t = (p2.y-p0.y)*dX + (p0.x-p2.x)*dY;
-        if (D<0) return s<=0 && t<=0 && s+t>=D;
-        return s>=0 && t>=0 && s+t<=D;
-    }
-
-    var linesIntersect = function(a1, a2, a3, a4) {
-        var x12 = a1.x - a2.x;
-        var x34 = a3.x - a4.x;
-        var y12 = a1.y - a2.y;
-        var y34 = a3.y - a4.y;
-        var c = x12*y34 - y12 * x34;
-        if (c==0) {
-            return false;
-        }
-        var a = a1.x*a2.y - a1.y*a2.x;
-        var b = a3.x*a4.y - a3.y*a4.x;
-        var x = (a * x34 - b * x12) / c;
-        var y = (a * y34 - b * y12) / c;
-        return ((Math.min(a1.x, a2.x) < x && x < Math.max(a1.x, a2.x) &&
-                 Math.min(a3.x, a4.x) < x && x < Math.max(a3.x, a4.x)) ||
-                (Math.min(a1.y, a2.y) < y && y < Math.max(a1.y, a2.y) &&
-                 Math.min(a3.y, a4.y) < y && y < Math.max(a3.y, a4.y)));
-    }
-
-    var trianglesIntersect = function(t0,t1) {
-        return linesIntersect(t0.a, t0.b, t1.a, t1.b) ||
-            linesIntersect(t0.a, t0.b, t1.b, t1.c) ||
-            linesIntersect(t0.a, t0.b, t1.c, t1.a) ||
-            linesIntersect(t0.b, t0.c, t1.a, t1.b) ||
-            linesIntersect(t0.b, t0.c, t1.b, t1.c) ||
-            linesIntersect(t0.b, t0.c, t1.c, t1.a) ||
-            linesIntersect(t0.c, t0.a, t1.a, t1.b) ||
-            linesIntersect(t0.c, t0.a, t1.b, t1.c) ||
-            pointInTriangle(t0.a, t1) ||
-            pointInTriangle(t1.a, t0);
+        var dXa = pa.x - p2.x;
+        var dYa = pa.y - p2.y;
+        var dXb = pb.x - p2.x;
+        var dYb = pb.y - p2.y;
+        var dXc = pc.x - p2.x;
+        var dYc = pc.y - p2.y;
+        var dX21 = p2.x - p1.x;
+        var dY12 = p1.y - p2.y;
+        var D = dY12 * (p0.x - p2.x) + dX21 * (p0.y - p2.y);
+        var sa = dY12 * dXa + dX21 * dYa;
+        var sb = dY12 * dXb + dX21 * dYb;
+        var sc = dY12 * dXc + dX21 * dYc;
+        var ta = (p2.y - p0.y) * dXa + (p0.x - p2.x) * dYa;
+        var tb = (p2.y - p0.y) * dXb + (p0.x - p2.x) * dYb;
+        var tc = (p2.y - p0.y) * dXc + (p0.x - p2.x) * dYc;
+        if (D < 0) return ((sa >= 0 && sb >= 0 && sc >= 0) ||
+                           (ta >= 0 && tb >= 0 && tc >= 0) ||
+                           (sa+ta <= D && sb+tb <= D && sc+tc <= D));
+        return ((sa <= 0 && sb <= 0 && sc <= 0) ||
+                (ta <= 0 && tb <= 0 && tc <= 0) ||
+                (sa+ta >= D && sb+tb >= D && sc+tc >= D));
     };
 
-    // Alternate algorithm.
-    var trianglesIntersect2 = function(t0,t1) {
-        return linesIntersect(t0.a, t0.b, t1.a, t1.b) ||
-            linesIntersect(t0.a, t0.b, t1.b, t1.c) ||
-            linesIntersect(t0.a, t0.b, t1.c, t1.a) ||
-            linesIntersect(t0.b, t0.c, t1.a, t1.b) ||
-            linesIntersect(t0.b, t0.c, t1.b, t1.c) ||
-            linesIntersect(t0.b, t0.c, t1.c, t1.a) ||
-            pointInTriangle(t0.a, t1) ||
-            pointInTriangle(t1.a, t0) ||
-            pointInTriangle(t1.b, t0) ||
-            pointInTriangle(t1.c, t0);
+    var trianglesIntersect = function(t0, t1) {
+        return !(pointsOutsideTriangle(t0,t1) ||
+                 pointsOutsideTriangle(t1,t0));
     };
 
     // Only trust the true output.  False means maybe.
