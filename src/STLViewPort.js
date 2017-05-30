@@ -81,12 +81,14 @@ export function STLViewPort( canvas, width, height ) {
         self.pointerInteractions.addEventListener("click", self.selectionChanged);
         self.pointerInteractions.addEventListener("hover", self.hoverChanged);
 
-        self.orbitControls = new OrbitControls(self.camera, self.renderer.domElement);
+        self.orbitControls = new OrbitControls(self.camera, self.renderer.domElement, THREE.MOUSE.RIGHT);
 
         self.orbitControls.enableDamping = true;
         self.orbitControls.dampingFactor = 0.25;
         self.orbitControls.enablePan = false;
         self.orbitControls.addEventListener("change", self.render);
+        self.orbitControls.addEventListener("start", self.startOrbit);
+        self.orbitControls.addEventListener("end", self.endOrbit);
 
         // Must bind these before TransformControls because we want to attach it ourselves.
         // This will only work if events are run in the order that they are added, which is
@@ -117,6 +119,8 @@ export function STLViewPort( canvas, width, height ) {
     self.dispose = function() {
 
         self.orbitControls.removeEventListener("change", self.render);
+        self.orbitControls.removeEventListener("start", self.startOrbit);
+        self.orbitControls.removeEventListener("end", self.endOrbit);
         self.transformControls.removeEventListener("change", self.render);
         self.transformControls.removeEventListener("transformStart", self.startTransform);
         self.transformControls.removeEventListener("transformEnd", self.endTransform);
@@ -212,6 +216,14 @@ export function STLViewPort( canvas, width, height ) {
         return self.transformControls.object;
     }
 
+    self.setCursor = function(forceAuto=false) {
+        if (self.transformControls.getMode() == "translate" && self.pointerInteractions.hoveredObject && !forceAuto) {
+            $("#slicer-viewport").css("cursor", "move");
+        } else {
+            $("#slicer-viewport").css("cursor", "auto");
+        }
+    }
+
     /////////////////
     // EVENTS   /////
     // /////////////
@@ -222,13 +234,7 @@ export function STLViewPort( canvas, width, height ) {
     };
 
     self.hoverChanged = function( event ) {
-
-        if (self.transformControls.getMode() == "translate" && event.current ) {
-            $("#slicer-viewport").css("cursor", "move");
-        } else {
-            $("#slicer-viewport").css("cursor", "auto");
-        }
-
+        self.setCursor();
     };
 
     self.onPointerDown = function( event ) {
@@ -237,7 +243,6 @@ export function STLViewPort( canvas, width, height ) {
             event.stopPropagation();
             self.transformControls.attach( self.pointerInteractions.hoveredObject.parent, event );
         }
-
     };
 
     self.onKeydown= function( event ) {
@@ -371,6 +376,14 @@ export function STLViewPort( canvas, width, height ) {
             models[0].scale.x == 1.0 &&
             models[0].scale.y == 1.0 &&
             models[0].scale.z == 1.0
+    };
+
+    self.startOrbit = function () {
+        self.setCursor(true);
+    };
+
+    self.endOrbit = function () {
+        self.setCursor();
     };
 
     self.startTransform = function () {
