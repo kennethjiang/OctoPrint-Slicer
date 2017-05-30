@@ -13,34 +13,21 @@ export var CollisionDetector = function () {
     // Given a Vector2 point and a triangle of Vector2 that describes
     // a closed shape, check if the point is inside the shape.  Taken
     // from https://jsperf.com/point-in-triangle .
+    // https://jsfiddle.net/eyal/gupjwg11/
     let pointInTriangle = function(point, triangle) {
-        var a = triangle.a;
-        var b = triangle.b;
-        var c = triangle.c;
-
-        var ax = a.x;
-        var ay = a.y;
-
-        // Compute vectors
-        var v0x = c.x - ax;
-        var v0y = c.y - ay;
-        var v1x = b.x - ax;
-        var v1y = b.y - ay;
-        var v2x = point.x - ax;
-        var v2y = point.y - ay;
-
-        var dot00 = v0x * v0x + v0y * v0y;
-        var dot01 = v0x * v1x + v0y * v1y;
-        var dot02 = v0x * v2x + v0y * v2y;
-        var dot11 = v1x * v1x + v1y * v1y;
-        var dot12 = v1x * v2x + v1y * v2y;
-
-        var denom = dot00 * dot11 - dot01 * dot01;
-        var u = (dot11 * dot02 - dot01 * dot12) / denom;
-        var v = (dot00 * dot12 - dot01 * dot02) /denom;
-
-        // Check if point is in triangle
-        return (u >= 0) && (v >= 0) && (u + v < 1);
+      	var p = point;
+        var p0 = triangle.a;
+        var p1 = triangle.b;
+        var p2 = triangle.c;
+        var dX = p.x-p2.x;
+        var dY = p.y-p2.y;
+        var dX21 = p2.x-p1.x;
+        var dY12 = p1.y-p2.y;
+        var D = dY12*(p0.x-p2.x) + dX21*(p0.y-p2.y);
+        var s = dY12*dX + dX21*dY;
+        var t = (p2.y-p0.y)*dX + (p0.x-p2.x)*dY;
+        if (D<0) return s<=0 && t<=0 && s+t>=D;
+        return s>=0 && t>=0 && s+t<=D;
     }
 
     var linesIntersect = function(a1, a2, a3, a4) {
