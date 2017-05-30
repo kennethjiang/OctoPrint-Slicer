@@ -159,6 +159,21 @@ export function ConvexHull2D() {
         return findHull3(points, rightmostPoint, leftmostPoint, rightmostPoint);
     };
 
+    // Points is assumed to be a list of points that describe a convex
+    // shape that wrap around counterclockwise.  This yields a list of
+    // triangles from that convex shape, each with the same normal as
+    // the original shape (right-hand rule up).
+    self.hullToTriangles = function(points) {
+        let triangles = [];
+        for (var i = 2; i < points.length; i++) {
+            let a = new THREE.Vector2().copy(points[0]);
+            let b = new THREE.Vector2().copy(points[i-1]);
+            let c = new THREE.Vector2().copy(points[i]);
+            triangles.push({a:a, b:b, c:c,
+                            boundingBox: new THREE.Box2().setFromPoints([a,b,c])});
+        }
+        return triangles;
+    }
 };
 
 // browserify support

@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { isUndefined } from 'lodash-es';
 import { Box3FromObject } from './Box3FromObject';
+import { ConvexHull2D } from './ConvexHull2D';
 
 // intersecting is a list of true/false results of collisions.  Yet
 // unknown results are undefined
@@ -149,6 +150,7 @@ export var CollisionDetector = function () {
         return b1.intersect(b2);
     };
 
+    let convexHull2D = new ConvexHull2D();
     var intersecting = [];
     // Report all models that collide with any other model or stick out
     // of the provided boundingBox.
@@ -198,12 +200,47 @@ export var CollisionDetector = function () {
                     }
                     bottomTriangles[otherGeometry] = result.value;
                 }
+
+                // We need the triangles that make up the convex hull of each object.
+                var hull1 = convexHull2D.convexHull([].concat.apply([], bottomTriangles[geometry].map(function (triangle) {
+                    return [triangle.a, triangle.b, triangle.c];
+                })));
+                var hullTriangles1 = convexHull2D.hullToTriangles(hull1);
+                var hull2 = convexHull2D.convexHull([].concat.apply([], bottomTriangles[otherGeometry].map(function (triangle) {
+                    return [triangle.a, triangle.b, triangle.c];
+                })));
+                var hullTriangles2 = convexHull2D.hullToTriangles(hull2);
                 var geo1 = bottomTriangles[geometry].filter(function (triangle) {
-                    return triangle.boundingBox.intersectsBox(intersectionBox);
+                    if (!triangle.boundingBox.intersectsBox(intersectionBox)) {
+                        return false;  // If the bounding boxes don't intersect, definitely skip.
+                    }
+                    for (var hullTriangle of hullTriangles2) {
+                        if (trianglesIntersect(triangle, hullTriangle)) {
+                            // If the triangle intersects the other
+                            // shape's hull, maybe there will be an
+                            // intersection, so we need to keep this
+                            // triangle.
+                            return true;
+                        }
+                    }
+                    return false;  // No hull intersection, definitely skip.
                 });
                 var geo2 = bottomTriangles[otherGeometry].filter(function (triangle) {
-                    return triangle.boundingBox.intersectsBox(intersectionBox);
+                    if (!triangle.boundingBox.intersectsBox(intersectionBox)) {
+                        return false;  // If the bounding boxes don't intersect, definitely skip.
+                    }
+                    for (var hullTriangle of hullTriangles1) {
+                        if (trianglesIntersect(triangle, hullTriangle)) {
+                            // If the triangle intersects the other
+                            // shape's hull, maybe there will be an
+                            // intersection, so we need to keep this
+                            // triangle.
+                            return true;
+                        }
+                    }
+                    return false;  // No hull intersection, definitely skip.
                 });
+
                 for (var g1 = 0; g1 < geo1.length; g1++) {
                     for (var g2 = 0; g2 < geo2.length; g2++) {
                         if (Date.now() > endTime) {
