@@ -14,6 +14,7 @@ export var CollisionDetector = function () {
     // Given a Vector2 point and a triangle of Vector2 that describes
     // a closed shape, check if the point is inside the shape.  Taken
     // from https://jsperf.com/point-in-triangle .
+    // Also from http://blackpawn.com/texts/pointinpoly/ .
     // https://jsfiddle.net/eyal/gupjwg11/
     let pointInTriangle = function(point, triangle) {
       	var p = point;
