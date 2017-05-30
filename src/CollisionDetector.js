@@ -203,17 +203,29 @@ export var CollisionDetector = function () {
                 }
 
                 // We need the triangles that make up the convex hull of each object.
-                var hull1 = convexHull2D.convexHull([].concat.apply([], bottomTriangles[geometry].map(function (triangle) {
-                    return [triangle.a, triangle.b, triangle.c];
-                })));
+                var bottomPoints1 = [];
+                for (var triangle of bottomTriangles[geometry]) {
+                    bottomPoints1.push(triangle.a);
+                    bottomPoints1.push(triangle.b);
+                    bottomPoints1.push(triangle.c);
+                }
+                var hull1 = convexHull2D.convexHull(bottomPoints1);
                 var hullTriangles1 = convexHull2D.hullToTriangles(hull1);
-                var hull2 = convexHull2D.convexHull([].concat.apply([], bottomTriangles[otherGeometry].map(function (triangle) {
-                    return [triangle.a, triangle.b, triangle.c];
-                })));
+                var bottomPoints2 = [];
+                for (var triangle of bottomTriangles[otherGeometry]) {
+                    bottomPoints2.push(triangle.a);
+                    bottomPoints2.push(triangle.b);
+                    bottomPoints2.push(triangle.c);
+                }
+                var hull2 = convexHull2D.convexHull(bottomPoints2);
                 var hullTriangles2 = convexHull2D.hullToTriangles(hull2);
-                var geo1 = bottomTriangles[geometry].filter(function (triangle) {
+                var geo1 = [];
+                for (var triangle of bottomTriangles[geometry]) {
+                    if (Date.now() > endTime) {
+                        endTime = (yield intersecting);
+                    }
                     if (!triangle.boundingBox.intersectsBox(intersectionBox)) {
-                        return false;  // If the bounding boxes don't intersect, definitely skip.
+                        continue;  // If the bounding boxes don't intersect, definitely skip.
                     }
                     for (var hullTriangle of hullTriangles2) {
                         if (trianglesIntersect(triangle, hullTriangle)) {
@@ -221,14 +233,18 @@ export var CollisionDetector = function () {
                             // shape's hull, maybe there will be an
                             // intersection, so we need to keep this
                             // triangle.
-                            return true;
+                            geo1.push(triangle);
+                            break;
                         }
                     }
-                    return false;  // No hull intersection, definitely skip.
-                });
-                var geo2 = bottomTriangles[otherGeometry].filter(function (triangle) {
+                }
+                var geo2 = [];
+                for (var triangle of bottomTriangles[otherGeometry]) {
+                    if (Date.now() > endTime) {
+                        endTime = (yield intersecting);
+                    }
                     if (!triangle.boundingBox.intersectsBox(intersectionBox)) {
-                        return false;  // If the bounding boxes don't intersect, definitely skip.
+                        continue;  // If the bounding boxes don't intersect, definitely skip.
                     }
                     for (var hullTriangle of hullTriangles1) {
                         if (trianglesIntersect(triangle, hullTriangle)) {
@@ -236,12 +252,11 @@ export var CollisionDetector = function () {
                             // shape's hull, maybe there will be an
                             // intersection, so we need to keep this
                             // triangle.
-                            return true;
+                            geo2.push(triangle);
+                            break;
                         }
                     }
-                    return false;  // No hull intersection, definitely skip.
-                });
-
+                }
                 for (var g1 = 0; g1 < geo1.length; g1++) {
                     for (var g2 = 0; g2 < geo2.length; g2++) {
                         if (Date.now() > endTime) {

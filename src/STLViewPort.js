@@ -313,7 +313,7 @@ export function STLViewPort( canvas, width, depth, height ) {
         collisionDetector.clearIterator();
         if (LIVE_COLLISION_DETECTOR) {
             setCollisionDetector();
-            var TASK_SWITCH_MS = 500000;
+            var TASK_SWITCH_MS = 50;
             collisionDetector.startBackground(self.markCollidingModels, TASK_SWITCH_MS);
         }
     };
