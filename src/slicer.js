@@ -158,8 +158,10 @@ function SlicerViewModel(parameters) {
         //Walls and Floor
         self.walls = new THREE.Object3D();
         self.floor = new THREE.Object3D();
+        self.origin= new THREE.Object3D();
         self.stlViewPort.scene.add(self.walls);
         self.stlViewPort.scene.add(self.floor);
+        self.stlViewPort.scene.add(self.origin);
 
         ko.applyBindings(self.slicingViewModel, $('#slicing-settings')[0]);
 
@@ -481,6 +483,32 @@ function SlicerViewModel(parameters) {
             self.createText(font, "Left", width, depth, self.floor);
             self.createText(font, "Right", width, depth, self.floor);
         } );
+
+        self.drawOrigin();
+    };
+
+    self.drawOrigin = function() {
+        for(var i = self.origin.children.length - 1; i >= 0; i--) {
+            var obj = self.origin.children[i];
+            self.origin.remove(obj);
+        }
+
+        var material = new THREE.LineBasicMaterial({
+                color: 0x801010
+        });
+
+        const axisLength = 8;
+        [[axisLength, 0, 0], [0, axisLength, 0], [0, 0, axisLength]].forEach( function(end) {
+            const geometry = new THREE.Geometry();
+            geometry.vertices.push(
+                    new THREE.Vector3(0, 0, 0),
+                    new THREE.Vector3(...end)
+            );
+            self.origin.add(new THREE.Line( geometry, material ));
+        });
+
+        self.origin.position.x = -self.ORIGIN_OFFSET_X_MM;
+        self.origin.position.y = -self.ORIGIN_OFFSET_Y_MM;
     };
 
     self.drawWalls = function ( width, depth, height, formFactor ) {
