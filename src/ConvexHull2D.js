@@ -34,7 +34,7 @@ export function ConvexHull2D() {
         var closestPoint;
         var closestDistanceSquared = Infinity;
         for (var i = 0; i < shape.length; i++) {
-            var projection = new ConvexHull2D().projectPointToLineSegment(point, shape[i], shape[(i+1)%shape.length]);
+            var projection = self.projectPointToLineSegment(point, shape[i], shape[(i+1)%shape.length]);
             var distanceSquared = projection.distanceToSquared(point);
             if (distanceSquared < closestDistanceSquared) {
                 closestPoint = projection;
@@ -44,33 +44,31 @@ export function ConvexHull2D() {
         return closestPoint;
     };
 
-    // Given 3 points a, b, c, find the angle of abc.  The result is
-    // the rotation to apply to the ray ba to get a ray from b through
-    // c.  positive is counterclockwise.  result is between 0 and 2PI.
-    self.angle3 = function(a, b, c) {
-        var diffAngle = c.clone().sub(b).angle() - a.clone().sub(b).angle();
-        // angle() returns between 0 and 2pi so diffAngle is between -2pi and 2pi.
-        if (diffAngle < 0) diffAngle += 2 * Math.PI;
-        return diffAngle;
-    };
+    // Returns a-b cross c-b
+    let cross = function(a, b, c) {
+        return (a.x - b.x) * (c.y - b.y) - (a.y - b.y) * (c.x - b.x);
+    }
 
     // Given a Vector2 point and a list of Vector2 that describe a
-    // closed shape, check if the point is inside the shape.
+    // closed shape, check if the point is inside the shape.  Assumes
+    // that the shape is convex and counter-clockwise.
     self.pointInShape = function(point, shape) {
-        var totalAngle = 0;
-        for (var i=0; i < shape.length; i++) {
-            var diffAngle = self.angle3(shape[i], point, shape[(i+1)%shape.length]);
-            // diffAngle is sure to be between 0 and 2PI.
-            if (diffAngle > Math.PI) {
-                diffAngle -= 2*Math.PI;
-            }
-            // Now diffAngle is between -PI and PI.
-            totalAngle += diffAngle;
+        if (shape.length == 0) {
+            return false;
         }
-        const EPSILON = 0.0001;
-        return totalAngle > EPSILON;
+        if (shape.length == 1) {
+            return point.equals(shape[0]);
+        }
+        if (shape.length == 2) {
+            return self.projectPointToLineSegment(point, shape[0], shape[1]).equals(point);
+        }
+        for (var i=0; i < shape.length; i++) {
+            if (cross(shape[(i+1)%shape.length], shape[i], point) <= 0) {
+                return false;
+            }
+        }
+        return true;
     };
-
 
     // Find the point farthest from the line.  points must have at
     // least one point in it.
@@ -98,8 +96,8 @@ export function ConvexHull2D() {
             if (toPoint.equals(fromPoint) || point.equals(fromPoint)) {
                 continue;
             }
-            var diffAngle = self.angle3(toPoint, fromPoint, point);
-            if (diffAngle > 0 && diffAngle < Math.PI) {
+            var normal = cross(toPoint, fromPoint, point);
+            if (normal > 0) {
                 pointsLeft.push(point);
             }
         }
