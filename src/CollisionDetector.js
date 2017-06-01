@@ -48,6 +48,41 @@ export var CollisionDetector = function () {
         return !(pointsOutsideTriangle(t0,t1) ||
                  pointsOutsideTriangle(t1,t0));
     };
+    // returns true if for all p in points, angle pbc has the same
+    // normal as normal.  If bc is a line that is part of a convex
+    // polygon and normal is the normal of that polygon, this function
+    // returns true if all points are outside the polygon on that
+    // side.
+    let cross = function(points, b, c, normal) {
+        let bx = b.x;
+        let by = b.y;
+        let cyby = c.y - by;
+        let cxbx = c.x - bx;
+        for (let p of points) {
+            if (((p.x - bx) * cyby - (p.y - by) * cxbx) * normal < 0) {
+                return false;
+            };
+        }
+        return true;
+    }
+
+    // Returns true if the convex hulls intersect.  Each hull must be
+    // convex and is specified as a list of points.  Each hull's
+    // normal is specified.  Only the sign matters.  If the points are
+    // counterclockwise, the normal is positive.
+    var hullsIntersect = function(hull0, normal0, hull1, normal1) {
+        for (var i = 0; i < hull0.length; i++) {
+            if (cross(hull1, hull0[i], hull0[(i+1)%hull0.length], normal0)) {
+                return false;
+            }
+        }
+        for (var i = 0; i < hull1.length; i++) {
+            if (cross(hull0, hull1[i], hull1[(i+1)%hull1.length], normal1)) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     // Only trust the true output.  False means maybe.
     var triangleOutsideBox = function(t, b) {
@@ -173,7 +208,7 @@ export var CollisionDetector = function () {
                     bottomTriangles[otherGeometry] = result.value;
                 }
 
-                // We need the triangles that make up the convex hull of each object.
+                // We need the convex hulls of each bottom.
                 var bottomPoints1 = [];
                 for (var triangle of bottomTriangles[geometry]) {
                     bottomPoints1.push(triangle.a);
@@ -181,7 +216,6 @@ export var CollisionDetector = function () {
                     bottomPoints1.push(triangle.c);
                 }
                 var hull1 = convexHull2D.convexHull(bottomPoints1);
-                var hullTriangles1 = convexHull2D.hullToTriangles(hull1);
                 var bottomPoints2 = [];
                 for (var triangle of bottomTriangles[otherGeometry]) {
                     bottomPoints2.push(triangle.a);
@@ -189,7 +223,9 @@ export var CollisionDetector = function () {
                     bottomPoints2.push(triangle.c);
                 }
                 var hull2 = convexHull2D.convexHull(bottomPoints2);
-                var hullTriangles2 = convexHull2D.hullToTriangles(hull2);
+                if (!hullsIntersect(hull1, 1, hull2, 1)) {
+                    continue; // No chance of intersection.
+                }
                 var geo1 = [];
                 for (var triangle of bottomTriangles[geometry]) {
                     if (Date.now() > endTime) {
@@ -198,15 +234,12 @@ export var CollisionDetector = function () {
                     if (!triangle.boundingBox.intersectsBox(intersectionBox)) {
                         continue;  // If the bounding boxes don't intersect, definitely skip.
                     }
-                    for (var hullTriangle of hullTriangles2) {
-                        if (trianglesIntersect(triangle, hullTriangle)) {
-                            // If the triangle intersects the other
-                            // shape's hull, maybe there will be an
-                            // intersection, so we need to keep this
-                            // triangle.
-                            geo1.push(triangle);
-                            break;
-                        }
+                    if (hullsIntersect([triangle.a, triangle.b, triangle.c], 1, hull2, 1)) {
+                        // If the triangle intersects the other
+                        // shape's hull, maybe there will be an
+                        // intersection, so we need to keep this
+                        // triangle.
+                        geo1.push(triangle);
                     }
                 }
                 var geo2 = [];
@@ -217,15 +250,12 @@ export var CollisionDetector = function () {
                     if (!triangle.boundingBox.intersectsBox(intersectionBox)) {
                         continue;  // If the bounding boxes don't intersect, definitely skip.
                     }
-                    for (var hullTriangle of hullTriangles1) {
-                        if (trianglesIntersect(triangle, hullTriangle)) {
-                            // If the triangle intersects the other
-                            // shape's hull, maybe there will be an
-                            // intersection, so we need to keep this
-                            // triangle.
-                            geo2.push(triangle);
-                            break;
-                        }
+                    if (hullsIntersect([triangle.a, triangle.b, triangle.c], 1, hull1, 1)) {
+                        // If the triangle intersects the other
+                        // shape's hull, maybe there will be an
+                        // intersection, so we need to keep this
+                        // triangle.
+                        geo2.push(triangle);
                     }
                 }
                 for (var g1 = 0; g1 < geo1.length; g1++) {
