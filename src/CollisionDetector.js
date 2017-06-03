@@ -53,7 +53,7 @@ export var CollisionDetector = function () {
     // polygon and normal is the normal of that polygon, this function
     // returns true if all points are outside the polygon on that
     // side.
-    let cross = function(points, b, c, normal) {
+    let crossAll = function(points, b, c, normal) {
         let bx = b.x;
         let by = b.y;
         let cyby = c.y - by;
@@ -72,12 +72,12 @@ export var CollisionDetector = function () {
     // counterclockwise, the normal is positive.
     var hullsIntersect = function(hull0, normal0, hull1, normal1) {
         for (var i = 0; i < hull0.length; i++) {
-            if (cross(hull1, hull0[i], hull0[(i+1)%hull0.length], normal0)) {
+            if (crossAll(hull1, hull0[i], hull0[(i+1)%hull0.length], normal0)) {
                 return false;
             }
         }
         for (var i = 0; i < hull1.length; i++) {
-            if (cross(hull0, hull1[i], hull1[(i+1)%hull1.length], normal1)) {
+            if (crossAll(hull0, hull1[i], hull1[(i+1)%hull1.length], normal1)) {
                 return false;
             }
         }
@@ -157,6 +157,43 @@ export var CollisionDetector = function () {
         return b1.intersect(b2);
     };
 
+    let generateIntersectingTriangles = function*(bottomTriangles, intersectionBox, otherHull) {
+        for (var triangle of bottomTriangles) {
+            if (!triangle.boundingBox.intersectsBox(intersectionBox)) {
+                continue;  // If the bounding boxes don't intersect, definitely skip.
+            }
+            if (hullsIntersect([triangle.a, triangle.b, triangle.c], 1, otherHull, 1)) {
+                // If the triangle intersects the other
+                // shape's hull, maybe there will be an
+                // intersection, so we need to keep this
+                // triangle.
+                yield triangle;
+            } else {
+                yield;
+            }
+        }
+    };
+    let interleaveWithIndex = function*(itr1, itr2) {
+        let done1 = false;
+        let done2 = false;
+        while(!done1 || !done2) {
+            if (!done1) {
+                let value;
+                ({done: done1, value} = itr1.next());
+                if (!done1) {
+                    yield {index:0, value:value};
+                }
+            }
+            if (!done2) {
+                let value;
+                ({done: done2, value} = itr2.next());
+                if (!done2) {
+                    yield {index:1, value:value};
+                }
+            }
+        }
+    }
+                
     let convexHull2D = new ConvexHull2D();
     var intersecting = [];
     // Report all models that collide with any other model or stick out
@@ -227,48 +264,36 @@ export var CollisionDetector = function () {
                     continue; // No chance of intersection.
                 }
                 var geo1 = [];
-                for (var triangle of bottomTriangles[geometry]) {
-                    if (Date.now() > endTime) {
-                        endTime = (yield intersecting);
-                    }
-                    if (!triangle.boundingBox.intersectsBox(intersectionBox)) {
-                        continue;  // If the bounding boxes don't intersect, definitely skip.
-                    }
-                    if (hullsIntersect([triangle.a, triangle.b, triangle.c], 1, hull2, 1)) {
-                        // If the triangle intersects the other
-                        // shape's hull, maybe there will be an
-                        // intersection, so we need to keep this
-                        // triangle.
-                        geo1.push(triangle);
-                    }
-                }
                 var geo2 = [];
-                for (var triangle of bottomTriangles[otherGeometry]) {
+                triangleLoop:
+                for (var indexTriangle of interleaveWithIndex(
+                    generateIntersectingTriangles(bottomTriangles[geometry], intersectionBox, hull2),
+                    generateIntersectingTriangles(bottomTriangles[otherGeometry], intersectionBox, hull1))) {
                     if (Date.now() > endTime) {
                         endTime = (yield intersecting);
                     }
-                    if (!triangle.boundingBox.intersectsBox(intersectionBox)) {
-                        continue;  // If the bounding boxes don't intersect, definitely skip.
-                    }
-                    if (hullsIntersect([triangle.a, triangle.b, triangle.c], 1, hull1, 1)) {
-                        // If the triangle intersects the other
-                        // shape's hull, maybe there will be an
-                        // intersection, so we need to keep this
-                        // triangle.
-                        geo2.push(triangle);
-                    }
-                }
-                for (var g1 = 0; g1 < geo1.length; g1++) {
-                    for (var g2 = 0; g2 < geo2.length; g2++) {
-                        if (Date.now() > endTime) {
-                            endTime = (yield intersecting);
-                        }
-                        if (geo1[g1].boundingBox.intersectsBox(geo2[g2].boundingBox) &&
-                            trianglesIntersect(geo1[g1], geo2[g2])) {
-                            intersecting[geometry] = true;
-                            intersecting[otherGeometry] = true;
-                            g1 = geo1.length; // To force a break.
-                            break;
+                    if (indexTriangle.value) {
+                        let triangle = indexTriangle.value;
+                        if (indexTriangle.index == 0) {
+                            geo1.push(triangle);
+                            for (var g2 = 0; g2 < geo2.length; g2++) {
+                                if (triangle.boundingBox.intersectsBox(geo2[g2].boundingBox) &&
+                                    trianglesIntersect(triangle, geo2[g2])) {
+                                    intersecting[geometry] = true;
+                                    intersecting[otherGeometry] = true;
+                                    break triangleLoop;
+                                }
+                            }
+                        } else if (indexTriangle.index == 1) {
+                            geo2.push(triangle);
+                            for (var g1 = 0; g1 < geo1.length; g1++) {
+                                if (geo1[g1].boundingBox.intersectsBox(triangle.boundingBox) &&
+                                    trianglesIntersect(geo1[g1], triangle)) {
+                                    intersecting[geometry] = true;
+                                    intersecting[otherGeometry] = true;
+                                    break triangleLoop;
+                                }
+                            }
                         }
                     }
                 }
