@@ -177,15 +177,15 @@ export var CollisionDetector = function () {
         let done1 = false;
         let done2 = false;
         while(!done1 || !done2) {
-            if (!done1) {
-                let value;
+            let value = null;
+            while (!done1 && !value) {
                 ({done: done1, value} = itr1.next());
                 if (!done1) {
                     yield {index:0, value:value};
                 }
             }
-            if (!done2) {
-                let value;
+            value = null;
+            while (!done2 && !value) {
                 ({done: done2, value} = itr2.next());
                 if (!done2) {
                     yield {index:1, value:value};
@@ -193,7 +193,7 @@ export var CollisionDetector = function () {
             }
         }
     }
-                
+
     let convexHull2D = new ConvexHull2D();
     var intersecting = [];
     // Report all models that collide with any other model or stick out
