@@ -1,11 +1,11 @@
 'use strict';
 
-//import * as THREE from 'three';
-const THREE = require('three');
+import * as THREE from 'three';
+//const THREE = require('three');
 
 // functions for creating and manipulating 2D convex hulls
-//export function ConvexHull2D() {
-function ConvexHull2D() {
+export function ConvexHull2D() {
+//function ConvexHull2D() {
     var self = this;
 
     // Find closest point on line to vw to point p.  All arguments are
@@ -264,6 +264,8 @@ console.log(resultString);
 */
 
 
+/*
+//Test convex hull of many points.
 var t = new ConvexHull2D();
 var points = []
 
@@ -274,3 +276,4 @@ for (let p of JSON.parse(
 console.log(points);
 var result = t.convexHull(points);
 console.log(result);
+*/
