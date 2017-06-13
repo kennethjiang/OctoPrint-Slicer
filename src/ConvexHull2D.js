@@ -73,7 +73,8 @@ function ConvexHull2D() {
     };
 
     // Find the point farthest from the line.  points must have at
-    // least one point in it.
+    // least one point in it.  If there are multiple with the same
+    // distance, pick the one that projects farthest on a->b.
     var findFarthestPoint = function(points, a, b) {
         var farthestPoint;
         var farthestDistanceSquared = -Infinity;
@@ -83,6 +84,17 @@ function ConvexHull2D() {
             if (distanceSquared > farthestDistanceSquared) {
                 farthestPoint = point;
                 farthestDistanceSquared = distanceSquared;
+            } else if(distanceSquared == farthestDistanceSquared && !point.equals(farthestPoint)) {
+                let l2 = a.distanceToSquared(b);  // i.e. |w-v|^2 -  avoid a sqrt
+                if (l2 != 0) { // Check just in case floating point problems.
+                    let ba = b.clone().sub(a);
+                    let tCurrent = farthestPoint.clone().sub(a).dot(ba);
+                    let tNew = point.clone().sub(a).dot(ba);
+                    if (tNew < tCurrent) {
+                        farthestPoint = point;
+                        farthestDistanceSquared = distanceSquared;
+                    }
+                }
             }
         }
         return farthestPoint;
