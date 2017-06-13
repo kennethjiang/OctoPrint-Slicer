@@ -93,14 +93,48 @@ function ConvexHull2D() {
     // than 180 degrees to get the ray from_p for every p in
     // points.  0 and 180 degrees are excluded.
     var findLeftPoints = function(points, fromPoint, toPoint) {
+        if (toPoint.equals(fromPoint)) {
+            return [];
+        }
         var pointsLeft = [];
         for (var point of points) {
-            if (toPoint.equals(fromPoint) || point.equals(fromPoint)) {
+            if (point.equals(fromPoint)) {
                 continue;
             }
             var normal = cross(toPoint, fromPoint, point);
             if (normal > 0) {
                 pointsLeft.push(point);
+            }
+        }
+        return pointsLeft;
+    };
+
+    // Returns two lists of points that are to the left of ray0-ray1
+    // and ray1-ray2.  That is, the ray from_to needs a rotation of
+    // less than 180 degrees to get the ray from-p for every p in
+    // points.  0 and 180 degrees are excluded.
+    var findLeftPoints2 = function(points, from, mid, to) {
+        if (mid.equals(from)) {
+            return [[], findLeftPoints(points, mid, to)];
+        }
+        if (to.equals(mid)) {
+            return [findLeftPoints(points, from, mid), []];
+        }
+        var pointsLeft = [[], []];
+        for (var point of points) {
+            if (!point.equals(from)) {
+                let normal = cross(mid, from, point);
+                if (normal > 0) {
+                    pointsLeft[0].push(point);
+                    continue;
+                }
+            }
+            if (!point.equals(mid)) {
+                let normal = cross(to, mid, point);
+                if (normal > 0) {
+                    pointsLeft[1].push(point);
+                    continue;
+                }
             }
         }
         return pointsLeft;
@@ -122,12 +156,10 @@ function ConvexHull2D() {
     };
 
     var findHull3 = function(points, fromPoint, farthestPoint, toPoint) {
-        // Iterate on one side.
-        var pointsLeft = findLeftPoints(points, farthestPoint, toPoint);
-        var halfHull = findHull(pointsLeft, farthestPoint, toPoint);
+        var pointsLeft2 = findLeftPoints2(points, fromPoint, farthestPoint, toPoint);
+        var halfHull = findHull(pointsLeft2[1], farthestPoint, toPoint);
         // Iterate on other side.
-        pointsLeft = findLeftPoints(points, fromPoint, farthestPoint);
-        var halfHull2 = findHull(pointsLeft, fromPoint, farthestPoint);
+        var halfHull2 = findHull(pointsLeft2[0], fromPoint, farthestPoint);
         return halfHull.concat(halfHull2);
     }
 
