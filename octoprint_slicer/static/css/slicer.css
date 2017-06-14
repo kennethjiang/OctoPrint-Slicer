@@ -95,7 +95,7 @@
 }
 
 #slicer-viewport > div.values.more{
-    top: calc(34px + 5*44px);
+    top: calc(34px + 6*44px);
 }
 
 #slicer-viewport > div.cutShape.show {

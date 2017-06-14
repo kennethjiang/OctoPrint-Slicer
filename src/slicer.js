@@ -23,7 +23,7 @@ function isDev() {
 
 if ( ! isDev() && typeof(Raven) !== 'undefined' ) {
     Raven.config('https://85bd9314656d40da9249aec5a32a2b52@sentry.io/141297', {
-        release: '1.2.8',
+        release: '1.2.9',
         ignoreErrors: [
             "Failed to execute 'arc' on 'CanvasRenderingContext2D': The radius provided",
             "Cannot read property 'highlightFill' of undefined",
@@ -179,8 +179,10 @@ function SlicerViewModel(parameters) {
         //Walls and Floor
         self.walls = new THREE.Object3D();
         self.floor = new THREE.Object3D();
+        self.origin= new THREE.Object3D();
         self.stlViewPort.scene.add(self.walls);
         self.stlViewPort.scene.add(self.floor);
+        self.stlViewPort.scene.add(self.origin);
 
         ko.applyBindings(self.slicingViewModel, $('#slicing-settings')[0]);
 
@@ -233,6 +235,7 @@ function SlicerViewModel(parameters) {
                        <a class="close"><i class="icon-remove-sign" /></a>\
                        <p><button id="split" class="btn"><i class="icon-unlink" /><span>&nbsp;Split into parts</span></button></p>\
                        <p><button id="duplicate" class="btn"><i class="icon-copy" /><span>&nbsp;Duplicate</span></button></p>\
+                       <p><button id="info" class="btn"><i class="icon-info" /><span>&nbsp;Advanced usage</span></button></p>\
                        <span></span>\
                    </div>\
                </div>');
@@ -301,6 +304,10 @@ function SlicerViewModel(parameters) {
                     self.setDestinationFilename();
                 });
             }
+        });
+
+        $("#slicer-viewport button#info").click(function(event) {
+            $("#plugin-slicer-advanced-usage-info").modal("show");
         });
 
         $("#slicer-viewport button#lay-flat").click(function(event) {
@@ -561,6 +568,32 @@ function SlicerViewModel(parameters) {
             self.createText(font, "Left", width, depth, self.floor);
             self.createText(font, "Right", width, depth, self.floor);
         } );
+
+        self.drawOrigin();
+    };
+
+    self.drawOrigin = function() {
+        for(var i = self.origin.children.length - 1; i >= 0; i--) {
+            var obj = self.origin.children[i];
+            self.origin.remove(obj);
+        }
+
+        var material = new THREE.LineBasicMaterial({
+                color: 0x801010
+        });
+
+        const axisLength = 8;
+        [[axisLength, 0, 0], [0, axisLength, 0], [0, 0, axisLength]].forEach( function(end) {
+            const geometry = new THREE.Geometry();
+            geometry.vertices.push(
+                    new THREE.Vector3(0, 0, 0),
+                    new THREE.Vector3(...end)
+            );
+            self.origin.add(new THREE.Line( geometry, material ));
+        });
+
+        self.origin.position.x = -self.ORIGIN_OFFSET_X_MM;
+        self.origin.position.y = -self.ORIGIN_OFFSET_Y_MM;
     };
 
     self.drawWalls = function ( width, depth, height, formFactor ) {
