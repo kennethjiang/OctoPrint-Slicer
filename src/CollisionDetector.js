@@ -127,8 +127,10 @@ export var CollisionDetector = function () {
         }
         var triangles = [];
         var posAttr = obj.children[0].geometry.getAttribute('position');
+        var normalAttr = obj.children[0].geometry.getAttribute('normal');
         var count = posAttr.count;
         for (var v=0; v < count; v += 3) {
+            let normal = normalAttr.getZ(v);  // v or v+1 or v+2, doesn't matter.
             let a = new THREE.Vector2().copy(
                 new THREE.Vector3().fromBufferAttribute(posAttr, v    )
                     .applyMatrix4(obj.children[0].matrixWorld));
@@ -139,7 +141,8 @@ export var CollisionDetector = function () {
                 new THREE.Vector3().fromBufferAttribute(posAttr, v + 2)
                     .applyMatrix4(obj.children[0].matrixWorld));
             let bottomTriangle = {a:a, b:b, c:c,
-                                  boundingBox: new THREE.Box2().setFromPoints([a,b,c])};
+                                  boundingBox: new THREE.Box2().setFromPoints([a,b,c]),
+                                  normal: normal};
             triangles.push(bottomTriangle);
             if (Date.now() > endTime) {
                 endTime = (yield intersecting);
@@ -162,7 +165,7 @@ export var CollisionDetector = function () {
             if (!triangle.boundingBox.intersectsBox(intersectionBox)) {
                 continue;  // If the bounding boxes don't intersect, definitely skip.
             }
-            if (hullsIntersect([triangle.a, triangle.b, triangle.c], 1, otherHull, 1)) {
+            if (hullsIntersect([triangle.a, triangle.b, triangle.c], triangle.normal, otherHull, 1)) {
                 // If the triangle intersects the other
                 // shape's hull, maybe there will be an
                 // intersection, so we need to keep this
