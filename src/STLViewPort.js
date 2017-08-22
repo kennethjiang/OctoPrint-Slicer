@@ -365,19 +365,6 @@ export function STLViewPort( canvas, width, height ) {
         self.dispatchEvent( { type: eventType.delete, models: [originalModel] } );
     };
 
-    self.onlyOneOriginalModel = function() {
-        var models = self.pointerInteractions.objects;
-        return models.length == 1  &&
-            models[0].position.x == 0.0 &&
-            models[0].position.y == 0.0 &&
-            models[0].rotation.x == 0.0 &&
-            models[0].rotation.y == 0.0 &&
-            models[0].rotation.z == 0.0 &&
-            models[0].scale.x == 1.0 &&
-            models[0].scale.y == 1.0 &&
-            models[0].scale.z == 1.0
-    };
-
     self.startOrbit = function () {
         self.setCursor(true);
     };
