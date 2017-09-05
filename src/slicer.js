@@ -245,10 +245,12 @@ function SlicerViewModel(parameters) {
         });
 
         $("#slicer-viewport button#split").click(function(event) {
+            toggleValueInputs($("#slicer-viewport .more.values div"));
             startLongRunning( self.stlViewPort.splitSelectedModel );
         });
 
         $("#slicer-viewport button#duplicate").click(function(event) {
+            toggleValueInputs($("#slicer-viewport .more.values div"));
             var copies = parseInt( prompt("The number of copies you want to duplicate:", 1) );
             if (copies != NaN) {
                 startLongRunning( self.stlViewPort.duplicateSelectedModel.bind(self, copies) );
@@ -256,6 +258,7 @@ function SlicerViewModel(parameters) {
         });
 
         $("#slicer-viewport button#info").click(function(event) {
+            toggleValueInputs($("#slicer-viewport .more.values div"));
             $("#plugin-slicer-advanced-usage-info").modal("show");
         });
 
