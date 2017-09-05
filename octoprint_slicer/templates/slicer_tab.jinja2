@@ -249,6 +249,13 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
                               <span class="add-on">mm</span>
                           </div>
                       </div>
+                      <div title="Skirt (mininum)" class="input-append" data-bind="visible: !_.isUndefined($data['profile.skirts']())">
+                          <label class="control-label">Skirt</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.skirts']" type="number" min="0" max="100" step="1"></input>
+                              <span class="add-on">loops</span>
+                          </div>
+                      </div>
                   </div>
                   <div class="span3">
                       <div title="Platform adhesion type" class="input-append" data-bind="visible: !_.isUndefined($data['profile.platform_adhesion']())">
