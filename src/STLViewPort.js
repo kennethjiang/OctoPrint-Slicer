@@ -253,7 +253,7 @@ export function STLViewPort( canvas, width, height ) {
                 break;
             case 46: // DEL key
             case 8: // backsapce key
-                //       self.removeSelectedModel();
+                self.removeSelectedModel();
                 break;
         }
     };
