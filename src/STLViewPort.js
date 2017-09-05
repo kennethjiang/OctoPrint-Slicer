@@ -192,6 +192,7 @@ export function STLViewPort( canvas, width, height ) {
             model.scale.copy(modelToCopyTransformFrom.scale);
         }
 
+        geometry.computeVertexNormals();
         model.orientationOptimizer = new OrientationOptimizer(geometry);
         self.recalculateOverhang(model);
 
