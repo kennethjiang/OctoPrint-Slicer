@@ -250,10 +250,17 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
                           </div>
                       </div>
                       <div title="Skirt (mininum)" class="input-append" data-bind="visible: !_.isUndefined($data['profile.skirts']())">
-                          <label class="control-label">Skirt</label>
+                          <label class="control-label">Skirt (min)</label>
                           <div class="controls">
                               <input data-bind="numericValue: $data['profile.skirts']" type="number" min="0" max="100" step="1"></input>
                               <span class="add-on">loops</span>
+                          </div>
+                      </div>
+                      <div title="Skirt length (mininum)" class="input-append" data-bind="visible: !_.isUndefined($data['profile.min_skirt_length']())">
+                          <label class="control-label">Skirt length (min)</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.min_skirt_length']" type="number" min="0" step="0.1"></input>
+                              <span class="add-on">mm</span>
                           </div>
                       </div>
                   </div>
