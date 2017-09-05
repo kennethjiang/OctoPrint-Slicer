@@ -229,7 +229,8 @@ export function STLViewPort( canvas, width, height ) {
     // EVENTS   /////
     // /////////////
     self.selectionChanged = function( event ) {
-        if (event.current) {
+        $(document.activeElement).blur();
+        if (event.current !== event.previous && event.current) {
             self.selectModel( event.current.parent );
         }
     };
@@ -253,7 +254,9 @@ export function STLViewPort( canvas, width, height ) {
                 break;
             case 46: // DEL key
             case 8: // backsapce key
-                self.removeSelectedModel();
+                if ($(document.activeElement).is('body')) {
+                    self.removeSelectedModel();
+                }
                 break;
         }
     };
