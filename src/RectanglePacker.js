@@ -332,9 +332,13 @@ export var RectanglePacker = {
   },
 
   // If compareFn is defined, it is used to compare inputs to remove
-  // duplicate permutations.  compareFn should return 0 if elements
-  // are the same, like the compare that sort uses.
-  permute: function*(inputs, compareFn) {
+  // duplicate permutations.  stringFn should convert an element into
+  // a string for comparing so that only unique permutations are
+  // returned.  If stringFn is null, don't remove duplicates.
+  permute: function*(inputs, toStringFn =
+                     function() {
+                       return JSON.stringify(arguments);
+                     }) {
     var inputsCopy = inputs.slice(0);
     var swap = function(a,b) {
       var temp = inputsCopy[a];
@@ -345,9 +349,14 @@ export var RectanglePacker = {
       if (position >= inputsCopy.length-1) {
         yield inputsCopy;
       } else {
-        yield* p(position+1);
-        for (var i=position+1; i < inputsCopy.length; i++) {
-          if (!compareFn || compareFn(inputsCopy[position], inputsCopy[i]) != 0) {
+        let valuesSeen = new Set();
+        for (let i=position; i < inputsCopy.length; i++) {
+          let key = null;
+          if (toStringFn) {
+            key = toStringFn(inputsCopy[i]);
+          }
+          if (key == null || !valuesSeen.has(key)) {
+            valuesSeen.add(key);
             swap(position, i);
             yield* p(position+1);
             swap(position, i);
@@ -364,7 +373,7 @@ export var RectanglePacker = {
   memoize: function(fn,
                     toStringFn = function() {
                       return JSON.stringify(
-                        Array.prototype.slice.call(arguments));
+                        arguments);
                     }) {
     var results = {};
 
@@ -470,12 +479,20 @@ export var RectanglePacker = {
           return r.width + "x" + r.height;
         }).join(",");
       });
+    var toStringFn = function (permutationElement) {
+      return permutationElement.height + "x" + permutationElement.width;
+    };
+    let seenCombinations = new Set();
     for (var combination of RectanglePacker.combinations(rotatedRectangles)) {
       var combinationCopy = RectanglePacker.sortRectangles(combination.slice());
-      var skipPermutation = function (a,b) {
-        return (a.height == b.height && a.width == b.width) ? 0 : 1;
-      };
-      for (var permutation of RectanglePacker.permute(combinationCopy, skipPermutation)) {
+      let combinationKey = combinationCopy.reduce(
+        function (sum, value) { return sum + "_" + toStringFn(value); },
+        "");
+      if (seenCombinations.has(combinationKey)) {
+        continue;
+      }
+      seenCombinations.add(combinationKey);
+      for (var permutation of RectanglePacker.permute(combinationCopy, toStringFn)) {
         for (var packResult of memoizedPacker(permutation, skipFn)) {
           // Copy the members from the original object.
           for (var i=0; i < permutation.length; i++) {
