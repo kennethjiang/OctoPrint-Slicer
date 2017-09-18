@@ -211,6 +211,7 @@ export function STLViewPort( canvas, width, depth, height ) {
                 model.scale.copy(modelToCopyTransformFrom.scale);
             }
 
+            geometry.computeVertexNormals();
             self.recalculateOverhang(model);
 
             self.pointerInteractions.objects.push(model);
@@ -246,7 +247,8 @@ export function STLViewPort( canvas, width, depth, height ) {
     // EVENTS   /////
     // /////////////
     self.selectionChanged = function( event ) {
-        if (event.current) {
+        $(document.activeElement).blur();
+        if (event.current !== event.previous && event.current) {
             self.selectModel( event.current.parent );
         }
     };
@@ -270,7 +272,9 @@ export function STLViewPort( canvas, width, depth, height ) {
                 break;
             case 46: // DEL key
             case 8: // backsapce key
-                //       self.removeSelectedModel();
+                if ($(document.activeElement).is('body')) {
+                    self.removeSelectedModel();
+                }
                 break;
         }
     };
@@ -452,19 +456,6 @@ export function STLViewPort( canvas, width, depth, height ) {
         self.dispatchEvent( { type: eventType.delete, models: [originalModel] } );
         self.dispatchEvent( { type: eventType.add, models: [] } );  // To force arranging.
         return newModels;
-    };
-
-    self.onlyOneOriginalModel = function() {
-        var models = self.pointerInteractions.objects;
-        return models.length == 1  &&
-            models[0].position.x == 0.0 &&
-            models[0].position.y == 0.0 &&
-            models[0].rotation.x == 0.0 &&
-            models[0].rotation.y == 0.0 &&
-            models[0].rotation.z == 0.0 &&
-            models[0].scale.x == 1.0 &&
-            models[0].scale.y == 1.0 &&
-            models[0].scale.z == 1.0
     };
 
     self.startOrbit = function () {

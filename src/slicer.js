@@ -23,7 +23,7 @@ function isDev() {
 
 if ( ! isDev() && typeof(Raven) !== 'undefined' ) {
     Raven.config('https://85bd9314656d40da9249aec5a32a2b52@sentry.io/141297', {
-        release: '1.2.9',
+        release: '1.3.0',
         ignoreErrors: [
             "Failed to execute 'arc' on 'CanvasRenderingContext2D': The radius provided",
             "Cannot read property 'highlightFill' of undefined",
@@ -275,6 +275,7 @@ function SlicerViewModel(parameters) {
         });
 
         $("#slicer-viewport button#split").click(function(event) {
+            toggleValueInputs($("#slicer-viewport .more.values div"));
             var originalFilename = self.stlViewPort.selectedModel().userData.filename;
             startLongRunning( self.stlViewPort.splitSelectedModel, function (models) {
                 if (models.length == 1) {
@@ -294,6 +295,7 @@ function SlicerViewModel(parameters) {
         });
 
         $("#slicer-viewport button#duplicate").click(function(event) {
+            toggleValueInputs($("#slicer-viewport .more.values div"));
             var copies = parseInt( prompt("The number of copies you want to duplicate:", 1) );
             if (copies != NaN) {
                 let originalFilename = self.stlViewPort.selectedModel().userData.filename;
@@ -307,6 +309,7 @@ function SlicerViewModel(parameters) {
         });
 
         $("#slicer-viewport button#info").click(function(event) {
+            toggleValueInputs($("#slicer-viewport .more.values div"));
             $("#plugin-slicer-advanced-usage-info").modal("show");
         });
 
@@ -448,43 +451,34 @@ function SlicerViewModel(parameters) {
         var target = self.slicingViewModel.target;
         var sliceRequestData;
 
-        if (self.stlViewPort.onlyOneOriginalModel()) {
+        var form = new FormData();
+        var group = new THREE.Group();
+        let groupBox3 = new THREE.Box3();
+        forEach(self.stlViewPort.models(), function (model) {
+            group.add(model.clone(true));
+            groupBox3.expandByPoint(model.userData.box3FromObject().min);
+            groupBox3.expandByPoint(model.userData.box3FromObject().max);
+        });
 
-            sliceRequestData = self.sliceRequestData(self.slicingViewModel);
-            self.sendSliceRequest(self.slicingViewModel.target, self.slicingViewModel.file(), sliceRequestData);
+        sliceRequestData = self.sliceRequestData(self.slicingViewModel, groupBox3.getCenter());
 
-        } else {
-
-            var form = new FormData();
-            var group = new THREE.Group();
-            let groupBox3 = new THREE.Box3();
-            forEach(self.stlViewPort.models(), function (model) {
-                group.add(model.clone(true));
-                groupBox3.expandByPoint(model.userData.box3FromObject().min);
-                groupBox3.expandByPoint(model.userData.box3FromObject().max);
-            });
-
-            sliceRequestData = self.sliceRequestData(self.slicingViewModel, groupBox3.getCenter());
-
-            var tempFilename = self.tempSTLFilename();
-            form.append("file", self.blobFromModel(group), tempFilename);
-            $.ajax({
-                url: API_BASEURL + "files/local",
-                type: "POST",
-                data: form,
-                processData: false,
-                contentType: false,
-                // On success
-                success: function(_) {
-                    self.tempFiles[tempFilename] = 1;
-                    self.sendSliceRequest(target, tempFilename, sliceRequestData);
-                },
-                error: function(jqXHR, textStatus) {
-                    new PNotify({title: "Slicing failed", text: textStatus, type: "error", hide: false});
-                }
-            });
-
-        }
+        var tempFilename = self.tempSTLFilename();
+        form.append("file", self.blobFromModel(group), tempFilename);
+        $.ajax({
+            url: API_BASEURL + "files/local",
+            type: "POST",
+            data: form,
+            processData: false,
+            contentType: false,
+            // On success
+            success: function(_) {
+                self.tempFiles[tempFilename] = 1;
+                self.sendSliceRequest(target, tempFilename, sliceRequestData);
+            },
+            error: function(jqXHR, textStatus) {
+                new PNotify({title: "Slicing failed", text: textStatus, type: "error", hide: false});
+            }
+        });
     };
 
     self.blobFromModel = function( model ) {
