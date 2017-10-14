@@ -359,6 +359,8 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
   </div>
 </div>
 <div id="slicer">
-    <button class="btn btn-primary btn-block" data-bind="click: $data.slice, enable: $data.canSliceNow(), text: ($data.canSliceNow() ? 'Slice it!' : 'Slicing disabled - currently printing or no model loaded.')"></button>
+    <button class="btn btn-primary btn-block" data-bind="click: $data.slice, enable: $data.slicingViewModel.enableSliceButton() && !slicing(), text: (slicing() ? 'Slicing...' : ($data.slicingViewModel.enableSliceButton() ? 'Slice it!' : 'Slicing disabled - currently printing or no model loaded.'))">
+        <i class="icon-spinner icon-spin" data-bind="visible: slicing()"></i>
+    </button>
     {% include "modal.jinja2" %}
 </div>

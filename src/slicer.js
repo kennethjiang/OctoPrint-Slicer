@@ -131,6 +131,8 @@ function SlicerViewModel(parameters) {
         }
     });
 
+    self.slicing = ko.observable(false);
+
     self.BEDSIZE_X_MM = 200;
     self.BEDSIZE_Y_MM = 200;
     self.BEDSIZE_Z_MM = 200;
@@ -311,6 +313,7 @@ function SlicerViewModel(parameters) {
             OctoPrint.files.delete(event.data.payload.stl_location,
                 event.data.payload.stl);
             delete self.tempFiles[event.data.payload.stl];
+            self.slicing(false);
         }
     }
 
@@ -363,6 +366,8 @@ function SlicerViewModel(parameters) {
     self.slice = function() {
         mixpanel.track("Slice Model");
 
+        self.slicing(true);
+
         var target = self.slicingViewModel.target;
         var sliceRequestData;
 
@@ -392,6 +397,7 @@ function SlicerViewModel(parameters) {
             },
             error: function(jqXHR, textStatus) {
                 new PNotify({title: "Slicing failed", text: textStatus, type: "error", hide: false});
+                self.slicing(false);
             }
         });
     };
@@ -401,16 +407,6 @@ function SlicerViewModel(parameters) {
         return new Blob([exporter.parse(model)], {type: "text/plain"});
     };
 
-    self.isPrinting = ko.computed(function () {
-        return self.printerStateViewModel.isPrinting() ||
-            self.printerStateViewModel.isPaused();
-    });
-
-    self.canSliceNow = ko.computed(function () {
-        // TODO: We should be checking for same_device here, too.
-        return self.slicingViewModel.enableSliceButton() &&
-            !self.isPrinting();
-    });
     // END: Slicing
 
     // Helpers for drawing walls and floor
