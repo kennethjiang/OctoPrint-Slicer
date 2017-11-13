@@ -23,7 +23,7 @@ function isDev() {
 
 if ( ! isDev() && typeof(Raven) !== 'undefined' ) {
     Raven.config('https://85bd9314656d40da9249aec5a32a2b52@sentry.io/141297', {
-        release: '1.3.0',
+        release: '1.3.2',
         ignoreErrors: [
             "Failed to execute 'arc' on 'CanvasRenderingContext2D': The radius provided",
             "Cannot read property 'highlightFill' of undefined",
@@ -146,6 +146,8 @@ function SlicerViewModel(parameters) {
             self.stlViewPort.resetCollisionDetector();
         }
     });
+
+    self.slicing = ko.observable(false);
 
     self.BEDSIZE_X_MM = 200;
     self.BEDSIZE_Y_MM = 200;
@@ -390,6 +392,7 @@ function SlicerViewModel(parameters) {
             OctoPrint.files.delete(event.data.payload.stl_location,
                 event.data.payload.stl);
             delete self.tempFiles[event.data.payload.stl];
+            self.slicing(false);
         }
     }
 
@@ -441,6 +444,8 @@ function SlicerViewModel(parameters) {
 
     self.slice = function(ignoreCollisions = false) {
         mixpanel.track("Slice Model");
+        self.slicing(true);
+
         $('#tab_plugin_slicer > div.translucent-blocker').show();
         var hasCollisions = self.stlViewPort.hasCollisions();
         $('#tab_plugin_slicer > div.translucent-blocker').hide();
@@ -477,6 +482,7 @@ function SlicerViewModel(parameters) {
             },
             error: function(jqXHR, textStatus) {
                 new PNotify({title: "Slicing failed", text: textStatus, type: "error", hide: false});
+                self.slicing(false);
             }
         });
     };
@@ -486,16 +492,6 @@ function SlicerViewModel(parameters) {
         return new Blob([exporter.parse(model)], {type: "text/plain"});
     };
 
-    self.isPrinting = ko.computed(function () {
-        return self.printerStateViewModel.isPrinting() ||
-            self.printerStateViewModel.isPaused();
-    });
-
-    self.canSliceNow = ko.computed(function () {
-        // TODO: We should be checking for same_device here, too.
-        return self.slicingViewModel.enableSliceButton() &&
-            !self.isPrinting();
-    });
     // END: Slicing
 
     // Helpers for drawing walls and floor

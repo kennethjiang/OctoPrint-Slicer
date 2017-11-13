@@ -119,6 +119,13 @@ export function OverridesViewModel(parameters, array_keys, enum_keys, item_keys,
         }
 
 
+        // Hacky - Slic3r profiles escape new line to be string '\n'
+        if (self.slicingViewModel.slicer() == 'slic3r'){
+            _.forEach(['end_gcode', 'start_gcode'], function(key) {
+                profile[key] = profile[key].replace(/\\n/g, '\n');
+            });
+        }
+
         // Some options are arrays in cura but not Slic3r.  Keep track of which.
         self.isArray = [];
 
@@ -207,6 +214,14 @@ export function OverridesViewModel(parameters, array_keys, enum_keys, item_keys,
                 delete result[k];
             }
         });
+
+        // Hacky - Slic3r profiles escape new line to be string '\n'
+        if (self.slicingViewModel.slicer() == 'slic3r'){
+            _.forEach(['profile.end_gcode', 'profile.start_gcode'], function(key) {
+                result[key] = result[key].replace(/\n/g, '\\n');
+            });
+        }
+
         return result;
     };
 }
