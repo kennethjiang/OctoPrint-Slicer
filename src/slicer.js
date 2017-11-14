@@ -218,16 +218,16 @@ function SlicerViewModel(parameters) {
                 <div class="values chop">\
                     <div>\
                         <a class="close"><i class="icon-remove-sign" /></a>\
-                        <p><span class="axis">Offset</span><input type="number" step="0.001" name="offsetMm">\
+                        <p><span class="axis">Offset</span><input type="number" step="any" id="chopOffsetMm" value=0>\
                            <span class="add-on">mm</span>\
-                        <p><span class="axis">Offset%</span><input type="number" step="0.001" min="0" max="100" name="offsetPercent">\
+                        <p><span class="axis">Offset%</span><input type="number" step="1" min="0" max="100" id="chopOffsetPercent" value=50>\
                            <span class="add-on">%</span>\
                         </p>\
                         <p><span class="axis x">X</span><input type="radio" name="chopAxis" value="X">\
                            <span class="axis y">Y</span><input type="radio" name="chopAxis" value="Y">\
                            <span class="axis z">Z</span><input type="radio" name="chopAxis" value="Z" checked>\
                         </p>\
-                        <p class="checkbox"><label><input type="checkbox" id="preview" checked>Preview</label></p>\
+                        <p class="checkbox"><label><input type="checkbox" id="chopPreview" checked>Preview</label></p>\
                         <button class="btn">Chop it!</button>\
                         <span></span>\
                     </div>\
@@ -634,7 +634,8 @@ function SlicerViewModel(parameters) {
             self.stlViewPort.transformControls.setMode("scale");
             self.stlViewPort.transformControls.space = "local";
             self.stlViewPort.transformControls.axis = null;
-            self.chop.start();
+            self.chop.start(self.stlViewPort.selectedModel());
+            applyChopInputs();
         } else {
             self.stlViewPort.transformControls.setMode("translate");
             self.stlViewPort.transformControls.space = "world";
@@ -676,15 +677,41 @@ function SlicerViewModel(parameters) {
         updateTransformMode();
     }
 
+    function applyChopInputs(input) {
+        if (input) {
+            if (input[0].id == "chopOffsetMm" && !Number.isNaN(parseFloat($("#chopOffsetMm").val()))) {
+                let model = self.stlViewPort.selectedModel();
+                let size = model.userData.box3FromObject().getSize();
+                let dimension;
+                if ($("#chopAxis").val() == "X") {
+                    dimension = size.x;
+                } else if($("#chopAxis").val() == "Y") {
+                    dimension = size.y;
+                } else {
+                    dimension = size.z;
+                }
+                $("#chopOffsetPercent").val((parseFloat($("#chopOffsetMm").val())+dimension/2)/dimension*100);
+            }
+            if (input[0].id == "chopOffsetPercent" && !Number.isNaN(parseFloat($("#chopOffsetPercent").val()))) {
+                let model = self.stlViewPort.selectedModel();
+                let size = model.userData.box3FromObject().getSize();
+                let dimension;
+                if ($("#chopAxis").val() == "X") {
+                    dimension = size.x;
+                } else if($("#chopAxis").val() == "Y") {
+                    dimension = size.y;
+                } else {
+                    dimension = size.z;
+                }
+                $("#chopOffsetMm").val(parseFloat($("#chopOffsetPercent").val())/100 * dimension - dimension/2);
+            }
+        }
+        self.chop.setAxisOffset($("[name='chopAxis']:checked").val(), $("#chopOffsetMm").val());
+    }
+
     function applyValueInputs(input) {
         if(input[0].type == "checkbox" && input[0].id == "lock") {
             self.lockScale = input[0].checked;
-        }
-        else if(input[0].type == "checkbox" && input[0].id == "preview") {
-            self.chop.preview = input[0].checked;
-        }
-        else if (input[0].type == "radio" && input[0].name == "chopAxis") {
-            self.chop.setAxis(input[0].value);
         }
         else if(input[0].type == "number" && !isNaN(parseFloat(input.val()))) {
 
@@ -711,6 +738,14 @@ function SlicerViewModel(parameters) {
             self.fixZPosition(model);
             updateSizeInfo();
             self.stlViewPort.recalculateOverhang(model);
+        }
+        if(input[0].id == "chopPreview") {
+            self.chop.setPreview(input[0].checked);
+        }
+        if (input[0].name == "chopAxis" ||
+            input[0].id == "chopOffsetMm" ||
+            input[0].id == "chopOffsetPercent") {
+            applyChopInputs(input);
         }
     }
 
