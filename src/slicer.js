@@ -14,12 +14,8 @@ import { STLViewPort } from './STLViewPort';
 import { OverridesViewModel } from './profile_overrides';
 import { ModelArranger } from './ModelArranger';
 import { CheckerboardMaterial } from './CheckerboardMaterial';
-<<<<<<< Updated upstream
 import { find, forEach, endsWith, some, extend } from 'lodash-es';
-=======
-import { find, forEach, endsWith, some, extend, map } from 'lodash-es';
 import { Chop } from './Chop';
->>>>>>> Stashed changes
 
 function isDev() {
     return window.location.hostname == "localhost";
@@ -185,6 +181,9 @@ function SlicerViewModel(parameters) {
                     <button class="scale disabled btn" title="Scale"><img src="'
                         + PLUGIN_BASEURL
                         + 'slicer/static/img/scale.png"></button>\
+                    <button class="chop disabled btn" title="Chop"><img src="'
+                        + PLUGIN_BASEURL
+                        + 'slicer/static/img/saw.png"></button>\
                     <button class="remove disabled btn" title="Remove"><img src="'
                         + PLUGIN_BASEURL
                         + 'slicer/static/img/remove.png"></button>\
