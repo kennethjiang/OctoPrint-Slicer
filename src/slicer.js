@@ -215,6 +215,23 @@ function SlicerViewModel(parameters) {
                         <span></span>\
                     </div>\
                </div>\
+                <div class="values chop">\
+                    <div>\
+                        <a class="close"><i class="icon-remove-sign" /></a>\
+                        <p><span class="axis">Offset</span><input type="number" step="0.001" name="offsetMm">\
+                           <span class="add-on">mm</span>\
+                        <p><span class="axis">Offset%</span><input type="number" step="0.001" min="0" max="100" name="offsetPercent">\
+                           <span class="add-on">%</span>\
+                        </p>\
+                        <p><span class="axis x">X</span><input type="radio" name="axis" value="x">\
+                           <span class="axis y">Y</span><input type="radio" name="axis" value="y">\
+                           <span class="axis z">Z</span><input type="radio" name="axis" value="z">\
+                        </p>\
+                        <p class="checkbox"><label><input type="checkbox" checked>Preview</label></p>\
+                        <button class="btn">Chop it!</button>\
+                        <span></span>\
+                    </div>\
+               </div>\
                <div class="values more">\
                    <div>\
                        <a class="close"><i class="icon-remove-sign" /></a>\
@@ -238,6 +255,10 @@ function SlicerViewModel(parameters) {
 
         $("#slicer-viewport button.scale").click(function(event) {
             toggleValueInputs($("#slicer-viewport .scale.values div"));
+        });
+
+        $("#slicer-viewport button.chop").click(function(event) {
+            toggleValueInputs($("#slicer-viewport .chop.values div"));
         });
 
         $("#slicer-viewport button.remove").click(function(event) {
@@ -597,6 +618,7 @@ function SlicerViewModel(parameters) {
     }
 
     function updateTransformMode() {
+        self.chop.stop();
         if ( $("#slicer-viewport .rotate.values div").hasClass("show") ) {
             self.stlViewPort.transformControls.setMode("rotate");
             self.stlViewPort.transformControls.space = "world";
@@ -604,6 +626,11 @@ function SlicerViewModel(parameters) {
             self.stlViewPort.transformControls.setMode("scale");
             self.stlViewPort.transformControls.space = "local";
             self.stlViewPort.transformControls.axis = null;
+        } else if ( $("#slicer-viewport .chop.values div").hasClass("show") ) {
+            self.stlViewPort.transformControls.setMode("scale");
+            self.stlViewPort.transformControls.space = "local";
+            self.stlViewPort.transformControls.axis = null;
+            self.chop.start();
         } else {
             self.stlViewPort.transformControls.setMode("translate");
             self.stlViewPort.transformControls.space = "world";
