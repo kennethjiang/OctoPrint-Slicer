@@ -12,12 +12,11 @@ class Chop {
             {color: 0xffff00, side: THREE.DoubleSide});
         let mesh = new THREE.Mesh(geometry, material);
         this.plane = new THREE.Object3D();
-        this.plane.rotateY(Math.PI/2);
         this.plane.add(mesh);
         this.transformControls = new TransformControls(this.stlViewPort.camera, this.stlViewPort.renderer.domElement);
         this.transformControls.setHandles('translate', null);
         this.transformControls.setMode("translate");
-        this.transformControls.axis = "X";
+        this.transformControls.axis = "Z";
         this.stlViewPort.scene.add(this.transformControls);
     }
 

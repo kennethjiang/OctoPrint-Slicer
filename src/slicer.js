@@ -211,7 +211,7 @@ function SlicerViewModel(parameters) {
                         <p><span class="axis x">X</span><input type="number" step="0.001" name="x" min="0.001"><span class="size x" ></span></p>\
                         <p><span class="axis y">Y</span><input type="number" step="0.001" name="y" min="0.001"><span class="size y" ></span></p>\
                         <p><span class="axis z">Z</span><input type="number" step="0.001" name="z" min="0.001"><span class="size z" ></span></p>\
-                        <p class="checkbox"><label><input type="checkbox" checked>Lock</label></p>\
+                        <p class="checkbox"><label><input type="checkbox" id="lock" checked>Lock</label></p>\
                         <span></span>\
                     </div>\
                </div>\
@@ -223,11 +223,11 @@ function SlicerViewModel(parameters) {
                         <p><span class="axis">Offset%</span><input type="number" step="0.001" min="0" max="100" name="offsetPercent">\
                            <span class="add-on">%</span>\
                         </p>\
-                        <p><span class="axis x">X</span><input type="radio" name="axis" value="x">\
-                           <span class="axis y">Y</span><input type="radio" name="axis" value="y">\
-                           <span class="axis z">Z</span><input type="radio" name="axis" value="z">\
+                        <p><span class="axis x">X</span><input type="radio" name="chopAxis" value="X">\
+                           <span class="axis y">Y</span><input type="radio" name="chopAxis" value="Y">\
+                           <span class="axis z">Z</span><input type="radio" name="chopAxis" value="Z" checked>\
                         </p>\
-                        <p class="checkbox"><label><input type="checkbox" checked>Preview</label></p>\
+                        <p class="checkbox"><label><input type="checkbox" id="preview" checked>Preview</label></p>\
                         <button class="btn">Chop it!</button>\
                         <span></span>\
                     </div>\
@@ -306,6 +306,10 @@ function SlicerViewModel(parameters) {
         });
 
         $("#slicer-viewport .values input[type='checkbox']").change( function() {
+            applyValueInputs($(this));
+        });
+
+        $("#slicer-viewport .values input[type='radio']").change( function() {
             applyValueInputs($(this));
         });
 
@@ -673,8 +677,14 @@ function SlicerViewModel(parameters) {
     }
 
     function applyValueInputs(input) {
-        if(input[0].type == "checkbox") {
+        if(input[0].type == "checkbox" && input[0].id == "lock") {
             self.lockScale = input[0].checked;
+        }
+        else if(input[0].type == "checkbox" && input[0].id == "preview") {
+            self.chop.preview = input[0].checked;
+        }
+        else if (input[0].type == "radio" && input[0].name == "chopAxis") {
+            self.chop.setAxis(input[0].value);
         }
         else if(input[0].type == "number" && !isNaN(parseFloat(input.val()))) {
 
@@ -713,7 +723,7 @@ function SlicerViewModel(parameters) {
             $("#slicer-viewport .scale.values input[name=\"x\"]").val(model.scale.x.toFixed(3)).attr("min", '');
             $("#slicer-viewport .scale.values input[name=\"y\"]").val(model.scale.y.toFixed(3)).attr("min", '');
             $("#slicer-viewport .scale.values input[name=\"z\"]").val(model.scale.z.toFixed(3)).attr("min", '');
-            $("#slicer-viewport .scale.values input[type=\"checkbox\"]").checked = self.lockScale;
+            $("#slicer-viewport .scale.values input#lock").checked = self.lockScale;
 
             updateSizeInfo();
         }
