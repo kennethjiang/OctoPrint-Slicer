@@ -14,7 +14,12 @@ import { STLViewPort } from './STLViewPort';
 import { OverridesViewModel } from './profile_overrides';
 import { ModelArranger } from './ModelArranger';
 import { CheckerboardMaterial } from './CheckerboardMaterial';
+<<<<<<< Updated upstream
 import { find, forEach, endsWith, some, extend } from 'lodash-es';
+=======
+import { find, forEach, endsWith, some, extend, map } from 'lodash-es';
+import { Chop } from './Chop';
+>>>>>>> Stashed changes
 
 function isDev() {
     return window.location.hostname == "localhost";
@@ -164,6 +169,9 @@ function SlicerViewModel(parameters) {
         self.stlViewPort.scene.add(self.walls);
         self.stlViewPort.scene.add(self.floor);
         self.stlViewPort.scene.add(self.origin);
+
+        // Chop
+        self.chop = new Chop(self.stlViewPort);
 
         ko.applyBindings(self.slicingViewModel, $('#slicing-settings')[0]);
 
