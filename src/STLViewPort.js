@@ -386,7 +386,11 @@ export function STLViewPort( canvas, width, height ) {
         let geometry = originalModel.children[0].geometry;
         let connectedSTL = new ConnectedSTL().fromBufferGeometry(geometry);
         let newConnectedSTLs = connectedSTL.chop(plane);
-        let newGeometries = newConnectedSTLs.map((x) => x.bufferGeometry());
+        let newGeometries = newConnectedSTLs.map((x) => {
+            x.mergeFaces();
+            x.retriangle(Array.from(new Array(x.positions.length/9).keys()));
+            return x.bufferGeometry();
+        });
 
         forEach(newGeometries, function(geometry) {
             self.addModelOfGeometry( geometry, originalModel );
