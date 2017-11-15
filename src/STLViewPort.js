@@ -217,7 +217,15 @@ export function STLViewPort( canvas, width, height ) {
         return self.transformControls.object;
     }
 
+    // Set false to cause STLViewPort to stop modifying the cursor.  True to return control.
+    self.setCursorControl = function(cursorControl) {
+        self.cursorControl = cursorControl;
+    }
+
     self.setCursor = function(forceAuto=false) {
+        if (!self.cursorControl) {
+            return;
+        }
         if (self.transformControls.getMode() == "translate" && self.pointerInteractions.hoveredObject && !forceAuto) {
             $("#slicer-viewport").css("cursor", "move");
         } else {

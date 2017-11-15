@@ -642,6 +642,7 @@ function SlicerViewModel(parameters) {
 
     function updateTransformMode() {
         self.chop.stop();
+        self.stlViewPort.setCursorControl(true);
         if ( $("#slicer-viewport .rotate.values div").hasClass("show") ) {
             self.stlViewPort.transformControls.setMode("rotate");
             self.stlViewPort.transformControls.space = "world";
@@ -654,6 +655,7 @@ function SlicerViewModel(parameters) {
             self.stlViewPort.transformControls.space = "local";
             self.stlViewPort.transformControls.axis = null;
             self.chop.start(self.stlViewPort.selectedModel());
+            self.stlViewPort.setCursorControl(false);
             applyChopInputs();
         } else {
             self.stlViewPort.transformControls.setMode("translate");
