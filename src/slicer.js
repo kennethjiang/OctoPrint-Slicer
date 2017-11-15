@@ -228,7 +228,6 @@ function SlicerViewModel(parameters) {
                            <span class="axis y">Y</span><input type="radio" name="chopAxis" value="y">\
                            <span class="axis z">Z</span><input type="radio" name="chopAxis" value="z" checked>\
                         </p>\
-                        <p class="checkbox"><label><input type="checkbox" id="chopPreview" checked>Preview</label></p>\
                         <button class="btn" id="doChop">Chop it!</button>\
                         <span></span>\
                     </div>\
@@ -747,9 +746,6 @@ function SlicerViewModel(parameters) {
             self.fixZPosition(model);
             updateSizeInfo();
             self.stlViewPort.recalculateOverhang(model);
-        }
-        if(input[0].id == "chopPreview") {
-            self.chop.setPreview(input[0].checked);
         }
         if (input[0].name == "chopAxis" ||
             input[0].id == "chopOffsetMm" ||

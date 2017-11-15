@@ -71,7 +71,6 @@ class Chop extends THREE.EventDispatcher {
                                 offsetPercent: offsetPercent
                                });
         }
-        this.preview();
     }
 
     // axis is one of x,y,z (case ignored).  Offset is reset to 0.
@@ -107,7 +106,6 @@ class Chop extends THREE.EventDispatcher {
         this.dispatchEvent({type: "offsetChange",
                             offsetPercent: this.getOffsetPercent()
                            });
-        this.preview();
     }
 
     setOffsetPercent(offsetPercent) {
@@ -116,7 +114,6 @@ class Chop extends THREE.EventDispatcher {
         this.dispatchEvent({type: "offsetChange",
                             offsetMm: this.getOffsetMm()
                            });
-        this.preview();
     }
 
     start(object) {
@@ -132,10 +129,6 @@ class Chop extends THREE.EventDispatcher {
         this.stlViewPort.scene.remove(this.plane);
         this.transformControls.detach();
         this.stlViewPort.scene.remove(this.transformControls);
-    }
-
-    preview() {
-        console.log(this.getPlane());
     }
 
     getPlane() {
