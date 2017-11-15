@@ -1,7 +1,7 @@
 'use strict';
 
 import * as THREE from 'three';
-import { ConnectedSTL, TransformControls } from '3tk';
+import { ConnectedSTL, TransformControls, PointerInteractions } from '3tk';
 
 class Chop extends THREE.EventDispatcher {
 
@@ -14,11 +14,23 @@ class Chop extends THREE.EventDispatcher {
         let mesh = new THREE.Mesh(geometry, material);
         this.plane = new THREE.Object3D();
         this.plane.add(mesh);
+
         this.transformControls = new TransformControls(this.stlViewPort.camera, this.stlViewPort.renderer.domElement);
         this.transformControls.setHandles('translate', null);
         this.transformControls.setMode("translate");
         this.transformControls.space = "world";
         this.transformControls.axis = "Z";
+
+        // Need to use "recursive" as the intersection will be with
+        // the mesh, not the top level objects that are nothing but
+        // holder
+        this.pointerInteractions = new PointerInteractions(
+            this.stlViewPort.renderer.domElement, this.stlViewPort.camera, true);
+        this.pointerInteractions.objects.push(this.plane);
+        this.pointerInteractions.update();
+        this.boundOnHoverChanged = (e) => this.onHoverChanged(e);
+        this.pointerInteractions.addEventListener("hover", this.boundOnHoverChanged);
+
         this.stlViewPort.scene.add(this.transformControls);
         this.boundOnObjectChange = (e) => this.onObjectChange(e);
         this.transformControls.addEventListener("objectChange", this.boundOnObjectChange);
@@ -34,6 +46,14 @@ class Chop extends THREE.EventDispatcher {
 
     getOffsetPercent() {
         return this.getOffsetMm()/this.getDimension()*100+50;
+    }
+
+    onHoverChanged() {
+        if (this.pointerInteractions.hoveredObject) {
+            $("#slicer-viewport").css("cursor", "move");
+        } else {
+            $("#slicer-viewport").css("cursor", "auto");
+        }
     }
 
     onObjectChange() {
@@ -58,19 +78,17 @@ class Chop extends THREE.EventDispatcher {
         const frame = 10;
         this.axis = axis.toLowerCase();
         this.plane.setRotationFromQuaternion(new THREE.Quaternion());
+        this.plane.children[0].geometry.dispose();
         if (this.axis=="x") {
             this.transformControls.axis = "X";
-            this.plane.children[0].geometry.dispose();
             this.plane.children[0].geometry = new THREE.PlaneBufferGeometry(this.objectSize.z + frame*2, this.objectSize.y + frame*2);
             this.plane.rotateY(Math.PI/2);
         } else if (this.axis=="y") {
             this.transformControls.axis = "Y";
-            this.plane.children[0].geometry.dispose();
             this.plane.children[0].geometry = new THREE.PlaneBufferGeometry(this.objectSize.x + frame*2, this.objectSize.z + frame*2);
             this.plane.rotateX(-Math.PI/2);
         } else {
             this.transformControls.axis = "Z";
-            this.plane.children[0].geometry.dispose();
             this.plane.children[0].geometry = new THREE.PlaneBufferGeometry(this.objectSize.x + frame*2, this.objectSize.y + frame*2);
         }
         this.plane.position.copy(this.object.position);
