@@ -71,6 +71,7 @@ class Chop extends THREE.EventDispatcher {
                                 offsetPercent: offsetPercent
                                });
         }
+        this.preview();
     }
 
     // axis is one of x,y,z (case ignored).  Offset is reset to 0.
@@ -129,6 +130,19 @@ class Chop extends THREE.EventDispatcher {
         this.stlViewPort.scene.remove(this.plane);
         this.transformControls.detach();
         this.stlViewPort.scene.remove(this.transformControls);
+    }
+
+    preview() {
+        let splitPlaneNormal = new THREE.Vector3(this.axis=="x"?1:0,
+                                                 this.axis=="y"?1:0,
+                                                 this.axis=="z"?1:0);
+        let splitPlaneOffset = this.plane.position.clone().sub(this.object.position);
+        // Only one dimension will be non-zero
+        let offset = splitPlaneOffset.x + splitPlaneOffset.y + splitPlaneOffset.z;
+        console.log(splitPlaneNormal);
+        console.log(splitPlaneOffset);
+        console.log(this.object.matrixWorld);
+        let splitPlane = new THREE.Plane(splitPlaneNormal, 
     }
 }
 
