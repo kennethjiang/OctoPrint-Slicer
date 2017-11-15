@@ -168,6 +168,7 @@ function SlicerViewModel(parameters) {
 
         // Chop
         self.chop = new Chop(self.stlViewPort);
+        self.chop.addEventListener("offsetChange", self.onChopOffsetChange);
 
         ko.applyBindings(self.slicingViewModel, $('#slicing-settings')[0]);
 
@@ -335,6 +336,10 @@ function SlicerViewModel(parameters) {
         updateValueInputs();
         updateControlState();
     };
+
+    self.onChopOffsetChange = function(e) {
+        console.log(e);
+    }
 
     // Slicing
     //
@@ -678,35 +683,15 @@ function SlicerViewModel(parameters) {
     }
 
     function applyChopInputs(input) {
-        if (input) {
-            if (input[0].id == "chopOffsetMm" && !Number.isNaN(parseFloat($("#chopOffsetMm").val()))) {
-                let model = self.stlViewPort.selectedModel();
-                let size = model.userData.box3FromObject().getSize();
-                let dimension;
-                if ($("#chopAxis").val() == "X") {
-                    dimension = size.x;
-                } else if($("#chopAxis").val() == "Y") {
-                    dimension = size.y;
-                } else {
-                    dimension = size.z;
-                }
-                $("#chopOffsetPercent").val((parseFloat($("#chopOffsetMm").val())+dimension/2)/dimension*100);
-            }
-            if (input[0].id == "chopOffsetPercent" && !Number.isNaN(parseFloat($("#chopOffsetPercent").val()))) {
-                let model = self.stlViewPort.selectedModel();
-                let size = model.userData.box3FromObject().getSize();
-                let dimension;
-                if ($("#chopAxis").val() == "X") {
-                    dimension = size.x;
-                } else if($("#chopAxis").val() == "Y") {
-                    dimension = size.y;
-                } else {
-                    dimension = size.z;
-                }
-                $("#chopOffsetMm").val(parseFloat($("#chopOffsetPercent").val())/100 * dimension - dimension/2);
-            }
+        if (!input) {
+            self.chop.setAxis($("[name='chopAxis']:checked").val());
+        } else if (input[0].id == "chopOffsetMm") {
+            self.chop.setOffsetMm(parseFloat($("#chopOffsetMm").val()));
+        } else if (input[0].id == "chopOffsetPercent" && !Number.isNaN(parseFloat($("#chopOffsetPercent").val()))) {
+            self.chop.setOffsetPercent(parseFloat($("#chopOffsetPercent").val()));
+        } else if (input[0].name == "chopAxis") {
+            self.chop.setAxis($("[name='chopAxis']:checked").val());
         }
-        self.chop.setAxisOffset($("[name='chopAxis']:checked").val(), $("#chopOffsetMm").val());
     }
 
     function applyValueInputs(input) {
