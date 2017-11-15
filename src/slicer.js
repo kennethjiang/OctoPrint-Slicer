@@ -264,7 +264,10 @@ function SlicerViewModel(parameters) {
 
         $("#doChop").click(function(event) {
             // Chop the curent model using the current plane.
-            self.stlViewPort.chopSelectedModel(self.chop.getPlane());
+            startLongRunning(() => {
+                self.stlViewPort.chopSelectedModel(self.chop.getPlane());
+                self.chop.stop();
+            });
         });
 
         $("#slicer-viewport button.remove").click(function(event) {

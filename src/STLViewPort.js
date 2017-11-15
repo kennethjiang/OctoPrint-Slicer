@@ -22,7 +22,7 @@
 
 import { forEach } from 'lodash-es';
 import * as THREE from 'three';
-import { BufferGeometryAnalyzer, OrbitControls, TransformControls, STLLoader, PointerInteractions } from '3tk';
+import { BufferGeometryAnalyzer, OrbitControls, TransformControls, STLLoader, PointerInteractions, ConnectedSTL } from '3tk';
 import { OrientationOptimizer } from './OrientationOptimizer';
 import { Box3FromObject } from './Box3FromObject';
 
@@ -384,7 +384,7 @@ export function STLViewPort( canvas, width, height ) {
 
         let originalModel = self.selectedModel()
         let geometry = originalModel.children[0].geometry;
-        let connectedSTL = new ConnectedSTL.fromBufferGeometry(geometry);
+        let connectedSTL = new ConnectedSTL().fromBufferGeometry(geometry);
         let newConnectedSTLs = connectedSTL.chop(plane);
         let newGeometries = newConnectedSTLs.map((x) => x.bufferGeometry());
 

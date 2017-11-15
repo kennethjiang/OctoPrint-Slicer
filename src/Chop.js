@@ -135,7 +135,7 @@ class Chop extends THREE.EventDispatcher {
     }
 
     preview() {
-        console.log(getPlane());
+        console.log(this.getPlane());
     }
 
     getPlane() {
