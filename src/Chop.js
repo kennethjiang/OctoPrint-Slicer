@@ -107,6 +107,7 @@ class Chop extends THREE.EventDispatcher {
         this.dispatchEvent({type: "offsetChange",
                             offsetPercent: this.getOffsetPercent()
                            });
+        this.preview();
     }
 
     setOffsetPercent(offsetPercent) {
@@ -115,6 +116,7 @@ class Chop extends THREE.EventDispatcher {
         this.dispatchEvent({type: "offsetChange",
                             offsetMm: this.getOffsetMm()
                            });
+        this.preview();
     }
 
     start(object) {
@@ -133,16 +135,15 @@ class Chop extends THREE.EventDispatcher {
     }
 
     preview() {
-        let splitPlaneNormal = new THREE.Vector3(this.axis=="x"?1:0,
-                                                 this.axis=="y"?1:0,
-                                                 this.axis=="z"?1:0);
-        let splitPlaneOffset = this.plane.position.clone().sub(this.object.position);
-        // Only one dimension will be non-zero
-        let offset = splitPlaneOffset.x + splitPlaneOffset.y + splitPlaneOffset.z;
-        console.log(splitPlaneNormal);
-        console.log(splitPlaneOffset);
-        console.log(this.object.matrixWorld);
-        let splitPlane = new THREE.Plane(splitPlaneNormal, 
+        console.log(getPlane());
+    }
+
+    getPlane() {
+        this.plane.updateMatrixWorld();
+        let splitPlane = new THREE.Plane(new THREE.Vector3(0,0,1), 0);
+        splitPlane.applyMatrix4(this.plane.matrixWorld);
+        splitPlane.applyMatrix4(new THREE.Matrix4().getInverse(this.object.children[0].matrixWorld));
+        return splitPlane;
     }
 }
 

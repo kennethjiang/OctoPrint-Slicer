@@ -377,6 +377,25 @@ export function STLViewPort( canvas, width, height ) {
         self.dispatchEvent( { type: eventType.delete, models: [originalModel] } );
     };
 
+    self.chopSelectedModel = function(plane) {
+        if (!self.selectedModel()) {
+            return;
+        }
+
+        let originalModel = self.selectedModel()
+        let geometry = originalModel.children[0].geometry;
+        let connectedSTL = new ConnectedSTL.fromBufferGeometry(geometry);
+        let newConnectedSTLs = connectedSTL.chop(plane);
+        let newGeometries = newConnectedSTLs.map((x) => x.bufferGeometry());
+
+        forEach(newGeometries, function(geometry) {
+            self.addModelOfGeometry( geometry, originalModel );
+        });
+
+        self.removeModel( originalModel );
+        self.dispatchEvent( { type: eventType.delete, models: [originalModel] } );
+    };
+
     self.startOrbit = function () {
         self.setCursor(true);
     };

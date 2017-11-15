@@ -229,7 +229,7 @@ function SlicerViewModel(parameters) {
                            <span class="axis z">Z</span><input type="radio" name="chopAxis" value="z" checked>\
                         </p>\
                         <p class="checkbox"><label><input type="checkbox" id="chopPreview" checked>Preview</label></p>\
-                        <button class="btn">Chop it!</button>\
+                        <button class="btn" id="doChop">Chop it!</button>\
                         <span></span>\
                     </div>\
                </div>\
@@ -260,6 +260,11 @@ function SlicerViewModel(parameters) {
 
         $("#slicer-viewport button.chop").click(function(event) {
             toggleValueInputs($("#slicer-viewport .chop.values div"));
+        });
+
+        $("#doChop").click(function(event) {
+            // Chop the curent model using the current plane.
+            self.stlViewPort.chopSelectedModel(self.chop.getPlane());
         });
 
         $("#slicer-viewport button.remove").click(function(event) {
