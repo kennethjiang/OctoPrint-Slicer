@@ -17,6 +17,7 @@ class Chop extends THREE.EventDispatcher {
         this.transformControls = new TransformControls(this.stlViewPort.camera, this.stlViewPort.renderer.domElement);
         this.transformControls.setHandles('translate', null);
         this.transformControls.setMode("translate");
+        this.transformControls.space = "world";
         this.transformControls.axis = "Z";
         this.stlViewPort.scene.add(this.transformControls);
         this.boundOnObjectChange = (e) => this.onObjectChange(e);
@@ -36,9 +37,20 @@ class Chop extends THREE.EventDispatcher {
     }
 
     onObjectChange() {
-        this.dispatchEvent({ type: "offsetChange",
-                             offsetMm: this.getOffsetMm(),
-                             offsetPercent: this.getOffsetPercent() });
+        let offsetPercent = this.getOffsetPercent();
+        let newOffsetPercent = Math.min(100, Math.max(0, offsetPercent));
+        if (offsetPercent != newOffsetPercent) {
+            // This will already dispatchEvent for offsetMm.
+            this.setOffsetPercent(newOffsetPercent);
+            this.dispatchEvent({type: "offsetChange",
+                                offsetPercent: newOffsetPercent
+                               });
+        } else {
+            this.dispatchEvent({type: "offsetChange",
+                                offsetMm: this.getOffsetMm(),
+                                offsetPercent: offsetPercent
+                               });
+        }
     }
 
     // axis is one of x,y,z (case ignored).  Offset is reset to 0.
@@ -62,22 +74,34 @@ class Chop extends THREE.EventDispatcher {
             this.plane.children[0].geometry = new THREE.PlaneBufferGeometry(this.objectSize.x + frame*2, this.objectSize.y + frame*2);
         }
         this.plane.position.copy(this.object.position);
+        this.dispatchEvent({type: "offsetChange",
+                            offsetMm: this.getOffsetMm(),
+                            offsetPercent: this.getOffsetPercent(),
+                            offsetMmMax: this.getDimension()/2,
+                            offsetMmMin: -this.getDimension()/2,
+                           });
     }
 
     setOffsetMm(offsetMm) {
         this.plane.position.copy(this.object.position);
         this.plane.position[this.axis] += offsetMm;
+        this.dispatchEvent({type: "offsetChange",
+                            offsetPercent: this.getOffsetPercent()
+                           });
     }
 
     setOffsetPercent(offsetPercent) {
         this.plane.position.copy(this.object.position);
         this.plane.position[this.axis] += (offsetPercent-50)/100*this.getDimension();
+        this.dispatchEvent({type: "offsetChange",
+                            offsetMm: this.getOffsetMm()
+                           });
     }
 
     start(object) {
         this.object = object;
         let boundingBox = this.object.userData.box3FromObject();
-        this.objectSize = boundingBox.size();
+        this.objectSize = boundingBox.getSize();
         this.stlViewPort.scene.add(this.plane);
         this.transformControls.attach(this.plane);
         this.stlViewPort.scene.add(this.transformControls);

@@ -219,14 +219,14 @@ function SlicerViewModel(parameters) {
                 <div class="values chop">\
                     <div>\
                         <a class="close"><i class="icon-remove-sign" /></a>\
-                        <p><span class="axis">Offset</span><input type="number" step="any" id="chopOffsetMm" value=0>\
+                        <p><span class="axis">Offset</span><input type="number" step="0.1" id="chopOffsetMm" value=0>\
                            <span class="add-on">mm</span>\
-                        <p><span class="axis">Offset%</span><input type="number" step="1" min="0" max="100" id="chopOffsetPercent" value=50>\
+                        <p><span class="axis">Offset%</span><input type="number" step="0.1" min="0" max="100" id="chopOffsetPercent" value=50>\
                            <span class="add-on">%</span>\
                         </p>\
-                        <p><span class="axis x">X</span><input type="radio" name="chopAxis" value="X">\
-                           <span class="axis y">Y</span><input type="radio" name="chopAxis" value="Y">\
-                           <span class="axis z">Z</span><input type="radio" name="chopAxis" value="Z" checked>\
+                        <p><span class="axis x">X</span><input type="radio" name="chopAxis" value="x">\
+                           <span class="axis y">Y</span><input type="radio" name="chopAxis" value="y">\
+                           <span class="axis z">Z</span><input type="radio" name="chopAxis" value="z" checked>\
                         </p>\
                         <p class="checkbox"><label><input type="checkbox" id="chopPreview" checked>Preview</label></p>\
                         <button class="btn">Chop it!</button>\
@@ -338,7 +338,21 @@ function SlicerViewModel(parameters) {
     };
 
     self.onChopOffsetChange = function(e) {
-        console.log(e);
+        if (e.hasOwnProperty("axis")) {
+            $("[name='chopAxis'][value='" + e.axis + "']")[0].checked = true;
+        }
+        if (e.hasOwnProperty("offsetMm")) {
+            $("#chopOffsetMm").val(e.offsetMm.toFixed(1));
+        }
+        if (e.hasOwnProperty("offsetPercent")) {
+            $("#chopOffsetPercent").val(e.offsetPercent.toFixed(1));
+        }
+        if (e.hasOwnProperty("offsetMmMax")) {
+            $("#chopOffsetMm")[0].max = e.offsetMmMax;
+        }
+        if (e.hasOwnProperty("offsetMmMin")) {
+            $("#chopOffsetMm")[0].min = e.offsetMmMin;
+        }
     }
 
     // Slicing
