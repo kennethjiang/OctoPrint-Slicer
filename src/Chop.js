@@ -46,12 +46,12 @@ class Chop extends THREE.EventDispatcher {
         const frame = 10;
         this.axis = axis.toLowerCase();
         this.plane.setRotationFromQuaternion(new THREE.Quaternion());
-        if (axis=="x") {
+        if (this.axis=="x") {
             this.transformControls.axis = "X";
             this.plane.children[0].geometry.dispose();
             this.plane.children[0].geometry = new THREE.PlaneBufferGeometry(this.objectSize.z + frame*2, this.objectSize.y + frame*2);
             this.plane.rotateY(Math.PI/2);
-        } else if (axis=="y") {
+        } else if (this.axis=="y") {
             this.transformControls.axis = "Y";
             this.plane.children[0].geometry.dispose();
             this.plane.children[0].geometry = new THREE.PlaneBufferGeometry(this.objectSize.x + frame*2, this.objectSize.z + frame*2);
