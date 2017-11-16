@@ -180,7 +180,7 @@ export function STLViewPort( canvas, width, depth, height ) {
 
     self.loadSTL = function ( url, afterLoad ) {
         new STLLoader().load(url, function ( geometry ) {
-            var newModels = self.addModelOfGeometry([geometry]);
+            var newModels = self.addModelsOfGeometries([geometry]);
             // Detect collisions after the event in case the users wants to arrange, for example.
             self.dispatchEvent( { type: eventType.change } );
             self.resetCollisionDetector();
@@ -188,7 +188,7 @@ export function STLViewPort( canvas, width, depth, height ) {
         });
     };
 
-    self.addModelOfGeometry = function( geometries, modelToCopyTransformFrom ) {
+    self.addModelsOfGeometries = function( geometries, modelToCopyTransformFrom ) {
         var models = map(geometries, function (geometry) {
             var material = new THREE.MeshStandardMaterial({
                 color: self.effectController.modelNonCollidingColors.inactive,  // We'll mark it active below.
@@ -203,8 +203,8 @@ export function STLViewPort( canvas, width, depth, height ) {
             // center model's origin
             var model = new THREE.Object3D();
             model.add(stlModel);
-        model.userData.box3FromObject = Box3FromObject(model);
-        var center = model.userData.box3FromObject().getCenter();
+            model.userData.box3FromObject = Box3FromObject(model);
+            var center = model.userData.box3FromObject().getCenter();
             stlModel.position.copy(center.negate());
             if (modelToCopyTransformFrom) {
                 model.rotation.copy(modelToCopyTransformFrom.rotation);
@@ -439,7 +439,7 @@ export function STLViewPort( canvas, width, depth, height ) {
             // Do we really need to clone them?
             geometries.push(originalModel.children[0].geometry.clone());
         }
-        return self.addModelOfGeometry(geometries, originalModel);
+        return self.addModelsOfGeometries(geometries, originalModel);
     };
 
     self.splitSelectedModel = function() {
@@ -449,9 +449,9 @@ export function STLViewPort( canvas, width, depth, height ) {
 
         var originalModel = self.selectedModel();
         var geometry = originalModel.children[0].geometry;
-        var newGeometries = BufferGeometryAnalyzer.isolatedGeometries(geometry);
+        var newGeometries = BufferGeometryAnalyzers.isolatedGeometries(geometry);
 
-        var newModels = self.addModelOfGeometry( newGeometries, originalModel );
+        var newModels = self.addModelsOfGeometries( newGeometries, originalModel );
         self.removeModel( originalModel );
         self.dispatchEvent( { type: eventType.delete, models: [originalModel] } );
         self.dispatchEvent( { type: eventType.add, models: [] } );  // To force arranging.
