@@ -444,7 +444,7 @@ export function STLViewPort( canvas, width, depth, height ) {
 
     self.splitSelectedModel = function() {
         if (!self.selectedModel()) {
-            return;
+            return [];
         }
 
         var originalModel = self.selectedModel();
