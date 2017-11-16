@@ -22,7 +22,7 @@
 
 import { forEach, isUndefined, map } from 'lodash-es';
 import * as THREE from 'three';
-import { BufferGeometryAnalyzer, OrbitControls, TransformControls, STLLoader, PointerInteractions } from '3tk';
+import { BufferGeometryAnalyzer, OrbitControls, TransformControls, STLLoader, PointerInteractions, ConnectedSTL } from '3tk';
 import { CollisionDetector } from './CollisionDetector';
 import { Tipping } from './Tipping';
 import { Box3FromObject } from './Box3FromObject';
@@ -235,7 +235,15 @@ export function STLViewPort( canvas, width, depth, height ) {
         return self.transformControls.object;
     }
 
+    // Set false to cause STLViewPort to stop modifying the cursor.  True to return control.
+    self.setCursorControl = function(cursorControl) {
+        self.cursorControl = cursorControl;
+    }
+
     self.setCursor = function(forceAuto=false) {
+        if (!self.cursorControl) {
+            return;
+        }
         if (self.transformControls.getMode() == "translate" && self.pointerInteractions.hoveredObject && !forceAuto) {
             $("#slicer-viewport").css("cursor", "move");
         } else {
@@ -449,7 +457,29 @@ export function STLViewPort( canvas, width, depth, height ) {
 
         var originalModel = self.selectedModel();
         var geometry = originalModel.children[0].geometry;
-        var newGeometries = BufferGeometryAnalyzers.isolatedGeometries(geometry);
+        var newGeometries = BufferGeometryAnalyzer.isolatedGeometries(geometry);
+
+        var newModels = self.addModelsOfGeometries( newGeometries, originalModel );
+        self.removeModel( originalModel );
+        self.dispatchEvent( { type: eventType.delete, models: [originalModel] } );
+        self.dispatchEvent( { type: eventType.add, models: [] } );  // To force arranging.
+        return newModels;
+    };
+
+    self.chopSelectedModel = function(plane) {
+        if (!self.selectedModel()) {
+            return [];
+        }
+
+        let originalModel = self.selectedModel()
+        let geometry = originalModel.children[0].geometry;
+        let connectedSTL = new ConnectedSTL().fromBufferGeometry(geometry);
+        let newConnectedSTLs = connectedSTL.chop(plane);
+        let newGeometries = newConnectedSTLs.map((x) => {
+            x.mergeFaces();
+            x.retriangle(Array.from(new Array(x.positions.length/9).keys()));
+            return x.bufferGeometry();
+        });
 
         var newModels = self.addModelsOfGeometries( newGeometries, originalModel );
         self.removeModel( originalModel );

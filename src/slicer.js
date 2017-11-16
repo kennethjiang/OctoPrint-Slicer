@@ -16,6 +16,7 @@ import { ModelArranger } from './ModelArranger';
 import { ArrangeModels } from './ArrangeModels';
 import { CheckerboardMaterial } from './CheckerboardMaterial';
 import { find, forEach, endsWith, some, extend, map } from 'lodash-es';
+import { Chop } from './Chop';
 
 function isDev() {
     return window.location.hostname == "localhost";
@@ -186,6 +187,10 @@ function SlicerViewModel(parameters) {
         self.stlViewPort.scene.add(self.floor);
         self.stlViewPort.scene.add(self.origin);
 
+        // Chop
+        self.chop = new Chop(self.stlViewPort);
+        self.chop.addEventListener("offsetChange", self.onChopOffsetChange);
+
         ko.applyBindings(self.slicingViewModel, $('#slicing-settings')[0]);
 
         // Buttons on the canvas, and their behaviors.
@@ -198,6 +203,9 @@ function SlicerViewModel(parameters) {
                     <button class="scale disabled btn" title="Scale"><img src="'
                         + PLUGIN_BASEURL
                         + 'slicer/static/img/scale.png"></button>\
+                    <button class="chop disabled btn" title="Chop"><img src="'
+                        + PLUGIN_BASEURL
+                        + 'slicer/static/img/saw.png"></button>\
                     <button class="remove disabled btn" title="Remove"><img src="'
                         + PLUGIN_BASEURL
                         + 'slicer/static/img/remove.png"></button>\
@@ -228,7 +236,23 @@ function SlicerViewModel(parameters) {
                         <p><span class="axis x">X</span><input type="number" step="0.001" name="x" min="0.001"><span class="size x" ></span></p>\
                         <p><span class="axis y">Y</span><input type="number" step="0.001" name="y" min="0.001"><span class="size y" ></span></p>\
                         <p><span class="axis z">Z</span><input type="number" step="0.001" name="z" min="0.001"><span class="size z" ></span></p>\
-                        <p class="checkbox"><label><input type="checkbox" checked>Lock</label></p>\
+                        <p class="checkbox"><label><input type="checkbox" id="lock" checked>Lock</label></p>\
+                        <span></span>\
+                    </div>\
+               </div>\
+                <div class="values chop">\
+                    <div>\
+                        <a class="close"><i class="icon-remove-sign" /></a>\
+                        <p><span class="axis">Offset</span><input type="number" step="0.1" id="chopOffsetMm" value=0>\
+                           <span class="add-on">mm</span>\
+                        <p><span class="axis">Offset%</span><input type="number" step="0.1" min="0" max="100" id="chopOffsetPercent" value=50>\
+                           <span class="add-on">%</span>\
+                        </p>\
+                        <p><span class="axis x">X</span><input type="radio" name="chopAxis" value="x">\
+                           <span class="axis y">Y</span><input type="radio" name="chopAxis" value="y">\
+                           <span class="axis z">Z</span><input type="radio" name="chopAxis" value="z" checked>\
+                        </p>\
+                        <button class="btn" id="doChop">Chop it!</button>\
                         <span></span>\
                     </div>\
                </div>\
@@ -255,6 +279,34 @@ function SlicerViewModel(parameters) {
 
         $("#slicer-viewport button.scale").click(function(event) {
             toggleValueInputs($("#slicer-viewport .scale.values div"));
+        });
+
+        $("#slicer-viewport button.chop").click(function(event) {
+            toggleValueInputs($("#slicer-viewport .chop.values div"));
+        });
+
+        $("#doChop").click(function(event) {
+            // Chop the curent model using the current plane.
+            let chopPlane = self.chop.getPlane();
+            $("#slicer-viewport .chop.values div").removeClass("show");
+            self.chop.stop();
+            let originalFilename = self.stlViewPort.selectedModel().userData.filename;
+            startLongRunning(() => { return self.stlViewPort.chopSelectedModel(self.chop.getPlane()); },
+                             function (models) {
+                                 if (models.length == 1) {
+                                     models[0].userData.filename = originalFilename;
+                                 } else {
+                                     var partNumber = 1;
+                                     for (var model of models) {
+                                         model.userData.filename =
+                                             originalFilename.substr(0, originalFilename.lastIndexOf(".")) +
+                                             "_Chop" + partNumber +
+                                             originalFilename.substr(originalFilename.lastIndexOf("."));
+                                         partNumber++;
+                                     }
+                                 }
+                                 self.setDestinationFilename();
+                             });
         });
 
         $("#slicer-viewport button.remove").click(function(event) {
@@ -336,6 +388,10 @@ function SlicerViewModel(parameters) {
             applyValueInputs($(this));
         });
 
+        $("#slicer-viewport .values input[type='radio']").change( function() {
+            applyValueInputs($(this));
+        });
+
         $("#slicer-viewport .values a.close").click(function() {
             $("#slicer-viewport .values div").removeClass("show");
             updateTransformMode();
@@ -382,6 +438,24 @@ function SlicerViewModel(parameters) {
         updateValueInputs();
         updateControlState();
     };
+
+    self.onChopOffsetChange = function(e) {
+        if (e.hasOwnProperty("axis")) {
+            $("[name='chopAxis'][value='" + e.axis + "']")[0].checked = true;
+        }
+        if (e.hasOwnProperty("offsetMm")) {
+            $("#chopOffsetMm").val(e.offsetMm.toFixed(1));
+        }
+        if (e.hasOwnProperty("offsetPercent")) {
+            $("#chopOffsetPercent").val(e.offsetPercent.toFixed(1));
+        }
+        if (e.hasOwnProperty("offsetMmMax")) {
+            $("#chopOffsetMm")[0].max = e.offsetMmMax;
+        }
+        if (e.hasOwnProperty("offsetMmMin")) {
+            $("#chopOffsetMm")[0].min = e.offsetMmMin;
+        }
+    }
 
     // Slicing
     //
@@ -722,6 +796,8 @@ function SlicerViewModel(parameters) {
     }
 
     function updateTransformMode() {
+        self.chop.stop();
+        self.stlViewPort.setCursorControl(true);
         if ( $("#slicer-viewport .rotate.values div").hasClass("show") ) {
             self.stlViewPort.transformControls.setMode("rotate");
             self.stlViewPort.transformControls.space = "world";
@@ -729,6 +805,13 @@ function SlicerViewModel(parameters) {
             self.stlViewPort.transformControls.setMode("scale");
             self.stlViewPort.transformControls.space = "local";
             self.stlViewPort.transformControls.axis = null;
+        } else if ( $("#slicer-viewport .chop.values div").hasClass("show") ) {
+            self.stlViewPort.transformControls.setMode("scale");
+            self.stlViewPort.transformControls.space = "local";
+            self.stlViewPort.transformControls.axis = null;
+            self.chop.start(self.stlViewPort.selectedModel());
+            self.stlViewPort.setCursorControl(false);
+            applyChopInputs();
         } else {
             self.stlViewPort.transformControls.setMode("translate");
             self.stlViewPort.transformControls.space = "world";
@@ -769,8 +852,20 @@ function SlicerViewModel(parameters) {
         updateTransformMode();
     }
 
+    function applyChopInputs(input) {
+        if (!input) {
+            self.chop.setAxis($("[name='chopAxis']:checked").val());
+        } else if (input[0].id == "chopOffsetMm") {
+            self.chop.setOffsetMm(parseFloat($("#chopOffsetMm").val()));
+        } else if (input[0].id == "chopOffsetPercent" && !Number.isNaN(parseFloat($("#chopOffsetPercent").val()))) {
+            self.chop.setOffsetPercent(parseFloat($("#chopOffsetPercent").val()));
+        } else if (input[0].name == "chopAxis") {
+            self.chop.setAxis($("[name='chopAxis']:checked").val());
+        }
+    }
+
     function applyValueInputs(input) {
-        if(input[0].type == "checkbox") {
+        if(input[0].type == "checkbox" && input[0].id == "lock") {
             self.lockScale = input[0].checked;
         }
         else if(input[0].type == "number" && !isNaN(parseFloat(input.val()))) {
@@ -800,6 +895,11 @@ function SlicerViewModel(parameters) {
             self.stlViewPort.recalculateOverhang(model);
             self.stlViewPort.resetCollisionDetector();
         }
+        if (input[0].name == "chopAxis" ||
+            input[0].id == "chopOffsetMm" ||
+            input[0].id == "chopOffsetPercent") {
+            applyChopInputs(input);
+        }
     }
 
     function updateValueInputs() {
@@ -811,7 +911,7 @@ function SlicerViewModel(parameters) {
             $("#slicer-viewport .scale.values input[name=\"x\"]").val(model.scale.x.toFixed(3)).attr("min", '');
             $("#slicer-viewport .scale.values input[name=\"y\"]").val(model.scale.y.toFixed(3)).attr("min", '');
             $("#slicer-viewport .scale.values input[name=\"z\"]").val(model.scale.z.toFixed(3)).attr("min", '');
-            $("#slicer-viewport .scale.values input[type=\"checkbox\"]").checked = self.lockScale;
+            $("#slicer-viewport .scale.values input#lock").checked = self.lockScale;
 
             updateSizeInfo();
         }

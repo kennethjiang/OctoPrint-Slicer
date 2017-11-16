@@ -87,6 +87,10 @@
     top: calc(34px + 44px);
 }
 
+#slicer-viewport > div.values.chop {
+    top: calc(34px + 2*44px);
+}
+
 #slicer-viewport > div.cutShape {
     left: 60px;
     top: calc(34px + 2*44px);
@@ -95,7 +99,7 @@
 }
 
 #slicer-viewport > div.values.more{
-    top: calc(34px + 5*44px);
+    top: calc(34px + 6*44px);
 }
 
 #slicer-viewport > div.cutShape.show {
@@ -166,6 +170,10 @@
     margin: 0 0 5px 5px;
     vertical-align: middle;
     line-height: 16px;
+}
+
+#slicer-viewport > div.values > div > p > input[type="radio"] {
+    width: auto;
 }
 
 #slicer-viewport > div.values > div > p > span.axis.x {
