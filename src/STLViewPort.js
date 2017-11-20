@@ -22,7 +22,7 @@
 
 import { forEach, isUndefined, map } from 'lodash-es';
 import * as THREE from 'three';
-import { BufferGeometryAnalyzer, OrbitControls, TransformControls, STLLoader, PointerInteractions, ConnectedSTL } from '3tk';
+import { BufferGeometryAnalyzer, OrbitControls, TransformControls, STLLoader, PointerInteractions, BufferGeometryMutator } from '3tk';
 import { CollisionDetector } from './CollisionDetector';
 import { Tipping } from './Tipping';
 import { Box3FromObject } from './Box3FromObject';
@@ -473,11 +473,10 @@ export function STLViewPort( canvas, width, depth, height ) {
 
         let originalModel = self.selectedModel()
         let geometry = originalModel.children[0].geometry;
-        let connectedSTL = new ConnectedSTL().fromBufferGeometry(geometry);
-        let newConnectedSTLs = connectedSTL.chop(plane);
-        let newGeometries = newConnectedSTLs.map((x) => {
+        let mutator = new BufferGeometryMutator().fromBufferGeometry(geometry);
+        let newBufferGeometryMutators = mutator.chop(plane);
+        let newGeometries = newBufferGeometryMutators.map((x) => {
             x.mergeFaces();
-            x.retriangle(Array.from(new Array(x.positions.length/9).keys()));
             return x.bufferGeometry();
         });
 
