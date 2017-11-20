@@ -265,8 +265,8 @@ function SlicerViewModel(parameters) {
             // Chop the curent model using the current plane.
             startLongRunning(() => {
                 self.stlViewPort.chopSelectedModel(self.chop.getPlane());
-                self.chop.stop();
             });
+            self.chop.stop();
             toggleValueInputs($("#slicer-viewport .chop.values div"));
         });
 
