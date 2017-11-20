@@ -1,7 +1,7 @@
 'use strict';
 
 import * as THREE from 'three';
-import { ConnectedSTL, TransformControls, PointerInteractions } from '3tk';
+import { TransformControls, PointerInteractions } from '3tk';
 
 class Chop extends THREE.EventDispatcher {
 
