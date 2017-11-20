@@ -266,8 +266,8 @@ function SlicerViewModel(parameters) {
             startLongRunning(() => {
                 self.stlViewPort.chopSelectedModel(self.chop.getPlane());
                 self.chop.stop();
-                $("#slicer-viewport .chop.values div").removeClass("show");
             });
+            toggleValueInputs($("#slicer-viewport .chop.values div"));
         });
 
         $("#slicer-viewport button.remove").click(function(event) {

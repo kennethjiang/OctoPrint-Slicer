@@ -386,10 +386,12 @@ export function STLViewPort( canvas, width, height ) {
         let geometry = originalModel.children[0].geometry;
         let mutator = new BufferGeometryMutator().fromBufferGeometry(geometry);
         let newBufferGeometryMutators = mutator.chop(plane);
-        let newGeometries = newBufferGeometryMutators.map((x) => {
-            x.mergeFaces();
-            return x.bufferGeometry();
-        });
+        let newGeometries = newBufferGeometryMutators
+            .filter((x) => x.positions.length > 0)
+            .map((x) => {
+                x.mergeFaces();
+                return x.bufferGeometry();
+            });
 
         forEach(newGeometries, function(geometry) {
             self.addModelOfGeometry( geometry, originalModel );
