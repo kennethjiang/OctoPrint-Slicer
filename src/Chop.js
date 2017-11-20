@@ -79,6 +79,7 @@ class Chop extends THREE.EventDispatcher {
         this.axis = axis.toLowerCase();
         this.plane.setRotationFromQuaternion(new THREE.Quaternion());
         this.plane.children[0].geometry.dispose();
+        this.transformControls.detach();
         if (this.axis=="x") {
             this.transformControls.axis = "X";
             this.plane.children[0].geometry = new THREE.PlaneBufferGeometry(this.objectSize.z + frame*2, this.objectSize.y + frame*2);
@@ -92,6 +93,7 @@ class Chop extends THREE.EventDispatcher {
             this.plane.children[0].geometry = new THREE.PlaneBufferGeometry(this.objectSize.x + frame*2, this.objectSize.y + frame*2);
         }
         this.plane.position.copy(this.object.position);
+        this.transformControls.attach(this.plane);
         this.dispatchEvent({type: "offsetChange",
                             offsetMm: this.getOffsetMm(),
                             offsetPercent: this.getOffsetPercent(),
