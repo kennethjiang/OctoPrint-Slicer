@@ -388,7 +388,6 @@ export function STLViewPort( canvas, width, height ) {
         let newBufferGeometryMutators = mutator.chop(plane);
         let newGeometries = newBufferGeometryMutators.map((x) => {
             x.mergeFaces();
-            x.retriangle(Array.from(new Array(x.positions.length/9).keys()));
             return x.bufferGeometry();
         });
 
