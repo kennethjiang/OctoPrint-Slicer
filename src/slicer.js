@@ -287,8 +287,6 @@ function SlicerViewModel(parameters) {
 
         $("#doChop").click(function(event) {
             // Chop the curent model using the current plane.
-            let chopPlane = self.chop.getPlane();
-            self.chop.stop();
             let originalFilename = self.stlViewPort.selectedModel().userData.filename;
             startLongRunning(() => { return self.stlViewPort.chopSelectedModel(self.chop.getPlane()); },
                              function (models) {
@@ -306,6 +304,7 @@ function SlicerViewModel(parameters) {
                                  }
                                  self.setDestinationFilename();
                              });
+            self.chop.stop();
             toggleValueInputs($("#slicer-viewport .chop.values div"));
         });
 

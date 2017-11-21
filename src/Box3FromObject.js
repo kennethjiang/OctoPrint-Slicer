@@ -38,30 +38,36 @@ export function hullPointsFromGeometry(geometry) {
     let allPoints = [];
     traversePoints(function (point) { allPoints.push(point.clone()); });
     // allPoint has all points from the geometry
-    let convexHull = new ConvexGeometry(allPoints);
-    let hullMap = {};
-    for (let face of convexHull.faces) {
-        for (let vertexIndex of [face.a, face.b, face.c]) {
-            let hullPoint = convexHull.vertices[vertexIndex];
-            if (!hullMap[hullPoint.x]) {
-                hullMap[hullPoint.x] = {};
+        let hullPoints = [];
+        try {
+            let convexHull = new ConvexGeometry(allPoints);
+            let hullMap = {};
+            for (let face of convexHull.faces) {
+                for (let vertexIndex of [face.a, face.b, face.c]) {
+                    let hullPoint = convexHull.vertices[vertexIndex];
+                    if (!hullMap[hullPoint.x]) {
+                        hullMap[hullPoint.x] = {};
+                    }
+                    if (!hullMap[hullPoint.x][hullPoint.y]) {
+                        hullMap[hullPoint.x][hullPoint.y] = {};
+                    }
+                    if (!hullMap[hullPoint.x][hullPoint.y][hullPoint.z]) {
+                        hullMap[hullPoint.x][hullPoint.y][hullPoint.z] = {};
+                    }
+                }
             }
-            if (!hullMap[hullPoint.x][hullPoint.y]) {
-                hullMap[hullPoint.x][hullPoint.y] = {};
+            for (const x in hullMap) {
+                for (const y in hullMap[x]) {
+                    for (const z in hullMap[x][y]) {
+                        hullPoints.push(new THREE.Vector3(x,y,z));
+                    }
+                }
             }
-            if (!hullMap[hullPoint.x][hullPoint.y][hullPoint.z]) {
-                hullMap[hullPoint.x][hullPoint.y][hullPoint.z] = {};
-            }
+        } catch (e) {
+            // Maybe the shape isn't legal.  In that case, we'll just
+            // use all the original points.
+            hullPoints = allPoints;
         }
-    }
-    let hullPoints = [];
-    for (const x in hullMap) {
-        for (const y in hullMap[x]) {
-            for (const z in hullMap[x][y]) {
-                hullPoints.push(new THREE.Vector3(x,y,z));
-            }
-        }
-    }
     return hullPoints;
 };
 
