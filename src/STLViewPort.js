@@ -22,7 +22,7 @@
 
 import { forEach } from 'lodash-es';
 import * as THREE from 'three';
-import { BufferGeometryAnalyzer, OrbitControls, TransformControls, STLLoader, PointerInteractions } from '3tk';
+import { BufferGeometryAnalyzer, OrbitControls, TransformControls, STLLoader, PointerInteractions, BufferGeometryMutator } from '3tk';
 import { OrientationOptimizer } from './OrientationOptimizer';
 import { Box3FromObject } from './Box3FromObject';
 
@@ -217,7 +217,15 @@ export function STLViewPort( canvas, width, height ) {
         return self.transformControls.object;
     }
 
+    // Set false to cause STLViewPort to stop modifying the cursor.  True to return control.
+    self.setCursorControl = function(cursorControl) {
+        self.cursorControl = cursorControl;
+    }
+
     self.setCursor = function(forceAuto=false) {
+        if (!self.cursorControl) {
+            return;
+        }
         if (self.transformControls.getMode() == "translate" && self.pointerInteractions.hoveredObject && !forceAuto) {
             $("#slicer-viewport").css("cursor", "move");
         } else {
@@ -360,6 +368,30 @@ export function STLViewPort( canvas, width, height ) {
         var originalModel = self.selectedModel()
         var geometry = originalModel.children[0].geometry;
         var newGeometries = BufferGeometryAnalyzer.isolatedGeometries(geometry);
+
+        forEach(newGeometries, function(geometry) {
+            self.addModelOfGeometry( geometry, originalModel );
+        });
+
+        self.removeModel( originalModel );
+        self.dispatchEvent( { type: eventType.delete, models: [originalModel] } );
+    };
+
+    self.chopSelectedModel = function(plane) {
+        if (!self.selectedModel()) {
+            return;
+        }
+
+        let originalModel = self.selectedModel()
+        let geometry = originalModel.children[0].geometry;
+        let mutator = new BufferGeometryMutator().fromBufferGeometry(geometry);
+        let newBufferGeometryMutators = mutator.chop(plane);
+        let newGeometries = newBufferGeometryMutators
+            .filter((x) => x.positions.length > 0)
+            .map((x) => {
+                x.mergeFaces();
+                return x.bufferGeometry();
+            });
 
         forEach(newGeometries, function(geometry) {
             self.addModelOfGeometry( geometry, originalModel );
