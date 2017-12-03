@@ -213,6 +213,7 @@ function SlicerViewModel(parameters) {
                        <a class="close"><i class="icon-remove-sign" /></a>\
                        <p><button id="split" class="btn"><i class="icon-unlink" /><span>&nbsp;Split into parts</span></button></p>\
                        <p><button id="duplicate" class="btn"><i class="icon-copy" /><span>&nbsp;Duplicate</span></button></p>\
+                       <p><button id="cut" class="btn"><i class="icon-copy" /><span>&nbsp;Cut at height</span></button></p>\
                        <p><button id="info" class="btn"><i class="icon-info" /><span>&nbsp;Advanced usage</span></button></p>\
                        <span></span>\
                    </div>\
@@ -249,6 +250,14 @@ function SlicerViewModel(parameters) {
         $("#slicer-viewport button#split").click(function(event) {
             toggleValueInputs($("#slicer-viewport .more.values div"));
             startLongRunning( self.stlViewPort.splitSelectedModel );
+        });
+
+        $("#slicer-viewport button#cut").click(function(event) {
+            toggleValueInputs($("#slicer-viewport .more.values div"));
+            var height = parseFloat( prompt("Cut selected object(s) at height (mm):", 1.00) );
+            if (height != NaN) {
+                startLongRunning( self.stlViewPort.cutSelectedModel.bind(self.stlViewPort, height) );
+            }
         });
 
         $("#slicer-viewport button#duplicate").click(function(event) {

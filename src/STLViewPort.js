@@ -22,7 +22,7 @@
 
 import { forEach } from 'lodash-es';
 import * as THREE from 'three';
-import { BufferGeometryAnalyzer, OrbitControls, TransformControls, STLLoader, PointerInteractions } from '3tk';
+import { BufferGeometryAnalyzer, OrbitControls, TransformControls, STLLoader, PointerInteractions, BufferGeometryMutator } from '3tk';
 import { OrientationOptimizer } from './OrientationOptimizer';
 import { Box3FromObject } from './Box3FromObject';
 
@@ -363,6 +363,25 @@ export function STLViewPort( canvas, width, height ) {
 
         forEach(newGeometries, function(geometry) {
             self.addModelOfGeometry( geometry, originalModel );
+        });
+
+        self.removeModel( originalModel );
+        self.dispatchEvent( { type: eventType.delete, models: [originalModel] } );
+    };
+
+    self.cutSelectedModel = function(height) {
+        if (!self.selectedModel()) {
+            return;
+        }
+
+        var originalModel = self.selectedModel()
+        var geometry = originalModel.children[0].geometry;
+        geometry.computeBoundingBox();
+        var boundingBox = geometry.boundingBox;
+        var plane = new THREE.Plane(new THREE.Vector3(0,0,1), height * -1.0);
+        var mutator = new BufferGeometryMutator().fromBufferGeometry( geometry )
+        forEach(mutator.chop(plane), function(newMutator) {;
+            self.addModelOfGeometry( newMutator.bufferGeometry(), originalModel );
         });
 
         self.removeModel( originalModel );
