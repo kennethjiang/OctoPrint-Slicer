@@ -213,7 +213,7 @@ function SlicerViewModel(parameters) {
                        <a class="close"><i class="icon-remove-sign" /></a>\
                        <p><button id="split" class="btn"><i class="icon-unlink" /><span>&nbsp;Split into parts</span></button></p>\
                        <p><button id="duplicate" class="btn"><i class="icon-copy" /><span>&nbsp;Duplicate</span></button></p>\
-                       <p><button id="cut" class="btn"><i class="icon-copy" /><span>&nbsp;Cut at height</span></button></p>\
+                       <p><button id="cut" class="btn"><i class="icon-crop" /><span>&nbsp;Cut at height</span></button></p>\
                        <p><button id="info" class="btn"><i class="icon-info" /><span>&nbsp;Advanced usage</span></button></p>\
                        <span></span>\
                    </div>\
