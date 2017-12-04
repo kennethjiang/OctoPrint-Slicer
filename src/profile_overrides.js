@@ -63,6 +63,7 @@ export function OverridesViewModel(parameters, array_keys, enum_keys, item_keys,
             "brim_width",
             "skirts",
             "min_skirt_length",
+            "perimeters",
         ],
         BOOLEAN_KEYS = [
             "support_material",

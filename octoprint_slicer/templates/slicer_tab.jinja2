@@ -263,6 +263,13 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
                               <span class="add-on">mm</span>
                           </div>
                       </div>
+                      <div title="Perimeters (mininum)" class="input-append" data-bind="visible: !_.isUndefined($data['profile.perimeters']())">
+                          <label class="control-label">Perimeters (min)</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.perimeters']" type="number" min="0" step="1"></input>
+                              <span class="add-on">loops</span>
+                          </div>
+                      </div>
                   </div>
                   <div class="span3">
                       <div title="Platform adhesion type" class="input-append" data-bind="visible: !_.isUndefined($data['profile.platform_adhesion']())">
