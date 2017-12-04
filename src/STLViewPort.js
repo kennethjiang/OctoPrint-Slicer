@@ -372,9 +372,10 @@ export function STLViewPort( canvas, width, height ) {
         var geometry = originalModel.children[0].geometry;
         geometry.computeBoundingBox();
         var boundingBox = geometry.boundingBox;
-        var plane = new THREE.Plane(new THREE.Vector3(0,0,1), height * -1.0);
+        var cutPlane = new THREE.Plane(new THREE.Vector3(0,0,1), height * -1.0);
+        cutPlane.applyMatrix4(new THREE.Matrix4().getInverse(originalModel.children[0].matrixWorld));
         var mutator = new BufferGeometryMutator().fromBufferGeometry( geometry )
-        forEach(mutator.chop(plane), function(newMutator) {;
+        forEach(mutator.chop(cutPlane), function(newMutator) {;
             self.addModelOfGeometry( newMutator.bufferGeometry(), originalModel );
         });
 
