@@ -327,18 +327,12 @@ export function STLViewPort( canvas, width, height ) {
         self.dispatchEvent( { type: eventType.delete, models: arrayCopy} );
     };
 
-    self.laySelectedModelFlat = function(restricted) {
+    self.laySelectedModelFlat = function() {
 
         var model = self.selectedModel();
         if (! model) return;
 
-        var newOrientation;
-        if (restricted) {
-            newOrientation = model.orientationOptimizer.optimalOrientation( model.rotation, 0.7857); // Limit to 45 degree pivot
-        } else {
-            newOrientation = model.orientationOptimizer.optimalOrientation( model.rotation );
-        }
-
+        var newOrientation = model.orientationOptimizer.optimalOrientation( model.rotation, 0.7857); // Limit to 45 degree pivot
         model.rotation.copy( newOrientation );
         self.recalculateOverhang(model);
         self.dispatchEvent( { type: eventType.change } );

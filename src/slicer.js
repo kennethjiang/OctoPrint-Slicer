@@ -14,7 +14,7 @@ import { STLViewPort } from './STLViewPort';
 import { OverridesViewModel } from './profile_overrides';
 import { ModelArranger } from './ModelArranger';
 import { CheckerboardMaterial } from './CheckerboardMaterial';
-import { find, forEach, endsWith, some, extend } from 'lodash-es';
+import { find, forEach, endsWith, some, extend, isNaN } from 'lodash-es';
 
 function isDev() {
     return window.location.hostname == "localhost";
@@ -255,7 +255,7 @@ function SlicerViewModel(parameters) {
         $("#slicer-viewport button#cut").click(function(event) {
             toggleValueInputs($("#slicer-viewport .more.values div"));
             var height = parseFloat( prompt("Cut selected object(s) at height (mm):", 1.00) );
-            if (height != NaN) {
+            if (!isNaN(height)) {
                 startLongRunning( self.stlViewPort.cutSelectedModel.bind(self.stlViewPort, height) );
             }
         });
@@ -263,7 +263,7 @@ function SlicerViewModel(parameters) {
         $("#slicer-viewport button#duplicate").click(function(event) {
             toggleValueInputs($("#slicer-viewport .more.values div"));
             var copies = parseInt( prompt("The number of copies you want to duplicate:", 1) );
-            if (copies != NaN) {
+            if (!isNaN(copies)) {
                 startLongRunning( self.stlViewPort.duplicateSelectedModel.bind(self, copies) );
             }
         });
@@ -274,7 +274,7 @@ function SlicerViewModel(parameters) {
         });
 
         $("#slicer-viewport button#lay-flat").click(function(event) {
-            startLongRunning( function() {self.stlViewPort.laySelectedModelFlat(true); } );
+            startLongRunning( function() {self.stlViewPort.laySelectedModelFlat(); } );
         });
 
         $("#slicer-viewport button#rotate0").click(function(event) {
