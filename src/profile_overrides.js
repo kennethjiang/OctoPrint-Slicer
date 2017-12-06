@@ -70,7 +70,8 @@ export function OverridesViewModel(parameters, array_keys, enum_keys, item_keys,
             "retraction_enable",
             "fan_enabled",
             "cooling",
-            "fan_always_on"
+            "fan_always_on",
+            "spiral_vase"
         ];
 
     // Some options, depending on their setting, can force other
