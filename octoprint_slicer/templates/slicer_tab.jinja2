@@ -137,55 +137,14 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
               <div class="row">
                   <div class="span3">
                       {{ slicer_number("travel_speed", "Travel speed while not printing", "Travel speed", 0, 300, 1, "mm/s") }}
-                      <div title="Speed while printing infill" class="input-append" data-bind="visible: !_.isUndefined($data['profile.infill_speed']())">
-                          <label class="control-label">Infill speed</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.infill_speed']" type="number" min="0" max="300" step="1"></input>
-                              <span class="add-on">mm/s</span>
-                          </div>
-                      </div>
-                      <div title="Speed while printing outer shell" class="input-append" data-bind="visible: !_.isUndefined($data['profile.outer_shell_speed']())">
-                          <label class="control-label">Outer shell speed</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.outer_shell_speed']" type="number" min="0" max="300" step="1"></input>
-                              <span class="add-on">mm/s</span>
-                          </div>
-                      </div>
-                      <div title="Speed while printing inner shell" class="input-append" data-bind="visible: !_.isUndefined($data['profile.inner_shell_speed']())">
-                          <label class="control-label">Inner shell speed</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.inner_shell_speed']" type="number" min="0" max="300" step="1"></input>
-                              <span class="add-on">mm/s</span>
-                          </div>
-                      </div>
-                      <div title="Speed while printing Bottom layer" class="input-append" data-bind="visible: !_.isUndefined($data['profile.bottom_layer_speed']())">
-                          <label class="control-label">Bottom layer speed</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.bottom_layer_speed']" type="number" min="0" max="300" step="1"></input>
-                              <span class="add-on">mm/s</span>
-                          </div>
-                      </div>
-                      <div title="Enable filament retraction" class="input-append" data-bind="visible: !_.isUndefined($data['profile.retraction_enable']())">
-                          <label class="control-label">Retraction</label>
-                          <div class="controls checkbox">
-                              <input type="checkbox" data-bind="checked: $data['profile.retraction_enable']"></input>
-                          </div>
-                      </div>
+                      {{ slicer_number("infill_speed", "Speed while printing infill", "Infill speed", 0, 300, 1, "mm/s") }}
+                      {{ slicer_number("outer_shell_speed", "Speed while printing outer shell", "Outer shell speed", 0, 300, 1, "mm/s") }}
+                      {{ slicer_number("inner_shell_speed", "Speed while printing inner shell", "Inner shell speed", 0, 300, 1, "mm/s") }}
+                      {{ slicer_number("bottom_layer_speed", "Speed while printing Bottom layer", "Bottom layer speed", 0, 300, 1, "mm/s") }}
+                      {{ slicer_checkbox("retraction_enable", "Enable filament retraction", "Retraction") }}
                       <div data-bind="visible: $data['profile.retraction_enable']">
-                          <div title="Filament retraction speed" class="input-append" data-bind="visible: !_.isUndefined($data['profile.retraction_enable']())">
-                              <label class="control-label">Retraction speed</label>
-                              <div class="controls">
-                                  <input data-bind="numericValue: $data['profile.retraction_speed']" type="number" min="0" max="300" step="1"></input>
-                                  <span class="add-on">mm/s</span>
-                              </div>
-                          </div>
-                          <div title="Filament retraction distance" class="input-append" data-bind="visible: !_.isUndefined($data['profile.retraction_enable']())">
-                              <label class="control-label">Retraction distance</label>
-                              <div class="controls">
-                                  <input data-bind="numericValue: $data['profile.retraction_amount']" type="number" min="0" max="30" step="0.1"></input>
-                                  <span class="add-on">mm</span>
-                              </div>
-                          </div>
+                          {{ slicer_number("retraction_speed", "Filament retraction speed", "Retraction speed", 0, 300, 1, "mm/s") }}
+                          {{ slicer_number("retraction_amount", "Filament retraction distance", "Retraction distance", 0, 30, 0.1, "mm") }}
                       </div>
                       {{ slicer_number("first_layer_temperature", "First layer temperature", "1st layer temperature", 0, 315, 1, "°C") }}
                       {{ slicer_number("first_layer_bed_temperature", "First layer bed temperature", "1st layer bed temperature", 0, 110, 1, "°C") }}
