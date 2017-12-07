@@ -154,7 +154,9 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
                   </div>
                   <div class="span3">
                       {{ slicer_select("platform_adhesion", "Platform adhesion type", "Adhesion") }}
-                      {{ slicer_number("brim_line_count", "Brim line count", "Brim line count", min=0, step=1) }}
+                      <div data-bind="visible: !_.isUndefined($data['profile.platform_adhesion'])">
+                        {{ slicer_number("brim_line_count", "Brim line count", "Brim line count", min=0, step=1) }}
+                      </div>
                       {{ slicer_number("filament_diameter", "Filament Diameter", "Filament", 0, 100, 0.01, "mm") }}
                       {{ slicer_number("filament_flow", "Filament Flow", "Filament Flow", 0, 200, 0.1, "%") }}
                       {{ slicer_checkbox("fan_enabled", "Enable cooling fan", "Cooling fan") }}
