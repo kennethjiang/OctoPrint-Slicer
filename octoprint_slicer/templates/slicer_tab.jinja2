@@ -27,13 +27,21 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
   <canvas id="slicer-canvas"></canvas>
 </ul>
 </div>
-{% macro slicer_checkbox(variable, title, label) -%}
-  <div title="{{ title }}" class="input-append" data-bind="visible: !_.isUndefined($data['profile.{{ variable }}']())">
-    <label class="control-label">{{ label }}</label>
-    <div class="controls checkbox">
-      <input type="checkbox" data-bind="checked: $data['profile.{{ variable }}']"></input>
-    </div>
-  </div>
+{%- macro slicer_checkbox(setting, title, label) -%}
+                      <div title="{{ title }}" class="input-append" data-bind="visible: !_.isUndefined($data['profile.{{ setting }}']())">
+                          <label class="control-label">{{ label }}</label>
+                          <div class="controls checkbox">
+                              <input type="checkbox" data-bind="checked: $data['profile.{{ setting }}']"></input>
+                          </div>
+                      </div>
+{%- endmacro %}
+{%- macro slicer_select(setting, title, label) -%}
+                      <div title="{{ title }}" class="input-append" data-bind="visible: !_.isUndefined($data['profile.{{ setting }}']())">
+                          <label class="control-label">{{ label }}</label>
+                          <div class="controls">
+                              <select data-bind="options: $data.optionsForKey('{{ setting }}'), value: $data['profile.{{ setting }}'], valueAllowUnset: true"></select>
+                          </div>
+                      </div>
 {%- endmacro %}
 <div class="tab-content">
   <div id="general" class="tab-pane fade in active">
@@ -151,19 +159,9 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
                               <span class="add-on">mm</span>
                           </div>
                       </div>
-                      <div title="Support for overhangs" class="input-append" data-bind="visible: !_.isUndefined($data['profile.support']())">
-                          <label class="control-label">Support</label>
-                          <div class="controls">
-                              <select data-bind="options: $data.optionsForKey('support'), value: $data['profile.support'], valueAllowUnset: true"></select>
-                          </div>
-                      </div>
+                      {{ slicer_select("support", "Support for overhangs", "Support") }}
                       {{ slicer_checkbox("support_material", "Generate support material", "Supports") }}
-                      <div title="Detect Bridging Perimeters (recommended when using supports)" class="input-append" data-bind="visible: !_.isUndefined($data['profile.overhangs']())">
-                          <label class="control-label">Detect overhangs</label>
-                          <div class="controls checkbox">
-                              <input type="checkbox" data-bind="checked: $data['profile.overhangs']"></input>
-                          </div>
-                      </div>
+                      {{ slicer_checkbox("overhangs", "Detect Bridging Perimeters (recommended when using supports)", "Detect overhangs") }}
                   </div>
               </div>
           </form>
