@@ -27,7 +27,7 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
   <canvas id="slicer-canvas"></canvas>
 </ul>
 </div>
-{% macro checkbox(variable, title, label) %}
+{% macro slicer_checkbox(variable, title, label) -%}
   <div title="{{ title }}" class="input-append" data-bind="visible: !_.isUndefined($data['profile.{{ variable }}']())">
     <label class="control-label">{{ label }}</label>
     <div class="controls checkbox">
@@ -157,7 +157,7 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
                               <select data-bind="options: $data.optionsForKey('support'), value: $data['profile.support'], valueAllowUnset: true"></select>
                           </div>
                       </div>
-                      {{ checkbox("support_material", ""Generate support material", Supports") }}
+                      {{ slicer_checkbox("support_material", "Generate support material", "Supports") }}
                       <div title="Detect Bridging Perimeters (recommended when using supports)" class="input-append" data-bind="visible: !_.isUndefined($data['profile.overhangs']())">
                           <label class="control-label">Detect overhangs</label>
                           <div class="controls checkbox">
