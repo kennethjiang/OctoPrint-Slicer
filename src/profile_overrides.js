@@ -87,7 +87,8 @@ export function OverridesViewModel(parameters, array_keys, enum_keys, item_keys,
              new Map([["ensure_vertical_shell_thickness", 0],
                       ["fill_density", "0%"],
                       ["perimeters", 1],
-                      ["top_solid_layers", 0]
+                      ["top_solid_layers", 0],
+                      ["support_material", 0],
                      ])
             ]
         ])]
@@ -246,14 +247,16 @@ export function OverridesViewModel(parameters, array_keys, enum_keys, item_keys,
         // Do all the overrides.  If there are conflicting overrides,
         // it's going to behave surprisingly.
         for (let key of FORCED_SETTINGS.keys()) {
-            if (result.hasOwnProperty(key)) {
+            let profile_key = "profile." + key;
+            if (result.hasOwnProperty(profile_key)) {
                 // This key is in our overrides.
                 for (let value of FORCED_SETTINGS.get(key).keys()) {
-                    if (result[key] == value) {
+                    if (result[profile_key] == value) {
                         // This value causes overriding.
-                        let overrides = FORCE_SETTINGS.get(key).get(value);
-                        for ([overrideKey, overrideValue] of overrides.entries()) {
-                            result[overrideKey] = overrideValue;
+                        let overrides = FORCED_SETTINGS.get(key).get(value);
+                        for (let [overrideKey, overrideValue] of overrides.entries()) {
+                            let profile_overrideKey = "profile." + overrideKey;
+                            result[profile_overrideKey] = overrideValue;
                         }
                     }
                 }
