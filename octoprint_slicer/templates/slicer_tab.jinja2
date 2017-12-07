@@ -150,20 +150,8 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
                       </div>
                   </div>
                   <div class="span3">
-                      <div title="Shell thickness" class="input-append" data-bind="visible: !_.isUndefined($data['profile.wall_thickness']())">
-                          <label class="control-label">Shell thickness</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.wall_thickness']" type="number" min="0.1" max="2" step="0.05"></input>
-                              <span class="add-on">mm</span>
-                          </div>
-                      </div>
-                      <div title="Speed of the extruder's movements while printing" class="input-append" data-bind="visible: !_.isUndefined($data['profile.print_speed']())">
-                          <label class="control-label">Print speed</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.print_speed']" type="number" min="2" max="150" step="0.1"></input>
-                              <span class="add-on">mm/s</span>
-                          </div>
-                      </div>
+                      {{ slicer_number("wall_thickness", "Shell thickness", "Shell thickness", 0.1, 2, 0.05, "mm") }}
+                      {{ slicer_number("print_speed", "Speed of the extruder's movements while printing", "Print speed", 2, 150, 0.1, "mm/s") }}
                       {{ slicer_number("solid_layer_thickness", "Top and bottom thickness", "Top/bottom", 0.1, 2, 0.05, "mm") }}
                       {{ slicer_select("support", "Support for overhangs", "Support") }}
                       {{ slicer_checkbox("support_material", "Generate support material", "Supports") }}
