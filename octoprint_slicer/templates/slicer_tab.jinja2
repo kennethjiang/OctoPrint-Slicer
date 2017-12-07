@@ -154,7 +154,7 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
                   </div>
                   <div class="span3">
                       {{ slicer_select("platform_adhesion", "Platform adhesion type", "Adhesion") }}
-                      <div data-bind="visible: !_.isUndefined($data['profile.platform_adhesion'])">
+                      <div data-bind="visible: !_.isUndefined($data['profile.brim_line_count']()) && $data['profile.platform_adhesion']() == 'brim'">
                         {{ slicer_number("brim_line_count", "Brim line count", "Brim line count", min=0, step=1) }}
                       </div>
                       {{ slicer_number("filament_diameter", "Filament Diameter", "Filament", 0, 100, 0.01, "mm") }}
