@@ -27,30 +27,33 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
   <canvas id="slicer-canvas"></canvas>
 </ul>
 </div>
-{%- macro slicer_checkbox(setting, title, label) -%}
+{%- macro slicer_setting(setting, title, label, callback) -%}
                       <div title="{{ title }}" class="input-append" data-bind="visible: !_.isUndefined($data['profile.{{ setting }}']())">
                           <label class="control-label">{{ label }}</label>
+                          {{ caller() }}
+                      </div>
+{%- endmacro %}
+{%- macro slicer_checkbox(setting, title, label) -%}
+  {% call slicer_setting(setting, title, label) -%}
                           <div class="controls checkbox">
                               <input type="checkbox" data-bind="checked: $data['profile.{{ setting }}']"></input>
                           </div>
-                      </div>
+  {%- endcall %}
 {%- endmacro %}
 {%- macro slicer_select(setting, title, label) -%}
-                      <div title="{{ title }}" class="input-append" data-bind="visible: !_.isUndefined($data['profile.{{ setting }}']())">
-                          <label class="control-label">{{ label }}</label>
+  {% call slicer_setting(setting, title, label) -%}
                           <div class="controls">
                               <select data-bind="options: $data.optionsForKey('{{ setting }}'), value: $data['profile.{{ setting }}'], valueAllowUnset: true"></select>
                           </div>
-                      </div>
+  {%- endcall %}
 {%- endmacro %}
 {%- macro slicer_number(setting, title, label, min, max, step, add_on) -%}
-                      <div title="{{ title }}" class="input-append" data-bind="visible: !_.isUndefined($data['profile.{{ setting }}']())">
-                          <label class="control-label">{{ label }}</label>
+  {% call slicer_setting(setting, title, label) -%}
                           <div class="controls">
                               <input data-bind="numericValue: $data['profile.{{ setting }}']" type="number" min="{{ min }}" max="{{ max }}" step="{{ step }}"></input>
                               <span class="add-on">{{ add_on }}</span>
                           </div>
-                      </div>
+  {%- endcall %}
 {%- endmacro %}
 <div class="tab-content">
   <div id="general" class="tab-pane fade in active">
