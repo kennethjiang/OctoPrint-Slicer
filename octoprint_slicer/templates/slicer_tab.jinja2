@@ -106,48 +106,12 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
           <form class="form-horizontal">
               <div class="row">
                   <div class="span3">
-                      <div title="Temperature" class="input-append" data-bind="visible: !_.isUndefined($data['profile.temperature']())">
-                          <label class="control-label">Temperature</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.temperature']" type="number" min="150" max="315" step="1"></input>
-                              <span class="add-on">°C</span>
-                          </div>
-                      </div>
-                      <div title="Print temperature" class="input-append" data-bind="visible: !_.isUndefined($data['profile.print_temperature']())">
-                          <label class="control-label">Print temperature</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.print_temperature']" type="number" min="150" max="315" step="1"></input>
-                              <span class="add-on">°C</span>
-                          </div>
-                      </div>
-                      <div title="Print Bed temperature" class="input-append" data-bind="visible: !_.isUndefined($data['profile.print_bed_temperature']())">
-                          <label class="control-label">Print bed temperature</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.print_bed_temperature']" type="number" min="0" max="110" step="1"></input>
-                              <span class="add-on">°C</span>
-                          </div>
-                      </div>
-                      <div title="Bed temperature" class="input-append" data-bind="visible: !_.isUndefined($data['profile.bed_temperature']())">
-                          <label class="control-label">Bed temperature</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.bed_temperature']" type="number" min="0" max="110" step="1"></input>
-                              <span class="add-on">°C</span>
-                          </div>
-                      </div>
-                      <div title="Height of each layer" class="input-append" data-bind="visible: !_.isUndefined($data['profile.layer_height']())">
-                          <label class="control-label">Layer height</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.layer_height']" type="number" min="0.01" max="0.35" step="0.01"></input>
-                              <span class="add-on">mm</span>
-                          </div>
-                      </div>
-                      <div title="Percentage of the model that is filled in" class="input-append" data-bind="visible: !_.isUndefined($data['profile.fill_density']())">
-                          <label class="control-label">Fill density</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.fill_density']" type="number" min="0" max="100" step="1"></input>
-                              <span class="add-on">%</span>
-                          </div>
-                      </div>
+                      {{ slicer_number("temperature", "Temperature", "Temperature", 150, 315, 1, "°C") }}
+                      {{ slicer_number("print_temperature", "Print temperature", "Print temperature", 150, 315, 1, "°C") }}
+                      {{ slicer_number("print_bed_temperature", "Print Bed temperature", "Print bed temperature", 0, 110, 1, "°C") }}
+                      {{ slicer_number("bed_temperature", "Bed temperature", "Bed temperature", 0, 110, 1, "°C") }}
+                      {{ slicer_number("layer_height", "Height of each layer", "Layer height", 0.01, 0.35, 0.01, "mm") }}
+                      {{ slicer_number("fill_density", "Percentage of the model that is filled in", "Fill density", 0, 100, 1, "%") }}
                   </div>
                   <div class="span3">
                       {{ slicer_number("wall_thickness", "Shell thickness", "Shell thickness", 0.1, 2, 0.05, "mm") }}
