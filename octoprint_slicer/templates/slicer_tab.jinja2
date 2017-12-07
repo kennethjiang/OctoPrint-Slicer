@@ -240,34 +240,11 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
                               <span class="add-on">%</span>
                           </div>
                       </div>
-                      <div title="Enable cooling fan" class="input-append" data-bind="visible: !_.isUndefined($data['profile.fan_enabled']())">
-                          <label class="control-label">Cooling fan</label>
-                          <div class="controls checkbox">
-                              <input type="checkbox" data-bind="checked: $data['profile.fan_enabled']"></input>
-                          </div>
-                      </div>
+                      {{ slicer_checkbox("fan_enabled", "Enable cooling fan", "Cooling fan") }}
                       <div data-bind="visible: $data['profile.fan_enabled']">
-                          <div title="Full fan on height" class="input-append" data-bind="visible: !_.isUndefined($data['profile.fan_full_height']())">
-                              <label class="control-label">Full at height</label>
-                              <div class="controls">
-                                  <input data-bind="numericValue: $data['profile.fan_full_height']" type="number" min="0" max="2000" step="0.1"></input>
-                                  <span class="add-on">mm</span>
-                              </div>
-                          </div>
-                          <div title="Maximum fan speed" class="input-append" data-bind="visible: !_.isUndefined($data['profile.fan_speed_max']())">
-                              <label class="control-label">Max speed</label>
-                              <div class="controls">
-                                  <input data-bind="numericValue: $data['profile.fan_speed_max']" type="number" min="0" max="100" step="1"></input>
-                                  <span class="add-on">%</span>
-                              </div>
-                          </div>
-                          <div title="Minimum fan speed" class="input-append" data-bind="visible: !_.isUndefined($data['profile.fan_speed']())">
-                              <label class="control-label">Min speed</label>
-                              <div class="controls">
-                                  <input data-bind="numericValue: $data['profile.fan_speed']" type="number" min="0" max="100" step="1"></input>
-                                  <span class="add-on">%</span>
-                              </div>
-                          </div>
+                          {{ slicer_number("fan_full_height", "Full fan on height", "Full at height", 0, 2000, 0.1, "mm") }}
+                          {{ slicer_number("fan_speed_max", "Maximum fan speed", "Max speed", 0, 100, 1, "%") }}
+                          {{ slicer_number("fan_speed", "Minimum fan speed", "Min speed", 0, 100, 1, "%") }}
                       </div>
                       {{ slicer_number("extrusion_multiplier", "Extrusion Multiplier", "Flow Multiplier", 0, 2, 0.001) }}
                       {{ slicer_checkbox("cooling", "Enable auto cooling", "Cooling") }}
