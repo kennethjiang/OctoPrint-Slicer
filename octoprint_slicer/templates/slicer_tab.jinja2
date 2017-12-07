@@ -50,7 +50,11 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
 {%- macro slicer_number(setting, title, label, min, max, step, add_on) -%}
   {% call slicer_setting(setting, title, label) -%}
                           <div class="controls">
-                              <input data-bind="numericValue: $data['profile.{{ setting }}']" type="number" min="{{ min }}" max="{{ max }}" step="{{ step }}"></input>
+                              <input data-bind="numericValue: $data['profile.{{ setting }}']" type="number"
+                                     {%- if min is defined %} min="{{ min }}"{% endif -%}
+                                     {%- if max is defined %} max="{{ max }}"{% endif -%}
+                                     {%- if step is defined %} step="{{ step }}">{% endif -%}
+                              </input>
                               {%- if add_on %}
                               <span class="add-on">{{ add_on }}</span>
                               {%- endif %}
@@ -211,35 +215,12 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
                               <span class="add-on">loops</span>
                           </div>
                       </div>
-                      <div title="Skirt length (mininum)" class="input-append" data-bind="visible: !_.isUndefined($data['profile.min_skirt_length']())">
-                          <label class="control-label">Skirt length (min)</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.min_skirt_length']" type="number" min="0" step="0.1"></input>
-                              <span class="add-on">mm</span>
-                          </div>
-                      </div>
+                      {{ slicer_number("min_skirt_length", "Skirt length (mininum)", "Skirt length (min)", min="0", step="0.1", add_on="mm") }}
                   </div>
                   <div class="span3">
-                      <div title="Platform adhesion type" class="input-append" data-bind="visible: !_.isUndefined($data['profile.platform_adhesion']())">
-                          <label class="control-label">Adhesion</label>
-                          <div class="controls">
-                            <select data-bind="options: $data.optionsForKey('platform_adhesion'), value: $data['profile.platform_adhesion'], valueAllowUnset: true"></select>
-                          </div>
-                      </div>
-                      <div title="Filament Diameter" class="input-append" data-bind="visible: !_.isUndefined($data['profile.filament_diameter']())">
-                          <label class="control-label">Filament</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.filament_diameter']" type="number" min="0" max="100" step="0.01"></input>
-                              <span class="add-on">mm</span>
-                          </div>
-                      </div>
-                      <div title="Filament Flow" class="input-append" data-bind="visible: !_.isUndefined($data['profile.filament_flow']())">
-                          <label class="control-label">Filament Flow</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.filament_flow']" type="number" min="0" max="200" step="0.1"></input>
-                              <span class="add-on">%</span>
-                          </div>
-                      </div>
+                      {{ slicer_select("platform_adhesion", "Platform adhesion type", "Adhesion") }}
+                      {{ slicer_number("filament_diameter", "Filament Diameter", "Filament", 0, 100, 0.01, "mm") }}
+                      {{ slicer_number("filament_flow", "Filament Flow", "Filament Flow", 0, 200, 0.1, "%") }}
                       {{ slicer_checkbox("fan_enabled", "Enable cooling fan", "Cooling fan") }}
                       <div data-bind="visible: $data['profile.fan_enabled']">
                           {{ slicer_number("fan_full_height", "Full fan on height", "Full at height", 0, 2000, 0.1, "mm") }}
