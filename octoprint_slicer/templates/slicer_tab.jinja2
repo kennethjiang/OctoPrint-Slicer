@@ -271,6 +271,12 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
                             <select data-bind="options: $data.optionsForKey('platform_adhesion'), value: $data['profile.platform_adhesion'], valueAllowUnset: true"></select>
                           </div>
                       </div>
+                      <div title="Brim line count" class="input-append" data-bind="visible: !_.isUndefined($data['profile.brim_line_count']()) && $data['profile.platform_adhesion']() == 'brim'">
+                          <label class="control-label">Brim line count</label>
+                          <div class="controls">
+                            <input data-bind="numericValue: $data['profile.brim_line_count']" type="number" min="0" step="1"></input>
+                          </div>
+                      </div>
                       <div title="Filament Diameter" class="input-append" data-bind="visible: !_.isUndefined($data['profile.filament_diameter']())">
                           <label class="control-label">Filament</label>
                           <div class="controls">
