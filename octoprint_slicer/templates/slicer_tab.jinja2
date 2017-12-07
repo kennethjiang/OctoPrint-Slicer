@@ -43,6 +43,15 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
                           </div>
                       </div>
 {%- endmacro %}
+{%- macro slicer_number(setting, title, label, min, max, step, add_on) -%}
+                      <div title="{{ title }}" class="input-append" data-bind="visible: !_.isUndefined($data['profile.{{ setting }}']())">
+                          <label class="control-label">{{ label }}</label>
+                          <div class="controls">
+                              <input data-bind="numericValue: $data['profile.{{ setting }}']" type="number" min="{{ min }}" max="{{ max }}" step="{{ step }}"></input>
+                              <span class="add-on">{{ add_on }}</span>
+                          </div>
+                      </div>
+{%- endmacro %}
 <div class="tab-content">
   <div id="general" class="tab-pane fade in active">
     <div id="slicing-settings">
@@ -152,13 +161,7 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
                               <span class="add-on">mm/s</span>
                           </div>
                       </div>
-                      <div title="Top and bottom thickness" class="input-append" class="input-append" data-bind="visible: !_.isUndefined($data['profile.solid_layer_thickness']())">
-                          <label class="control-label">Top/bottom</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.solid_layer_thickness']" type="number" min="0.1" max="2" step="0.05"></input>
-                              <span class="add-on">mm</span>
-                          </div>
-                      </div>
+                      {{ slicer_number("solid_layer_thickness", "Top and bottom thickness", "Top/bottom", 0.1, 2, 0.05, "mm") }}
                       {{ slicer_select("support", "Support for overhangs", "Support") }}
                       {{ slicer_checkbox("support_material", "Generate support material", "Supports") }}
                       {{ slicer_checkbox("overhangs", "Detect Bridging Perimeters (recommended when using supports)", "Detect overhangs") }}
