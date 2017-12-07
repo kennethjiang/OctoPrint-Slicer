@@ -51,7 +51,9 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
   {% call slicer_setting(setting, title, label) -%}
                           <div class="controls">
                               <input data-bind="numericValue: $data['profile.{{ setting }}']" type="number" min="{{ min }}" max="{{ max }}" step="{{ step }}"></input>
+                              {%- if add_on %}
                               <span class="add-on">{{ add_on }}</span>
+                              {%- endif %}
                           </div>
   {%- endcall %}
 {%- endmacro %}
@@ -130,13 +132,7 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
           <form class="form-horizontal">
               <div class="row">
                   <div class="span3">
-                      <div title="Travel speed while not printing" class="input-append" data-bind="visible: !_.isUndefined($data['profile.travel_speed']())">
-                          <label class="control-label">Travel speed</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.travel_speed']" type="number" min="0" max="300" step="1"></input>
-                              <span class="add-on">mm/s</span>
-                          </div>
-                      </div>
+                      {{ slicer_number("travel_speed", "Travel speed while not printing", "Travel speed", 0, 300, 1, "mm/s") }}
                       <div title="Speed while printing infill" class="input-append" data-bind="visible: !_.isUndefined($data['profile.infill_speed']())">
                           <label class="control-label">Infill speed</label>
                           <div class="controls">
@@ -273,24 +269,9 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
                               </div>
                           </div>
                       </div>
-                      <div title="Extrusion Multiplier" class="input-append" data-bind="visible: !_.isUndefined($data['profile.extrusion_multiplier']())">
-                          <label class="control-label">Flow Multiplier</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.extrusion_multiplier']" type="number" min="0" max="2" step="0.001"></input>
-                          </div>
-                      </div>
-                      <div title="Enable auto cooling" class="input-append" data-bind="visible: !_.isUndefined($data['profile.cooling']())">
-                          <label class="control-label">Cooling</label>
-                          <div class="controls checkbox">
-                              <input type="checkbox" data-bind="checked: $data['profile.cooling']"></input>
-                          </div>
-                      </div>
-                      <div title="Keep fan always on" class="input-append" data-bind="visible: !_.isUndefined($data['profile.fan_always_on']())">
-                          <label class="control-label">Fan always on</label>
-                          <div class="controls checkbox">
-                              <input type="checkbox" data-bind="checked: $data['profile.fan_always_on']"></input>
-                          </div>
-                      </div>
+                      {{ slicer_number("extrusion_multiplier", "Extrusion Multiplier", "Flow Multiplier", 0, 2, 0.001) }}
+                      {{ slicer_checkbox("cooling", "Enable auto cooling", "Cooling") }}
+                      {{ slicer_checkbox("fan_always_on", "Keep fan always on", "Fan always on") }}
                   </div>
               </div>
           </form>
