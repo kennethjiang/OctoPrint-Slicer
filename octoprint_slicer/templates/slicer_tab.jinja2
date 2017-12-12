@@ -27,6 +27,39 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
   <canvas id="slicer-canvas"></canvas>
 </ul>
 </div>
+{%- macro slicer_setting(setting, title, label, callback) -%}
+  <div title="{{ title }}" class="input-append" data-bind="visible: !_.isUndefined($data['profile.{{ setting }}']())">
+    <label class="control-label">{{ label }}</label>
+    {{ caller() }}
+  </div>
+{%- endmacro %}
+{%- macro slicer_checkbox(setting, title, label) -%}
+  {% call slicer_setting(setting, title, label) -%}
+    <div class="controls checkbox">
+      <input type="checkbox" data-bind="checked: $data['profile.{{ setting }}']"></input>
+    </div>
+  {%- endcall %}
+{%- endmacro %}
+{%- macro slicer_select(setting, title, label) -%}
+  {% call slicer_setting(setting, title, label) -%}
+    <div class="controls">
+      <select data-bind="options: $data.optionsForKey('{{ setting }}'), value: $data['profile.{{ setting }}'], valueAllowUnset: true"></select>
+    </div>
+  {%- endcall %}
+{%- endmacro %}
+{%- macro slicer_number(setting, title, label, min, max, step, add_on) -%}
+  {% call slicer_setting(setting, title, label) -%}
+    <div class="controls">
+      <input data-bind="numericValue: $data['profile.{{ setting }}']" type="number"
+             {%- if min is defined %} min="{{ min }}"{% endif -%}
+             {%- if max is defined %} max="{{ max }}"{% endif -%}
+             {%- if step is defined %} step="{{ step }}">{% endif -%}</input>
+             {%- if add_on %}
+               <span class="add-on">{{ add_on }}</span>
+             {%- endif %}
+    </div>
+  {%- endcall %}
+{%- endmacro %}
 <div class="tab-content">
   <div id="general" class="tab-pane fade in active">
     <div id="slicing-settings">
@@ -78,95 +111,21 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
           <form class="form-horizontal">
               <div class="row">
                   <div class="span3">
-                      <div title="Temperature" class="input-append" data-bind="visible: !_.isUndefined($data['profile.temperature']())">
-                          <label class="control-label">Temperature</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.temperature']" type="number" min="150" max="315" step="1"></input>
-                              <span class="add-on">°C</span>
-                          </div>
-                      </div>
-                      <div title="Print temperature" class="input-append" data-bind="visible: !_.isUndefined($data['profile.print_temperature']())">
-                          <label class="control-label">Print temperature</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.print_temperature']" type="number" min="150" max="315" step="1"></input>
-                              <span class="add-on">°C</span>
-                          </div>
-                      </div>
-                      <div title="Print Bed temperature" class="input-append" data-bind="visible: !_.isUndefined($data['profile.print_bed_temperature']())">
-                          <label class="control-label">Print bed temperature</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.print_bed_temperature']" type="number" min="0" max="110" step="1"></input>
-                              <span class="add-on">°C</span>
-                          </div>
-                      </div>
-                      <div title="Bed temperature" class="input-append" data-bind="visible: !_.isUndefined($data['profile.bed_temperature']())">
-                          <label class="control-label">Bed temperature</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.bed_temperature']" type="number" min="0" max="110" step="1"></input>
-                              <span class="add-on">°C</span>
-                          </div>
-                      </div>
-                      <div title="Height of each layer" class="input-append" data-bind="visible: !_.isUndefined($data['profile.layer_height']())">
-                          <label class="control-label">Layer height</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.layer_height']" type="number" min="0.01" max="0.35" step="0.01"></input>
-                              <span class="add-on">mm</span>
-                          </div>
-                      </div>
-                      <div title="Percentage of the model that is filled in" class="input-append" data-bind="visible: !_.isUndefined($data['profile.fill_density']())">
-                          <label class="control-label">Fill density</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.fill_density']" type="number" min="0" max="100" step="1"></input>
-                              <span class="add-on">%</span>
-                          </div>
-                      </div>
+                      {{ slicer_number("temperature", "Temperature", "Temperature", 150, 315, 1, "°C") }}
+                      {{ slicer_number("print_temperature", "Print temperature", "Print temperature", 150, 315, 1, "°C") }}
+                      {{ slicer_number("print_bed_temperature", "Print Bed temperature", "Print bed temperature", 0, 110, 1, "°C") }}
+                      {{ slicer_number("bed_temperature", "Bed temperature", "Bed temperature", 0, 110, 1, "°C") }}
+                      {{ slicer_number("layer_height", "Height of each layer", "Layer height", 0.01, 0.35, 0.01, "mm") }}
+                      {{ slicer_number("fill_density", "Percentage of the model that is filled in", "Fill density", 0, 100, 1, "%") }}
                   </div>
                   <div class="span3">
-                      <div title="Shell thickness" class="input-append" data-bind="visible: !_.isUndefined($data['profile.wall_thickness']())">
-                          <label class="control-label">Shell thickness</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.wall_thickness']" type="number" min="0.1" max="2" step="0.05"></input>
-                              <span class="add-on">mm</span>
-                          </div>
-                      </div>
-                      <div title="Speed of the extruder's movements while printing" class="input-append" data-bind="visible: !_.isUndefined($data['profile.print_speed']())">
-                          <label class="control-label">Print speed</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.print_speed']" type="number" min="2" max="150" step="0.1"></input>
-                              <span class="add-on">mm/s</span>
-                          </div>
-                      </div>
-                      <div title="Top and bottom thickness" class="input-append" class="input-append" data-bind="visible: !_.isUndefined($data['profile.solid_layer_thickness']())">
-                          <label class="control-label">Top/bottom</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.solid_layer_thickness']" type="number" min="0.1" max="2" step="0.05"></input>
-                              <span class="add-on">mm</span>
-                          </div>
-                      </div>
-                      <div title="Support for overhangs" class="input-append" data-bind="visible: !_.isUndefined($data['profile.support']())">
-                          <label class="control-label">Support</label>
-                          <div class="controls">
-                              <select data-bind="options: $data.optionsForKey('support'), value: $data['profile.support'], valueAllowUnset: true"></select>
-                          </div>
-                      </div>
-                      <div title="Generate support material" class="input-append" data-bind="visible: !_.isUndefined($data['profile.support_material']())">
-                          <label class="control-label">Supports</label>
-                          <div class="controls checkbox">
-                              <input type="checkbox" data-bind="checked: $data['profile.support_material']"></input>
-                          </div>
-                      </div>
-                      <div title="Detect Bridging Perimeters (recommended when using supports)" class="input-append" data-bind="visible: !_.isUndefined($data['profile.overhangs']())">
-                          <label class="control-label">Detect overhangs</label>
-                          <div class="controls checkbox">
-                              <input type="checkbox" data-bind="checked: $data['profile.overhangs']"></input>
-                          </div>
-                      </div>
-                      <div title="Spiral Vase (automatically adjusts fill, perimeters, top layers, etc)" class="input-append" data-bind="visible: !_.isUndefined($data['profile.spiral_vase']())">
-                          <label class="control-label">Spiral vase</label>
-                          <div class="controls checkbox">
-                              <input type="checkbox" data-bind="checked: $data['profile.spiral_vase']"></input>
-                          </div>
-                      </div>
+                      {{ slicer_number("wall_thickness", "Shell thickness", "Shell thickness", 0.1, 2, 0.05, "mm") }}
+                      {{ slicer_number("print_speed", "Speed of the extruder's movements while printing", "Print speed", 2, 150, 0.1, "mm/s") }}
+                      {{ slicer_number("solid_layer_thickness", "Top and bottom thickness", "Top/bottom", 0.1, 2, 0.05, "mm") }}
+                      {{ slicer_select("support", "Support for overhangs", "Support") }}
+                      {{ slicer_checkbox("support_material", "Generate support material", "Supports") }}
+                      {{ slicer_checkbox("overhangs", "Detect Bridging Perimeters (recommended when using supports)", "Detect overhangs") }}
+                      {{ slicer_checkbox("spiral_vase", "Spiral Vase (automatically adjusts fill, perimeters, top layers, etc)", "Spiral vase") }}
                   </div>
               </div>
           </form>
@@ -177,173 +136,38 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
           <form class="form-horizontal">
               <div class="row">
                   <div class="span3">
-                      <div title="Travel speed while not printing" class="input-append" data-bind="visible: !_.isUndefined($data['profile.travel_speed']())">
-                          <label class="control-label">Travel speed</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.travel_speed']" type="number" min="0" max="300" step="1"></input>
-                              <span class="add-on">mm/s</span>
-                          </div>
-                      </div>
-                      <div title="Speed while printing infill" class="input-append" data-bind="visible: !_.isUndefined($data['profile.infill_speed']())">
-                          <label class="control-label">Infill speed</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.infill_speed']" type="number" min="0" max="300" step="1"></input>
-                              <span class="add-on">mm/s</span>
-                          </div>
-                      </div>
-                      <div title="Speed while printing outer shell" class="input-append" data-bind="visible: !_.isUndefined($data['profile.outer_shell_speed']())">
-                          <label class="control-label">Outer shell speed</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.outer_shell_speed']" type="number" min="0" max="300" step="1"></input>
-                              <span class="add-on">mm/s</span>
-                          </div>
-                      </div>
-                      <div title="Speed while printing inner shell" class="input-append" data-bind="visible: !_.isUndefined($data['profile.inner_shell_speed']())">
-                          <label class="control-label">Inner shell speed</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.inner_shell_speed']" type="number" min="0" max="300" step="1"></input>
-                              <span class="add-on">mm/s</span>
-                          </div>
-                      </div>
-                      <div title="Speed while printing Bottom layer" class="input-append" data-bind="visible: !_.isUndefined($data['profile.bottom_layer_speed']())">
-                          <label class="control-label">Bottom layer speed</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.bottom_layer_speed']" type="number" min="0" max="300" step="1"></input>
-                              <span class="add-on">mm/s</span>
-                          </div>
-                      </div>
-                      <div title="Enable filament retraction" class="input-append" data-bind="visible: !_.isUndefined($data['profile.retraction_enable']())">
-                          <label class="control-label">Retraction</label>
-                          <div class="controls checkbox">
-                              <input type="checkbox" data-bind="checked: $data['profile.retraction_enable']"></input>
-                          </div>
-                      </div>
+                      {{ slicer_number("travel_speed", "Travel speed while not printing", "Travel speed", 0, 300, 1, "mm/s") }}
+                      {{ slicer_number("infill_speed", "Speed while printing infill", "Infill speed", 0, 300, 1, "mm/s") }}
+                      {{ slicer_number("outer_shell_speed", "Speed while printing outer shell", "Outer shell speed", 0, 300, 1, "mm/s") }}
+                      {{ slicer_number("inner_shell_speed", "Speed while printing inner shell", "Inner shell speed", 0, 300, 1, "mm/s") }}
+                      {{ slicer_number("bottom_layer_speed", "Speed while printing Bottom layer", "Bottom layer speed", 0, 300, 1, "mm/s") }}
+                      {{ slicer_checkbox("retraction_enable", "Enable filament retraction", "Retraction") }}
                       <div data-bind="visible: $data['profile.retraction_enable']">
-                          <div title="Filament retraction speed" class="input-append" data-bind="visible: !_.isUndefined($data['profile.retraction_enable']())">
-                              <label class="control-label">Retraction speed</label>
-                              <div class="controls">
-                                  <input data-bind="numericValue: $data['profile.retraction_speed']" type="number" min="0" max="300" step="1"></input>
-                                  <span class="add-on">mm/s</span>
-                              </div>
-                          </div>
-                          <div title="Filament retraction distance" class="input-append" data-bind="visible: !_.isUndefined($data['profile.retraction_enable']())">
-                              <label class="control-label">Retraction distance</label>
-                              <div class="controls">
-                                  <input data-bind="numericValue: $data['profile.retraction_amount']" type="number" min="0" max="30" step="0.1"></input>
-                                  <span class="add-on">mm</span>
-                              </div>
-                          </div>
+                          {{ slicer_number("retraction_speed", "Filament retraction speed", "Retraction speed", 0, 300, 1, "mm/s") }}
+                          {{ slicer_number("retraction_amount", "Filament retraction distance", "Retraction distance", 0, 30, 0.1, "mm") }}
                       </div>
-                      <div title="First layer temperature" class="input-append" data-bind="visible: !_.isUndefined($data['profile.first_layer_temperature']())">
-                          <label class="control-label">1st layer temperature</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.first_layer_temperature']" type="number" min="0" max="315" step="1"></input>
-                              <span class="add-on">°C</span>
-                          </div>
-                      </div>
-                      <div title="First layer bed temperature" class="input-append" data-bind="visible: !_.isUndefined($data['profile.first_layer_bed_temperature']())">
-                          <label class="control-label">1st layer bed temperature</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.first_layer_bed_temperature']" type="number" min="0" max="110" step="1"></input>
-                              <span class="add-on">°C</span>
-                          </div>
-                      </div>
-                      <div title="Brim width" class="input-append" data-bind="visible: !_.isUndefined($data['profile.brim_width']())">
-                          <label class="control-label">Brim width</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.brim_width']" type="number" min="0" max="30" step="0.1"></input>
-                              <span class="add-on">mm</span>
-                          </div>
-                      </div>
-                      <div title="Skirt (mininum)" class="input-append" data-bind="visible: !_.isUndefined($data['profile.skirts']())">
-                          <label class="control-label">Skirt (min)</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.skirts']" type="number" min="0" max="100" step="1"></input>
-                              <span class="add-on">loops</span>
-                          </div>
-                      </div>
-                      <div title="Skirt length (mininum)" class="input-append" data-bind="visible: !_.isUndefined($data['profile.min_skirt_length']())">
-                          <label class="control-label">Skirt length (min)</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.min_skirt_length']" type="number" min="0" step="0.1"></input>
-                              <span class="add-on">mm</span>
-                          </div>
-                      </div>
+                      {{ slicer_number("first_layer_temperature", "First layer temperature", "1st layer temperature", 0, 315, 1, "°C") }}
+                      {{ slicer_number("first_layer_bed_temperature", "First layer bed temperature", "1st layer bed temperature", 0, 110, 1, "°C") }}
+                      {{ slicer_number("brim_width", "Brim width", "Brim width", 0, 30, 0.1, "mm") }}
+                      {{ slicer_number("skirts", "Skirt (mininum)", "Skirt (min)", 0, 100, 1, "loops") }}
+                      {{ slicer_number("min_skirt_length", "Skirt length (mininum)", "Skirt length (min)", min="0", step="0.1", add_on="mm") }}
                   </div>
                   <div class="span3">
-                      <div title="Platform adhesion type" class="input-append" data-bind="visible: !_.isUndefined($data['profile.platform_adhesion']())">
-                          <label class="control-label">Adhesion</label>
-                          <div class="controls">
-                            <select data-bind="options: $data.optionsForKey('platform_adhesion'), value: $data['profile.platform_adhesion'], valueAllowUnset: true"></select>
-                          </div>
+                      {{ slicer_select("platform_adhesion", "Platform adhesion type", "Adhesion") }}
+                      <div data-bind="visible: !_.isUndefined($data['profile.brim_line_count']()) && $data['profile.platform_adhesion']() == 'brim'">
+                        {{ slicer_number("brim_line_count", "Brim line count", "Brim line count", min=0, step=1) }}
                       </div>
-                      <div title="Brim line count" class="input-append" data-bind="visible: !_.isUndefined($data['profile.brim_line_count']()) && $data['profile.platform_adhesion']() == 'brim'">
-                          <label class="control-label">Brim line count</label>
-                          <div class="controls">
-                            <input data-bind="numericValue: $data['profile.brim_line_count']" type="number" min="0" step="1"></input>
-                          </div>
-                      </div>
-                      <div title="Filament Diameter" class="input-append" data-bind="visible: !_.isUndefined($data['profile.filament_diameter']())">
-                          <label class="control-label">Filament</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.filament_diameter']" type="number" min="0" max="100" step="0.01"></input>
-                              <span class="add-on">mm</span>
-                          </div>
-                      </div>
-                      <div title="Filament Flow" class="input-append" data-bind="visible: !_.isUndefined($data['profile.filament_flow']())">
-                          <label class="control-label">Filament Flow</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.filament_flow']" type="number" min="0" max="200" step="0.1"></input>
-                              <span class="add-on">%</span>
-                          </div>
-                      </div>
-                      <div title="Enable cooling fan" class="input-append" data-bind="visible: !_.isUndefined($data['profile.fan_enabled']())">
-                          <label class="control-label">Cooling fan</label>
-                          <div class="controls checkbox">
-                              <input type="checkbox" data-bind="checked: $data['profile.fan_enabled']"></input>
-                          </div>
-                      </div>
+                      {{ slicer_number("filament_diameter", "Filament Diameter", "Filament", 0, 100, 0.01, "mm") }}
+                      {{ slicer_number("filament_flow", "Filament Flow", "Filament Flow", 0, 200, 0.1, "%") }}
+                      {{ slicer_checkbox("fan_enabled", "Enable cooling fan", "Cooling fan") }}
                       <div data-bind="visible: $data['profile.fan_enabled']">
-                          <div title="Full fan on height" class="input-append" data-bind="visible: !_.isUndefined($data['profile.fan_full_height']())">
-                              <label class="control-label">Full at height</label>
-                              <div class="controls">
-                                  <input data-bind="numericValue: $data['profile.fan_full_height']" type="number" min="0" max="2000" step="0.1"></input>
-                                  <span class="add-on">mm</span>
-                              </div>
-                          </div>
-                          <div title="Maximum fan speed" class="input-append" data-bind="visible: !_.isUndefined($data['profile.fan_speed_max']())">
-                              <label class="control-label">Max speed</label>
-                              <div class="controls">
-                                  <input data-bind="numericValue: $data['profile.fan_speed_max']" type="number" min="0" max="100" step="1"></input>
-                                  <span class="add-on">%</span>
-                              </div>
-                          </div>
-                          <div title="Minimum fan speed" class="input-append" data-bind="visible: !_.isUndefined($data['profile.fan_speed']())">
-                              <label class="control-label">Min speed</label>
-                              <div class="controls">
-                                  <input data-bind="numericValue: $data['profile.fan_speed']" type="number" min="0" max="100" step="1"></input>
-                                  <span class="add-on">%</span>
-                              </div>
-                          </div>
+                          {{ slicer_number("fan_full_height", "Full fan on height", "Full at height", 0, 2000, 0.1, "mm") }}
+                          {{ slicer_number("fan_speed_max", "Maximum fan speed", "Max speed", 0, 100, 1, "%") }}
+                          {{ slicer_number("fan_speed", "Minimum fan speed", "Min speed", 0, 100, 1, "%") }}
                       </div>
-                      <div title="Extrusion Multiplier" class="input-append" data-bind="visible: !_.isUndefined($data['profile.extrusion_multiplier']())">
-                          <label class="control-label">Flow Multiplier</label>
-                          <div class="controls">
-                              <input data-bind="numericValue: $data['profile.extrusion_multiplier']" type="number" min="0" max="2" step="0.001"></input>
-                          </div>
-                      </div>
-                      <div title="Enable auto cooling" class="input-append" data-bind="visible: !_.isUndefined($data['profile.cooling']())">
-                          <label class="control-label">Cooling</label>
-                          <div class="controls checkbox">
-                              <input type="checkbox" data-bind="checked: $data['profile.cooling']"></input>
-                          </div>
-                      </div>
-                      <div title="Keep fan always on" class="input-append" data-bind="visible: !_.isUndefined($data['profile.fan_always_on']())">
-                          <label class="control-label">Fan always on</label>
-                          <div class="controls checkbox">
-                              <input type="checkbox" data-bind="checked: $data['profile.fan_always_on']"></input>
-                          </div>
-                      </div>
+                      {{ slicer_number("extrusion_multiplier", "Extrusion Multiplier", "Flow Multiplier", 0, 2, 0.001) }}
+                      {{ slicer_checkbox("cooling", "Enable auto cooling", "Cooling") }}
+                      {{ slicer_checkbox("fan_always_on", "Keep fan always on", "Fan always on") }}
                   </div>
               </div>
           </form>
