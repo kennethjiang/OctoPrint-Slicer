@@ -71,8 +71,29 @@ export function OverridesViewModel(parameters, array_keys, enum_keys, item_keys,
             "retraction_enable",
             "fan_enabled",
             "cooling",
-            "fan_always_on"
+            "fan_always_on",
+            "spiral_vase",
         ];
+
+    // Some options, depending on their setting, can force other
+    // options.  Overrides happen last so include any trailing "%" if
+    // needed.
+    const FORCED_SETTINGS = new Map([
+        // If spiral_vase...
+        ["spiral_vase", new Map([
+            // ... is set to 1 ...
+            [1,
+             // Override all of the following.
+             new Map([["ensure_vertical_shell_thickness", 0],
+                      ["fill_density", "0%"],
+                      ["perimeters", 1],
+                      ["top_solid_layers", 0],
+                      ["support_material", 0],
+                     ])
+            ]
+        ])]
+    ]);
+
     var ALL_KEYS = BOOLEAN_KEYS.concat(ITEM_KEYS).concat(ARRAY_KEYS).concat(Object.keys(ENUM_KEYS));
 
     // initialize all observables
@@ -221,6 +242,25 @@ export function OverridesViewModel(parameters, array_keys, enum_keys, item_keys,
             _.forEach(['profile.end_gcode', 'profile.start_gcode'], function(key) {
                 result[key] = result[key].replace(/\n/g, '\\n');
             });
+        }
+
+        // Do all the overrides.  If there are conflicting overrides,
+        // it's going to behave surprisingly.
+        for (let key of FORCED_SETTINGS.keys()) {
+            let profile_key = "profile." + key;
+            if (result.hasOwnProperty(profile_key)) {
+                // This key is in our overrides.
+                for (let value of FORCED_SETTINGS.get(key).keys()) {
+                    if (result[profile_key] == value) {
+                        // This value causes overriding.
+                        let overrides = FORCED_SETTINGS.get(key).get(value);
+                        for (let [overrideKey, overrideValue] of overrides.entries()) {
+                            let profile_overrideKey = "profile." + overrideKey;
+                            result[profile_overrideKey] = overrideValue;
+                        }
+                    }
+                }
+            }
         }
 
         return result;
