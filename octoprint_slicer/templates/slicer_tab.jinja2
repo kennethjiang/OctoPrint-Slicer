@@ -125,13 +125,8 @@ mixpanel.init("ade6b64c4db77172707571c1f9cfcebe");</script><!-- end Mixpanel -->
                       {{ slicer_select("support", "Support for overhangs", "Support") }}
                       {{ slicer_checkbox("support_material", "Generate support material", "Supports") }}
                       {{ slicer_checkbox("overhangs", "Detect Bridging Perimeters (recommended when using supports)", "Detect overhangs") }}
+                      {{ slicer_checkbox("spiral_vase", "Spiral Vase (automatically adjusts fill, perimeters, top layers, etc)", "Spiral vase") }}
                   </div>
-                      <div title="Spiral Vase (automatically adjusts fill, perimeters, top layers, etc)" class="input-append" data-bind="visible: !_.isUndefined($data['profile.spiral_vase']())">
-                          <label class="control-label">Spiral vase</label>
-                          <div class="controls checkbox">
-                              <input type="checkbox" data-bind="checked: $data['profile.spiral_vase']"></input>
-                          </div>
-                      </div>
               </div>
           </form>
       </div>
