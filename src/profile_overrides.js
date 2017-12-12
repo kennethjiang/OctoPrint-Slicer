@@ -230,9 +230,9 @@ export function OverridesViewModel(parameters, array_keys, enum_keys, item_keys,
             }
         }
 
-        _.forEach(result, function(k) {
+        _.forEach(result, function(v, k) {
             // If the value is undefined, must not be valid for this slicer.
-            if (result[k] === undefined) {
+            if (k.startsWith("profile.") && result[k] === undefined) {
                 delete result[k];
             }
         });
