@@ -367,7 +367,8 @@ function SlicerViewModel(parameters) {
             contentType: "application/json; charset=UTF-8",
             data: JSON.stringify(data),
             error: function(jqXHR, textStatus) {
-                new PNotify({title: "Slicing failed", text: textStatus, type: "error", hide: false});
+                new PNotify({title: "Slicing failed", text: jqXHR.responseText, type: "error", hide: false});
+                self.slicing(false);
             }
         });
     };
@@ -405,7 +406,7 @@ function SlicerViewModel(parameters) {
                 self.sendSliceRequest(target, tempFilename, sliceRequestData);
             },
             error: function(jqXHR, textStatus) {
-                new PNotify({title: "Slicing failed", text: textStatus, type: "error", hide: false});
+                new PNotify({title: "Slicing failed", text: jqXHR.responseText, type: "error", hide: false});
                 self.slicing(false);
             }
         });
