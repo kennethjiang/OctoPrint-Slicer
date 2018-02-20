@@ -9,11 +9,11 @@
     "dev": "rollup -c -w --environment DEBUG"
   },
   "dependencies": {
-    "3tk": "=0.4.4",
+    "3tk": "=0.4.5",
     "babel-polyfill": "^6.23.0",
     "bin-packing-es": "0.0.3",
     "lodash-es": "^4.17.4",
-    "three": "^0.84.0"
+    "three": "^0.90.0"
   },
   "devDependencies": {
     "babel-cli": "^6.24.0",
