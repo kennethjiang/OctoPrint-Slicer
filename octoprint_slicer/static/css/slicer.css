@@ -154,8 +154,18 @@
 }
 
 #slicer-viewport > div.values > div > p.checkbox {
-    margin: 5px 33px;
+    margin: 5px 12px 0px 33px;
 }
+
+#slicer-viewport > .values p.checkbox > label {
+    display: inline-block;
+    margin-bottom: 0px;
+}
+
+#slicer-viewport > .values p.checkbox > label:first-child {
+    margin-right: 35px;
+}
+
 
 #slicer-viewport > div.values > div > p > input {
     width: 75px;
