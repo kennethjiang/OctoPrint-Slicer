@@ -188,8 +188,8 @@ function SlicerViewModel(parameters) {
                         <p><span class="axis x">X</span><input type="number" step="0.001" name="x" min="0.001"><span class="size x" ></span></p>\
                         <p><span class="axis y">Y</span><input type="number" step="0.001" name="y" min="0.001"><span class="size y" ></span></p>\
                         <p><span class="axis z">Z</span><input type="number" step="0.001" name="z" min="0.001"><span class="size z" ></span></p>\
-                        <p class="checkbox"><label><input type="checkbox" checked>Lock</label></p>\
-                        <p class="checkbox"><label><input type="checkbox" checked>Mirror X</label><label><input type="checkbox" checked>Mirror Y</label></p>\
+                        <p class="checkbox"><label><input id="lock-scale" type="checkbox" checked>Lock</label></p>\
+                        <p class="checkbox"><label><input id="mirror-x" type="checkbox">Mirror X</label><label><input id="mirror-y" type="checkbox">Mirror Y</label></p>\
                         <span></span>\
                     </div>\
                </div>\
@@ -271,8 +271,12 @@ function SlicerViewModel(parameters) {
             applyValueInputs($(this));
         });
 
-        $("#slicer-viewport .values input[type='checkbox']").change( function() {
-            applyValueInputs($(this));
+        $("#slicer-viewport .values input#lock-scale").change( function(event) {
+            self.lockScale = event.target.checked;
+        });
+
+        $("#slicer-viewport .values input[id^=mirror]").change( function(event) {
+            applyMirrorScale(event.target);
         });
 
         $("#slicer-viewport .values a.close").click(function() {
@@ -612,6 +616,28 @@ function SlicerViewModel(parameters) {
         }
     }
 
+    function updateMirrorCheckboxes() {
+        var model = self.stlViewPort.selectedModel();
+        $("#slicer-viewport .scale.values input#mirror-x").prop('checked', model.scale.x < 0);
+        $("#slicer-viewport .scale.values input#mirror-y").prop('checked',model.scale.y < 0);
+    }
+
+    function updateValueInputs() {
+        var model = self.stlViewPort.selectedModel();
+        if (model) {
+            $("#slicer-viewport .rotate.values input[name=\"x\"]").val((model.rotation.x * 180 / Math.PI).toFixed(1)).attr("min", '');
+            $("#slicer-viewport .rotate.values input[name=\"y\"]").val((model.rotation.y * 180 / Math.PI).toFixed(1)).attr("min", '');
+            $("#slicer-viewport .rotate.values input[name=\"z\"]").val((model.rotation.z * 180 / Math.PI).toFixed(1)).attr("min", '');
+            $("#slicer-viewport .scale.values input[name=\"x\"]").val(model.scale.x.toFixed(3)).attr("min", '');
+            $("#slicer-viewport .scale.values input[name=\"y\"]").val(model.scale.y.toFixed(3)).attr("min", '');
+            $("#slicer-viewport .scale.values input[name=\"z\"]").val(model.scale.z.toFixed(3)).attr("min", '');
+            $("#slicer-viewport .scale.values input#lock-scale").prop('checked', self.lockScale);
+
+            updateSizeInfo();
+            updateMirrorCheckboxes();
+        }
+    }
+
     function updateControlState() {
         $('#tab_plugin_slicer > div.translucent-blocker').hide();
         if (!self.stlViewPort.selectedModel()) {
@@ -634,10 +660,7 @@ function SlicerViewModel(parameters) {
     }
 
     function applyValueInputs(input) {
-        if(input[0].type == "checkbox") {
-            self.lockScale = input[0].checked;
-        }
-        else if(input[0].type == "number" && !isNaN(parseFloat(input.val()))) {
+        if(input[0].type == "number" && !isNaN(parseFloat(input.val()))) {
 
             var model = self.stlViewPort.selectedModel();
             if (model === undefined) return;
@@ -661,24 +684,26 @@ function SlicerViewModel(parameters) {
 
             self.fixZPosition(model);
             updateSizeInfo();
+            updateMirrorCheckboxes();
             self.stlViewPort.recalculateOverhang(model);
         }
     }
 
-    function updateValueInputs() {
+    function applyMirrorScale(mirrorCheckbox) {
         var model = self.stlViewPort.selectedModel();
-        if (model) {
-            $("#slicer-viewport .rotate.values input[name=\"x\"]").val((model.rotation.x * 180 / Math.PI).toFixed(1)).attr("min", '');
-            $("#slicer-viewport .rotate.values input[name=\"y\"]").val((model.rotation.y * 180 / Math.PI).toFixed(1)).attr("min", '');
-            $("#slicer-viewport .rotate.values input[name=\"z\"]").val((model.rotation.z * 180 / Math.PI).toFixed(1)).attr("min", '');
-            $("#slicer-viewport .scale.values input[name=\"x\"]").val(model.scale.x.toFixed(3)).attr("min", '');
-            $("#slicer-viewport .scale.values input[name=\"y\"]").val(model.scale.y.toFixed(3)).attr("min", '');
-            $("#slicer-viewport .scale.values input[name=\"z\"]").val(model.scale.z.toFixed(3)).attr("min", '');
-            $("#slicer-viewport .scale.values input[type=\"checkbox\"]").checked = self.lockScale;
-
-            updateSizeInfo();
+        if (mirrorCheckbox.id == "mirror-x") {
+            model.scale.x = -1 * model.scale.x;
         }
+        if (mirrorCheckbox.id == "mirror-y") {
+            model.scale.y = -1 * model.scale.y;
+        }
+        if (mirrorCheckbox.checked) {
+            self.lockScale = false;
+        }
+
+        updateValueInputs();
     }
+
 }
 
 
