@@ -1,6 +1,6 @@
 version: '2'
 services:
-  octo_print:
+  slicer:
     build: .
     stdin_open: true
     tty: true

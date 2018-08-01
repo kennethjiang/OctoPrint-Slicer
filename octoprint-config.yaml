@@ -4,25 +4,38 @@ api:
   key: 0689A79DB939469ABB099A5294683556
 plugins:
   announcements:
+    _config_version: 1
     channels:
+      _blog:
+        read_until: 1529054100
       _important:
-        read_until: 1478614200
+        read_until: 1521111600
+      _octopi:
+        read_until: 1527588900
+      _plugins:
+        read_until: 1531785600
+      _releases:
+        read_until: 1532527200
   cura:
-    cura_engine: /usr/local/bin/cura_engine
+    cura_engine: /usr/bin/CuraEngine
   discovery:
     upnpUuid: e7f6ce9b-2ec8-4049-b753-8ed6c4917bc2
   slic3r:
     slic3r_engine: /Slic3r/slic3r.pl
   softwareupdate:
-    _config_version: 5
+    _config_version: 6
     check_providers:
       Slic3r: slic3r
       slicer: slicer
 server:
   firstRun: false
+  onlineCheck:
+    enabled: false
+  pluginBlacklist:
+    enabled: true
   secretKey: 63obWUi08Jqh7moNHLmn5ehT7MCY2tiZ
   seenWizards:
-    corewizard: null
+    corewizard: 3
     cura: null
     softwareupdate: null
 # Settings only relevant for development
