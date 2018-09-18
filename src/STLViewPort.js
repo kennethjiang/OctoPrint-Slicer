@@ -33,6 +33,7 @@ export function STLViewPort( canvas, width, height ) {
     self.canvas = canvas;
     self.canvasWidth = width;
     self.canvasHeight = height;
+    self.renderingPaused = true;
 
     self.effectController = {
         metalness: 0.5,
@@ -132,15 +133,25 @@ export function STLViewPort( canvas, width, height ) {
 
     }
 
+    self.pauseRendering = function() {
+        self.renderingPaused = true;
+    }
+
+    self.unpauseRendering = function() {
+        self.renderingPaused = false;
+    }
+
     self.animate = function() {
         requestAnimationFrame( self.animate );
 
-        self.update();
-        self.transformControls.update();
-        self.orbitControls.update();
-        if (self.stats) self.stats.update();
+        if (!self.renderingPaused) {
+            self.update();
+            self.transformControls.update();
+            self.orbitControls.update();
+            if (self.stats) self.stats.update();
 
-        self.render();
+            self.render();
+        }
     };
 
     self.update = function() {
