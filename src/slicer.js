@@ -574,6 +574,18 @@ function SlicerViewModel(parameters) {
             self.slicingViewModel.file().slice(pos)].join('');
     };
 
+    // Pause WebGL rendering when slicer tab is inactive
+    self.onTabChange = function (next, current) {
+        if (current === "#tab_plugin_slicer") {
+            self.stlViewPort.pauseRendering();
+        }
+    }
+    self.onAfterTabChange = function (current, previous) {
+        if (current === "#tab_plugin_slicer") {
+            self.stlViewPort.unpauseRendering();
+        }
+    }
+
     self.init();
 
     //////////////////////
