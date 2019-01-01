@@ -1,3 +1,7 @@
+*Note: This project is no longer maintained. The latest Cura versions have excellent support to directly slice and send gcode to OctoPrint, and hence render this plugin largely obsolete.*
+
+*If you are interested in taking over the ownership of this plugin, please PM me.*
+
 # OctoPrint Slicer
 
 Slicer plugin offers useful features that OctoPrint's built-in slicer doesn't have:
