@@ -31,6 +31,7 @@ export function OverridesViewModel(parameters, array_keys, enum_keys, item_keys,
         "print_temperature",
         "start_gcode",
         "end_gcode",
+        "before_layer_gcode",
         "filament_diameter"
     ],
         ENUM_KEYS = {
@@ -143,7 +144,7 @@ export function OverridesViewModel(parameters, array_keys, enum_keys, item_keys,
 
         // Hacky - Slic3r profiles escape new line to be string '\n'
         if (self.slicingViewModel.slicer() == 'slic3r'){
-            _.forEach(['end_gcode', 'start_gcode'], function(key) {
+            _.forEach(['end_gcode', 'start_gcode', 'before_layer_gcode'], function(key) {
                 profile[key] = profile[key].replace(/\\n/g, '\n');
             });
         }
@@ -239,7 +240,7 @@ export function OverridesViewModel(parameters, array_keys, enum_keys, item_keys,
 
         // Hacky - Slic3r profiles escape new line to be string '\n'
         if (self.slicingViewModel.slicer() == 'slic3r'){
-            _.forEach(['profile.end_gcode', 'profile.start_gcode'], function(key) {
+            _.forEach(['profile.end_gcode', 'profile.start_gcode', 'profile.before_layer_gcode'], function(key) {
                 result[key] = result[key].replace(/\n/g, '\\n');
             });
         }
