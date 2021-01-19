@@ -420,7 +420,7 @@ function SlicerViewModel(parameters) {
         var materialFront = new THREE.MeshBasicMaterial( { color: 0x048e06} );
         var materialSide = new THREE.MeshBasicMaterial( { color: 0x8A8A8A} );
         var materialArray = [ materialFront, materialSide ];
-        var textMaterial = new THREE.MultiMaterial(materialArray);
+        var textMaterial = materialArray;
 
         var mesh = new THREE.Mesh( textGeometry, textMaterial );
         textGeometry.computeBoundingBox();
@@ -531,7 +531,7 @@ function SlicerViewModel(parameters) {
                     invisibleMaterial,
                     invisibleMaterial,
             ];
-            var cubeSidesMaterial = new THREE.MultiMaterial( materials );
+            var cubeSidesMaterial = materials;
             var wall = new THREE.Mesh( cubeGeometry, cubeSidesMaterial );
             wall.position.z = height/2;
             self.walls.add(wall);
