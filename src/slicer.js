@@ -7,6 +7,7 @@
 
 'use strict';
 
+import '@babel/polyfill';
 import * as THREE from 'three';
 import * as THREETK from '3tk';
 import { STLViewPort } from './STLViewPort';

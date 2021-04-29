@@ -1,10 +1,12 @@
-import babel from 'rollup-plugin-babel';
+import { babel } from '@rollup/plugin-babel';
+import commonjs from '@rollup/plugin-commonjs';
 import babelrc from 'babelrc-rollup';
-import nodeResolve from 'rollup-plugin-node-resolve';
+import nodeResolve from '@rollup/plugin-node-resolve';
 
 let pkg = require('./package.json');
 
 let plugins = [
+    commonjs(),
     nodeResolve({
              jsnext: true,
              main: true,
@@ -17,9 +19,11 @@ if (process.env.DEBUG !== 'true') {
 }
 
 export default {
-  entry: 'src/slicer.js',
+  input: 'src/slicer.js',
   plugins,
-  dest: pkg.main,
-  format: 'iife',
-  sourceMap: false
+  output: {
+    file: pkg.main,
+    format: 'iife',
+    sourcemap: false
+  }
 };
