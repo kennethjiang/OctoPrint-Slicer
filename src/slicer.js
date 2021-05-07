@@ -7,7 +7,6 @@
 
 'use strict';
 
-import '../node_modules/babel-polyfill/dist/polyfill'
 import * as THREE from 'three';
 import * as THREETK from '3tk';
 import { STLViewPort } from './STLViewPort';
