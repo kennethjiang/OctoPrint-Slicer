@@ -357,6 +357,14 @@ class SlicerPlugin(octoprint.plugin.SettingsPlugin,
 		# Close output
 		output.close()
 
+	# stl upload extenstion tree hook
+	def get_extension_tree(self, *args, **kwargs):
+		return dict(
+			model=dict(
+				stlviewer=["stl"]
+			)
+		)
+
 	# Slic3r profile cleanup
 	def slic3rProfileCleanUp(self, input, output) :
 
@@ -387,5 +395,6 @@ def __plugin_load__():
 
 	global __plugin_hooks__
 	__plugin_hooks__ = {
-		"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information
+		"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
+		"octoprint.filemanager.extension_tree": __plugin_implementation__.get_extension_tree
 	}
